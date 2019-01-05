@@ -87,8 +87,10 @@ function createElement(node) {
 		return document.createTextNode(node);
 	}
 	const $el = document.createElement(node.type);
+
 	setProps($el, node.props);
 	addEventListeners($el, node.props);
+
 	node.children.map(createElement).forEach($el.appendChild.bind($el));
 	return $el;
 }
@@ -119,62 +121,128 @@ function updateElement($parent, newNode, oldNode, index = 0) {
 
 
 /** Creates a new Mosaic component.
- * @param {DOMElement} $element The DOM element to inject this component into.
- * @param {Object} state The state of this component.
- * @param {Object} props The properties of this component.
- * @param {Object} actions The functions that manipulate the state.
- * @param {Function} view The function that returns a view.
- */
-const Mosaic = function ($element, { state, props, actions, view, mounted, updated }) {
-	this.$element = $element;
+* @param {DOMElement | String} $element The DOM element to inject this component into, or
+* the HTML tag name of the element to create.
+* @param {Object} state The state of this component.
+* @param {Object} props The properties of this component.
+* @param {Object} actions The functions that manipulate the state.
+* @param {Function} view The function that returns a view.
+* @param {Function} created Lifecycle function called when the component is mounted onto the DOM.
+* @param {Function} update Lifecycle function called when the state or props are changed. */
+const Mosaic = function ($element, { state, props, actions, view, created, updated }) {
+	this.$element = $element ? (typeof $element === 'string' ? document.createElement($element) : $element) : document.createElement('div');
 	this.state = typeof state === 'object' ? state : {};
 	this.props = typeof props === 'object' ? props : {};
 	this.actions = typeof actions === 'object' ? actions : {};
 	this.view = typeof view === 'function' ? view : (props, state, actions) => { };
-
-
-
-	/** Renders a real DOM element for this Mosaic component.
-	* @returns A DOM element containing the rendered element. */
-	this.render = function() {
-		const val = this.view(this.props, this.state, this.actions);
-		console.log(val);
-		const $node = createElement(val);
-		this.$element.appendChild($node);
-		
-		if(this.mounted) this.mounted();
-		return this.$element;
-	}
-
-	/** Sets the state of this component and calls for an update of the DOM element. 
-	* @param {Object} newState The new state of this component.
-	* @param {Function} then What to do after the state has been set. */
-	this.setState = function(newState, then) {
-		const oldVirtDom = new Mosaic(this.$element, { state, props, actions, view, mounted, updated});
-		this.state = newState;
-
-		// Diff to make the necessary changes to the DOM.
-		updateElement(oldVirtDom.$element, this.view(this.props, this.state, this.actions), 
-					oldVirtDom.view(oldVirtDom.props, oldVirtDom.state, oldVirtDom.actions));
-
-		if(this.updated) this.updated();
-		if(then) then();
-	}
-
+	this.created = typeof created === 'function' ? created : null;
+	this.updated = typeof updated === 'function' ? updated : null;
 
 	// Lifecyle:
 
-	/** Called when the component is mounted onto the DOM. */
-	this.mounted = function() {
-		mounted();
+	/** Called when the component is mounted onto the DOM. 
+	* @param {Object} props The initial props that this component was created with.
+	* @param {Object} state The initial state that this component was created with. @*/
+	this.created = function(props, state) {
+		if(created) created(props, state);
 	}
 
-	/** Called when the state changes and an update is needed. */
-	this.updated = function() {
-		updated();
+	/** Called when the state changes and an update is needed.
+	* @param {Object} oldState The old version of the state. 
+	* @param {Object} newState The new version of the state. Might be the same as old
+	* if it was not a state changed that triggered the update.
+	* @param {Object} oldProps The old version of the props.
+	* @param {Object} newProps The new props that get passed into the component. Might
+	* be the same as the old props if it was not a prop change that triggered the update. */
+	this.updated = function(oldState, newState, oldProps, newProps) {
+		if(updated) updated(oldState, newState, oldProps, newProps);
 	}
+
+	Object.freeze(this.state);
+	Object.freeze(this.props);
+	Object.freeze(this.actions);
+	Object.freeze(this.view);
 }
 
+
+// Functions:
+
+/** Renders a real DOM element for this Mosaic component.
+* @param {Object} props (Optional) Props to render into this component, in case it does not
+* already hvae some.
+* @returns A DOM element containing the rendered element. */
+Mosaic.prototype.render = function(props) {
+	this.props = props || (this.props ? this.props : {});
+	const val = this.view(this.props, this.state, this.actions);
+
+	const $node = createElement(val);
+	this.$element.appendChild($node);
+	
+	if(this.created) this.created(this.props, this.state);
+	return this.$element;
+}
+
+/** Mounts a child component onto a larger component, when building apps with
+* multiple Mosaic components.
+* @param {Object} props (Optional) Props to render into this component, in case it does not
+* already hvae some.
+* @returns A DOM element containing the rendered element. */
+Mosaic.prototype.mount = function(props) {
+	this.props = props || (this.props ? this.props : {});
+	const val = this.view(this.props, this.state, this.actions);
+	
+	// If it's not already in the real DOM, wrap it in it's component type.
+	if(!document.body.contains(this.$element)) {
+		const val2 = h(this.$element.nodeName, {}, val);
+		return val2;
+	}
+	return val;
+}
+
+/** Sets the state of this component and calls for an update of the DOM element. 
+* @param {Object} newState The new state of this component.
+* @param {Function} then What to do after the state has been set. */
+Mosaic.prototype.setState = function(newState, then) {
+	const oldVirtDom = new Mosaic(this.$element, { 
+		state: this.state, 
+		props: this.props, 
+		actions: this.actions, 
+		view: this.view, 
+		mounted: this.mounted, 
+		updated: this.updated
+	});
+	this.state = newState;
+
+	// Diff to make the necessary changes to the DOM.
+	updateElement(oldVirtDom.$element, 
+				this.view(this.props, this.state, this.actions), 
+				oldVirtDom.view(oldVirtDom.props, oldVirtDom.state, oldVirtDom.actions));
+
+	if(this.updated) this.updated(oldVirtDom.state, this.state, this.props, this.props);
+	if(then) then();
+}
+
+/** Sets the props of this component and calls for an update of the DOM element. 
+* @param {Object} newProps The new props of this component.
+* @param {Function} then What to do after the props have been set. */
+Mosaic.prototype.setProps = function(newProps, then) {
+	const oldVirtDom = new Mosaic(this.$element, { 
+		state: this.state, 
+		props: this.props, 
+		actions: this.actions, 
+		view: this.view, 
+		mounted: this.mounted, 
+		updated: this.updated
+	});
+	this.props = newProps;
+
+	updateElement(oldVirtDom.$element, 
+		this.view(this.props, this.state, this.actions), 
+		oldVirtDom.view(oldVirtDom.props, oldVirtDom.state, oldVirtDom.actions));
+
+	if(this.updated) this.updated(this.state, this.state, oldVirtDom.props, this.props);
+	if(then) then();
+}
 
 
 exports.Mosaic = Mosaic;
