@@ -1,7 +1,5 @@
-const { h, Mosaic } = require('@authman2/mosaic');
-
+const { h, Mosaic } = require('../index');
 const root = document.getElementById('root');
-
 
 /** A button Mosaic component. */
 const Btn = new Mosaic('div', {
