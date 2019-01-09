@@ -125,8 +125,7 @@ function updateElement($parent, newNode, oldNode, index = 0) {
 * @param {DOMElement | String} $element The DOM element to inject this component into, or
 * the HTML tag name of the element to create.
 * @param {Object} state The state of this component.
-* @param {Object} props The properties of this component.
-* @param {Object} actions The functions that manipulate the state.
+* @param {Fuction} actions A function that is used to define the functions of this component.
 * @param {Function} view The function that returns a view.
 * @param {Function} created Lifecycle function called when the component is mounted onto the DOM.
 * @param {Function} updated Lifecycle function called when the state or props are changed. */
@@ -139,7 +138,7 @@ const Mosaic = function($element, { state, actions, view, created, updated }) {
 		$element: $element ? (typeof $element === 'string' ? document.createElement($element) : $element) : document.createElement('div'),
 		props: {},
 		state: typeof state === 'object' ? state : {},
-		actions: typeof actions === 'object' ? actions : {},
+		actions: typeof actions === 'function' ? actions(this) : {},
 		view: typeof view === 'function' ? view : (component) => { },
 		created: typeof created === 'function' ? created : null,
 		updated: typeof updated === 'function' ? updated : null
@@ -166,15 +165,11 @@ const Mosaic = function($element, { state, actions, view, created, updated }) {
 			updated: newStuff.updated || self.updated
 		});
 		self = privates.get(_self);
-
-		this.props = Object.freeze(self.props);
-		this.state = Object.freeze(self.state);
-		this.actions = Object.freeze(self.actions)
 	}
 
 	/** Returns a copy of this component. */
 	this.copy = function() {
-		return new Mosaic(self.$element, {
+		const cpy = new Mosaic(self.$element, {
 			props: self.props,
 			state: self.state,
 			actions: self.actions,
@@ -182,6 +177,7 @@ const Mosaic = function($element, { state, actions, view, created, updated }) {
 			created: self.created,
 			updated: self.updated
 		});
+		return cpy;
 	}
 
 	/** Returns the properties of this component. */
@@ -211,14 +207,10 @@ const Mosaic = function($element, { state, actions, view, created, updated }) {
 	}
 
 	/** Called when the state changes and an update is needed.
-	* @param {Object} oldState The old version of the state. 
-	* @param {Object} newState The new version of the state. Might be the same as old
-	* if it was not a state changed that triggered the update.
-	* @param {Object} oldProps The old version of the props.
-	* @param {Object} newProps The new props that get passed into the component. Might
-	* be the same as the old props if it was not a prop change that triggered the update. */
-	this.updated = function(oldState, newState, oldProps, newProps) {
-		if(updated) updated(oldState, newState, oldProps, newProps);
+	* @param {Mosaic} component The newly updated Mosaic component.
+	* @param {Object} oldComponent The old Mosaic component from before the update. */
+	this.updated = function(component, oldComponent) {
+		if(updated) updated(component, oldComponent);
 	}
 
 
@@ -249,25 +241,30 @@ const Mosaic = function($element, { state, actions, view, created, updated }) {
 	* @param {Object} props (Optional) Props to render into this component, in case it does not
 	* already hvae some.
 	* @returns An h-tree describing the rendered element. */
-	this.mount = function(props) {
-		// Create a copy of the old node and its old attributes.
+	this.mount = (props) => {
+		// Get the old values first and then update props.
 		const old = Object.assign({}, self);
-		const oldNode = this.copy();
+		resetPrivates({ props });
 
-		// Since this copy node has to be independent, we must set IT'S old props, not this one's.
-		oldNode.setProps(props);
-
+		// Create a copy of the updated node and its attributes.
+		const cpy = Object.assign({}, self);
+		const cpyNode = this.copy();
+		resetPrivates({ props: old.props });
+		console.log('Copy: ', cpy, cpyNode);
+		console.log('Old: ', self, this);
+		
 		// Re-render.
-		const val = old.view(oldNode);
+		const val = cpy.view(cpyNode);
+		console.log(val);
 
 		// Check if the element is in the DOM yet, otherwise wrap it in it's component type.
-		if(!document.body.contains(old.$element)) {
-			const val2 = h(old.$element.nodeName, {}, val);
-			if(old.created) old.created(oldNode);
+		if(!document.body.contains(cpy.$element)) {
+			const val2 = h(cpy.$element.nodeName, {}, val);
+			if(cpy.created) cpy.created(cpyNode);
 			return val2;
 		}
 
-		if(old.created) old.created(oldNode);
+		if(cpy.created) cpy.created(cpyNode);
 		return val;
 	}
 
@@ -286,7 +283,7 @@ const Mosaic = function($element, { state, actions, view, created, updated }) {
 		updateElement(old.$element, self.view(this), old.view(oldNode));
 
 		// Call update functions.
-		if(this.updated) this.updated(old.state, self.state, old.props, self.props);
+		if(this.updated) this.updated(this, oldNode);
 		if(then) then();
 	}
 
@@ -305,7 +302,7 @@ const Mosaic = function($element, { state, actions, view, created, updated }) {
 		updateElement(old.$element, self.view(this), old.view(oldNode));
 
 		// Call update functions.
-		if(this.updated) this.updated(old.state, self.state, old.props, self.props);
+		if(this.updated) this.updated(this, oldNode);
 		if(then) then();
 	}
 }

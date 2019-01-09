@@ -2,16 +2,11 @@ const { h, Mosaic } = require('../../index');
 
 // Home
 export default new Mosaic('div', {
-    state: {},
-    actions: {},
-    created: (component, props, state) => {
-        console.log('My Individual Component (Self): ', component, props, state);
-    },
-    updated: (oldS, newS, oldP, newP) => {},
-    view: (props, state, actions) => {
+    view: self => {
+        // console.log('props: ', self.props());
         return (
             <div>
-                { props.frameworkName || "Mosaic" }
+                <h1>hi { self.state().y || 5 }</h1>
             </div>
         )
     }
