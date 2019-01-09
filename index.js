@@ -124,26 +124,28 @@ function updateElement($parent, newNode, oldNode, index = 0) {
 /** Creates a new Mosaic component.
 * @param {DOMElement | String} $element The DOM element to inject this component into, or
 * the HTML tag name of the element to create.
-* @param {Object} state The state of this component.
+* @param {Object} attributes The attributes of this component.
 * @param {Fuction} actions A function that is used to define the functions of this component.
 * @param {Function} view The function that returns a view.
 * @param {Function} created Lifecycle function called when the component is mounted onto the DOM.
 * @param {Function} updated Lifecycle function called when the state or props are changed. */
-const Mosaic = function($element, { state, actions, view, created, updated }) {
+const Mosaic = function($element, { attributes, actions, view, created, updated }) {
 	var privates = new WeakMap();
 
 	// Set the private variables.
 	const _self = {};
 	privates.set(_self, {
 		$element: $element ? (typeof $element === 'string' ? document.createElement($element) : $element) : document.createElement('div'),
-		props: {},
-		state: typeof state === 'object' ? state : {},
 		actions: typeof actions === 'function' ? actions(this) : {},
 		view: typeof view === 'function' ? view : (component) => { },
 		created: typeof created === 'function' ? created : null,
 		updated: typeof updated === 'function' ? updated : null
 	});
 	var self = privates.get(_self);
+
+	// Set the public variables.
+	this.attributes = (typeof attributes === 'object' ? attributes : {});
+
 
 
 	/****************************
@@ -152,26 +154,24 @@ const Mosaic = function($element, { state, actions, view, created, updated }) {
     *                           *
     *****************************/
 
-	/** Resets the private variables on this component. 
+	/** Resets the public and private variables on this component. 
 	* @param {Object} newStuff The new attributes for the Mosaic component. */
-	const resetPrivates = function(newStuff) {
+	const resetVariables = function(newStuff) {
 		privates.set(_self, {
 			$element: newStuff.$element || self.$element,
-			props: newStuff.props || self.props,
-			state: newStuff.state || self.state,
 			actions: newStuff.actions || self.actions,
 			view: newStuff.view || self.view,
 			created: newStuff.created || self.created,
 			updated: newStuff.updated || self.updated
 		});
 		self = privates.get(_self);
+		this.attributes = newStuff.attributes || this.attributes;
 	}
 
 	/** Returns a copy of this component. */
 	this.copy = function() {
 		const cpy = new Mosaic(self.$element, {
-			props: self.props,
-			state: self.state,
+			attributes: this.attributes,
 			actions: self.actions,
 			view: self.view,
 			created: self.created,
@@ -180,14 +180,6 @@ const Mosaic = function($element, { state, actions, view, created, updated }) {
 		return cpy;
 	}
 
-	/** Returns the properties of this component. */
-	this.props = () => Object.freeze(self.props);
-
-	/** Returns the state of this component. */
-	this.state = () => Object.freeze(self.state);
-
-	/** Returns all of the actions for this component. */
-	this.actions = () => Object.freeze(self.actions)
 
 
 
@@ -199,18 +191,16 @@ const Mosaic = function($element, { state, actions, view, created, updated }) {
 
 	/** Called when the component is either mounted onto the DOM using the render function
 	* or injected into the DOM using the mount function.
-	* @param {Object} component A reference to this currently mounted Mosaic component.
-	* @param {Object} props The properties that get passed along to this component.
-	* @param {Object} state The initial state of this component. */
-	this.created = function(component) {
-		if(created) created(component);
+	* @param {Object} component A reference to this currently mounted Mosaic component. */
+	const _created = function(component) {
+		if(self.created) self.created(component);
 	}
 
 	/** Called when the state changes and an update is needed.
 	* @param {Mosaic} component The newly updated Mosaic component.
 	* @param {Object} oldComponent The old Mosaic component from before the update. */
-	this.updated = function(component, oldComponent) {
-		if(updated) updated(component, oldComponent);
+	const _updated = function(component, oldComponent) {
+		if(self.updated) self.updated(component, oldComponent);
 	}
 
 
@@ -222,89 +212,78 @@ const Mosaic = function($element, { state, actions, view, created, updated }) {
     *****************************/
 
 	/** Renders a real DOM element for this Mosaic component.
-	* @param {Object} props (Optional) Props to render into this component, in case it does not
-	* already hvae some.
+	* @param {Object} attributes (Optional) Attributes to render into this component, in case it does not
+	* already hvae some. This will add onto existing attributes, not reset them.
 	* @returns A DOM element containing the rendered element. */
-	this.render = function(props) {
-		self.props = props || (self.props ? self.props : {});
+	this.render = function(attributes) {
+		// Set the the attributes and get a new view.
+		if(attributes) this.attributes = Object.assign({}, this.attributes, attributes);
+		else this.attributes = this.attributes ? this.attributes : {};
 		const val = self.view(this);
 
+		// Create a dom element.
 		const $node = createElement(val);
 		self.$element.appendChild($node);
 		
-		if(this.created) this.created(this);
+		// Run the created lifecycle function.
+		if(_created) _created(this);
 		return self.$element;
 	}
 
 	/** Mounts a child component onto a larger component, when building apps with
 	* multiple Mosaic components.
-	* @param {Object} props (Optional) Props to render into this component, in case it does not
-	* already hvae some.
+	* @param {Object} attributes (Optional) Attributes to render into this component, in case it does not
+	* already have some.
 	* @returns An h-tree describing the rendered element. */
-	this.mount = (props) => {
-		// Get the old values first and then update props.
-		const old = Object.assign({}, self);
-		resetPrivates({ props });
+	this.mount = (attributes) => {
+		// Get the attributes as they are now so we can set them back later.
+		const oldPrivates = Object.assign({}, self);
+		const oldNode = this.copy();
 
-		// Create a copy of the updated node and its attributes.
-		const cpy = Object.assign({}, self);
+		// Set the new values on this object so we can make an "updated copy."
+		this.attributes = Object.assign({}, this.attributes, attributes);
+
+		// Get the updated copy.
+		const cpyPrivates = Object.assign({}, self);
 		const cpyNode = this.copy();
-		resetPrivates({ props: old.props });
-		console.log('Copy: ', cpy, cpyNode);
-		console.log('Old: ', self, this);
-		
+
+		// Reset this object's variables back to the old one beacuse we only needed to update
+		// them in order to create a copy.
+		this.attributes = oldNode.attributes;
+
 		// Re-render.
-		const val = cpy.view(cpyNode);
-		console.log(val);
+		const val = cpyPrivates.view(cpyNode);
 
 		// Check if the element is in the DOM yet, otherwise wrap it in it's component type.
-		if(!document.body.contains(cpy.$element)) {
-			const val2 = h(cpy.$element.nodeName, {}, val);
-			if(cpy.created) cpy.created(cpyNode);
+		if(!document.body.contains(cpyPrivates.$element)) {
+			const val2 = h(cpyPrivates.$element.nodeName, {}, val);
+			cpyPrivates.created(cpyNode);
 			return val2;
 		}
 
-		if(cpy.created) cpy.created(cpyNode);
+		cpyPrivates.created(cpyNode);
 		return val;
 	}
 
-	/** Sets the state of this component and calls for an update of the DOM element. 
-	* @param {Object} newState The new state of this component.
+	/** Sets the attributes of this component and calls for an update of the DOM element. 
+	* @param {Object} newAttributes The new state of this component.
 	* @param {Function} then What to do after the state has been set. */
-	this.setState = function(newState, then) {
+	this.setAttributes = function(newAttributes, then) {
 		// Copy old attributes.
 		const old = Object.assign({}, self);
 		const oldNode = this.copy();
 
 		// Set the new attributes.
-		resetPrivates({ state: newState });
+		this.attributes = Object.assign({}, this.attributes, newAttributes);
 
 		// Diff the old and new components.
 		updateElement(old.$element, self.view(this), old.view(oldNode));
 
 		// Call update functions.
-		if(this.updated) this.updated(this, oldNode);
+		if(_updated) _updated(this, oldNode);
 		if(then) then();
 	}
 
-	/** Sets the props of this component and calls for an update of the DOM element. 
-	* @param {Object} newProps The new props of this component.
-	* @param {Function} then What to do after the props have been set. */
-	this.setProps = function(newProps, then) {
-		// Copy old attributes.
-		const old = Object.assign({}, self);
-		const oldNode = this.copy();
-
-		// Set the new attributes.
-		resetPrivates({ props: newProps });
-
-		// Diff the old and new components.
-		updateElement(old.$element, self.view(this), old.view(oldNode));
-
-		// Call update functions.
-		if(this.updated) this.updated(this, oldNode);
-		if(then) then();
-	}
 }
 
 

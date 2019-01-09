@@ -2,11 +2,14 @@ const { h, Mosaic } = require('../../index');
 
 // Home
 export default new Mosaic('div', {
+    created: self => {
+        console.log('Child comp!: ', self);
+    },
     view: self => {
-        // console.log('props: ', self.props());
         return (
             <div>
-                <h1>hi { self.state().y || 5 }</h1>
+                <h1>hi</h1>
+                <p>My name is {self.attributes.something}</p>
             </div>
         )
     }

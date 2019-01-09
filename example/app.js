@@ -5,16 +5,22 @@ const root = document.getElementById('root');
 root.innerHTML = '';
 
 const app = new Mosaic(root, {
-    state: {},
+    attributes: {},
     actions: self => {},
-    created: self => {},
+    created: self => {
+        console.log(self);
+        
+        setTimeout(() => {
+            self.setAttributes({ frameworkName: "Mosaic App" });
+        }, 3000);
+    },
     updated: (self, oldSelf) => {},
     view: self => {
         return (
             <div>
-                { home.mount({ y: 5 }) }
-                { home.mount({ y: 1 }) }
-                { home.mount({ y: 2 }) }
+                <h1>First Title: {self.attributes.frameworkName}</h1>
+                { home.mount({ something: "Message" }) }
+                { home.mount({ something: "Completely different attribute" }) }
             </div>
         )
     }
