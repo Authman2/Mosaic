@@ -3,7 +3,10 @@ const { h, Mosaic } = require('../../index');
 // Home
 export default new Mosaic('div', {
     created: self => {
-        console.log('Child comp!: ', self);
+        // console.log('Child comp!: ', self);
+    },
+    updated: (self, oldSelf) => {
+        // console.log(self, oldSelf);
     },
     view: self => {
         return (

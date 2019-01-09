@@ -6,21 +6,36 @@ root.innerHTML = '';
 
 const app = new Mosaic(root, {
     attributes: {},
-    actions: self => {},
+    
+    actions: self => {
+        return {
+            something: function() {
+                // Change attributes and rerender.
+                // This works.
+                self.setAttributes({ frameworkName: "Mosaic Appetite" }, () => {
+
+                    // But this does not work.
+                    const r = self.references.comp2;
+                    r.setAttributes({ something: "Changed!!!!" });
+                });
+
+            }
+        }
+    },
+    
     created: self => {
-        console.log(self);
-        
-        setTimeout(() => {
-            self.setAttributes({ frameworkName: "Mosaic App" });
-        }, 3000);
+        // console.log(self);
     },
     updated: (self, oldSelf) => {},
+
     view: self => {
         return (
             <div>
-                <h1>First Title: {self.attributes.frameworkName}</h1>
-                { home.mount({ something: "Message" }) }
-                { home.mount({ something: "Completely different attribute" }) }
+                <h1 onClick={self.actions.something}>
+                    First Title: {self.attributes.frameworkName}
+                </h1>
+                { home.mount("comp1", self, { something: "Message" }) }
+                { home.mount("comp2", self, { something: "Completely different message" }) }
             </div>
         )
     }
