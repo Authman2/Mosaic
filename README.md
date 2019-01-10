@@ -1,5 +1,5 @@
 # Mosaic
-A front-end javascript framework for creating user interfaces.
+A front-end javascript library for creating user interfaces.
 
 # Author
 - Year: 2019

@@ -1,43 +1,63 @@
-const { h, Mosaic } = require('../index');
-const home = require('./pages/home').default;
+const { createElement, render, mount, diff, Mosaic } = require('../src/index');
 
 const root = document.getElementById('root');
 root.innerHTML = '';
 
-const app = new Mosaic(root, {
-    attributes: {},
-    
-    actions: self => {
-        return {
-            something: function() {
-                // Change attributes and rerender.
-                // This works.
-                self.setAttributes({ frameworkName: "Mosaic Appetite" }, () => {
 
-                    // But this does not work.
-                    const r = self.references.comp2;
-                    r.setAttributes({ something: "Changed!!!!" });
-                });
-
-            }
+const createVApp = attributes => createElement('div', {
+    style: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'mediumseagreen' 
+    }
+}, [
+    createElement('p', {
+        style: {
+            color: 'white',
+            fontFamily: 'Avenir'
         }
     },
-    
-    created: self => {
-        // console.log(self);
-    },
-    updated: (self, oldSelf) => {},
+    [
+        `Working with a cool title called ${attributes.title}`,
+        createElement('h1', { style: { color: 'white', fontFamily: 'Avenir' } }, [`Count: ${attributes.count}`])
+    ])
+]);
 
-    view: self => {
-        return (
-            <div>
-                <h1 onClick={self.actions.something}>
-                    First Title: {self.attributes.frameworkName}
-                </h1>
-                { home.mount("comp1", self, { something: "Message" }) }
-                { home.mount("comp2", self, { something: "Completely different message" }) }
-            </div>
-        )
-    }
-});
-app.render({ frameworkName: "Mosaic" });
+let name = "Mosaic";
+let count = 0;
+let vApp = createVApp({ title: name, count: count });
+let $AppNode = render(vApp);
+let $mountedElement = mount($AppNode, root);
+
+setInterval(() => {
+    const n = Math.floor(Math.random() * 10);
+    const newVApp = createVApp({ title: name, count: n });
+    const patch = diff(vApp, newVApp);
+
+    $mountedElement = patch($mountedElement);
+    vApp = newVApp;
+}, 1000);
+
+
+
+
+
+// const app = new Mosaic(root, {
+//     attributes: {},
+    
+//     actions: self => {},
+    
+//     created: self => {
+//         console.log('%c App Component: ', 'color: mediumseagreen; font-weight: bold', self);
+//     },
+
+//     updated: (self, oldSelf) => {},
+
+//     /** @param {Mosaic} self */
+//     view: self => {
+//         return (
+//             h('div', { style: { width: '100%', height: '100%', backgroundColor: 'mediumseagreen' } }, 'Hi')
+//         )
+//     }
+// });
+// app.render({ frameworkName: "Mosaic" });
