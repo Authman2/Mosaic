@@ -3,7 +3,15 @@
 * @param {Element} $realNode The real node that will be replaced.
 */
 const mount = ($newNode, $realNode) => {
-    $realNode.replaceWith($newNode);
+    // This works too. It just makes the new node sit inside of root instead of replacing root.
+    if($realNode.firstChild) {
+        $realNode.firstChild.replaceWith($newNode);
+    } else {
+        $realNode.appendChild($newNode);
+    }
+
+    // This works.
+    // $realNode.replaceWith($newNode);
     return $newNode;
 }
 exports.mount = mount;

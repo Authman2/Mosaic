@@ -1,63 +1,102 @@
-const { createElement, render, mount, diff, Mosaic } = require('../src/index');
+const { h, Mosaic } = require('../src/index');
 
 const root = document.getElementById('root');
 root.innerHTML = '';
 
-
-const createVApp = attributes => createElement('div', {
-    style: {
-        width: '100%',
-        height: '100%',
-        backgroundColor: 'mediumseagreen' 
-    }
-}, [
-    createElement('p', {
-        style: {
-            color: 'white',
-            fontFamily: 'Avenir'
-        }
+/** A counter component. */
+const counter = new Mosaic('div', {
+    attributes: {
+        count: 0
     },
-    [
-        `Working with a cool title called ${attributes.title}`,
-        createElement('h1', { style: { color: 'white', fontFamily: 'Avenir' } }, [`Count: ${attributes.count}`])
-    ])
-]);
+    view: self => (
+        h('h1', { 
+            style: { 
+                color: 'white',
+                fontFamily: 'Avenir',
+            }
+        }, 
+        [`Count: ${counter.attributes.count}`])
+    )
+})
 
-let name = "Mosaic";
-let count = 0;
-let vApp = createVApp({ title: name, count: count });
-let $AppNode = render(vApp);
-let $mountedElement = mount($AppNode, root);
+/** The actual app component. */
+const app = new Mosaic(root, {
+    attributes: {
+    },
+    view: self => (
+        h('div', {
+            id: "myDiv",
+            style: {
+                width: '100%',
+                height: '100%',
+                textAlign: 'center',
+                backgroundColor: 'mediumseagreen' 
+            }
+        }, [
+            h('p', {
+                style: {
+                    position: 'relative',
+                    top: '40%',
+                    color: 'white',
+                    fontFamily: 'Avenir',
+                    tranform: 'translateY(-40%)',
+                }
+            },
+            [
+                `Working with a cool title called ${app.attributes.title}`,
+                app.mount('comp1', counter, { count: 0 })
+            ])
+        ])
+    )
+});
 
+// Paint the Mosaic onto the page.
+app.paint({ title: "Mosaic" });
+
+
+// Test updating the components' attributes.
+const titles = ["Mosaic", "Mosaic App", "Adeola's Front-End Framework", "MOSAIC!!!",
+                "Testing", "Working", "Cool", "Something else", "Candy", "JavaScript"]
 setInterval(() => {
     const n = Math.floor(Math.random() * 10);
-    const newVApp = createVApp({ title: name, count: n });
-    const patch = diff(vApp, newVApp);
-
-    $mountedElement = patch($mountedElement);
-    vApp = newVApp;
+    app.setAttributes({ title: titles[n] });
+    counter.setAttributes({ count: n });
 }, 1000);
 
 
 
-
-
-// const app = new Mosaic(root, {
-//     attributes: {},
-    
-//     actions: self => {},
-    
-//     created: self => {
-//         console.log('%c App Component: ', 'color: mediumseagreen; font-weight: bold', self);
-//     },
-
-//     updated: (self, oldSelf) => {},
-
-//     /** @param {Mosaic} self */
-//     view: self => {
-//         return (
-//             h('div', { style: { width: '100%', height: '100%', backgroundColor: 'mediumseagreen' } }, 'Hi')
-//         )
+// const createVApp = attributes => h('div', {
+//     id: "myDiv",
+//     style: {
+//         width: '100%',
+//         height: '100%',
+//         backgroundColor: 'mediumseagreen' 
 //     }
-// });
-// app.render({ frameworkName: "Mosaic" });
+// }, [
+//     h('p', {
+//         style: {
+//             color: 'white',
+//             fontFamily: 'Avenir'
+//         }
+//     },
+//     [
+//         `Working with a cool title called ${attributes.title}`,
+//         h('h1', { style: { color: 'white', fontFamily: 'Avenir' } }, [`Count: ${attributes.count}`])
+//     ])
+// ]);
+
+// let attrs = { title: name, count: 0 }
+// let vApp = createVApp(attrs);
+// let $AppNode = render(vApp);
+// let $mountedElement = mount($AppNode, root);
+
+// setInterval(() => {
+//     const n = Math.floor(Math.random() * 10);
+//     attrs = { title: name, count: n };
+    
+//     const newVApp = createVApp(attrs);
+//     const patch = diff(vApp, newVApp);
+
+//     $mountedElement = patch($mountedElement);
+//     vApp = newVApp;
+// }, 1000);
