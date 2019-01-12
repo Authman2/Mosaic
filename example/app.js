@@ -8,60 +8,77 @@ const counter = new Mosaic('div', {
     attributes: {
         count: 0
     },
-    view: self => (
-        h('h1', { 
-            style: { 
-                color: 'white',
-                fontFamily: 'Avenir',
-            }
-        }, 
-        [`Count: ${counter.attributes.count}`])
-    )
-})
+
+    created: function() {
+        setInterval(() => {
+            const n = Math.floor(Math.random() * 10);
+            this.setAttributes({ count: n });
+        }, 1000);
+    },
+
+    view: function() {
+        return (
+            h('h1', { 
+                style: { 
+                    color: 'white',
+                    fontFamily: 'Avenir',
+                }
+            }, 
+            [`Count: ${this.attributes.count}`])
+        )
+    }
+});
 
 /** The actual app component. */
 const app = new Mosaic(root, {
     attributes: {
     },
-    view: self => (
-        h('div', {
-            id: "myDiv",
-            style: {
-                width: '100%',
-                height: '100%',
-                textAlign: 'center',
-                backgroundColor: 'mediumseagreen' 
-            }
-        }, [
-            h('p', {
+    
+    created: function() {
+        console.log('1.) Created: ', this);
+
+        setTimeout(() => this.setAttributes({ title: "Adeola's Front End JavaScript Library" }), 3000);
+    },
+    willUpdate: function(oldSelf) {
+        console.log('2.) About to update old component: ', oldSelf);
+    },
+    updated: function(oldSelf) {
+        console.log('3.) Update Old: ', oldSelf);
+        console.log('4.) Update New: ', this);
+    },
+
+    view: function() {
+        return (
+            h('div', {
+                id: "myDiv",
                 style: {
-                    position: 'relative',
-                    top: '40%',
-                    color: 'white',
-                    fontFamily: 'Avenir',
-                    tranform: 'translateY(-40%)',
+                    width: '100%',
+                    height: '100%',
+                    textAlign: 'center',
+                    backgroundColor: '#4341B5' 
                 }
-            },
-            [
-                `Working with a cool title called ${app.attributes.title}`,
-                app.mount('comp1', counter, { count: 0 })
+            }, [
+                h('p', {
+                    style: {
+                        position: 'relative',
+                        top: '40%',
+                        color: 'white',
+                        fontFamily: 'Avenir',
+                        tranform: 'translateY(-40%)',
+                    }
+                },
+                [
+                    `Working with a cool title called ${this.attributes.title}`,
+                    app.mount('comp1', counter, { count: 0 }),
+                    app.mount('comp2', counter, { count: 5 })
+                ])
             ])
-        ])
-    )
+        )
+    }
 });
 
 // Paint the Mosaic onto the page.
 app.paint({ title: "Mosaic" });
-
-
-// Test updating the components' attributes.
-const titles = ["Mosaic", "Mosaic App", "Adeola's Front-End Framework", "MOSAIC!!!",
-                "Testing", "Working", "Cool", "Something else", "Candy", "JavaScript"]
-setInterval(() => {
-    const n = Math.floor(Math.random() * 10);
-    app.setAttributes({ title: titles[n] });
-    counter.setAttributes({ count: n });
-}, 1000);
 
 
 

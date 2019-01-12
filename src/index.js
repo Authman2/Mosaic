@@ -15,13 +15,38 @@ const getDOMElement = (element) => {
 * the HTML tag name of the element to create.
 * @param {Object} attributes The attributes associated with this Mosaic component.
 * @param {Function} view The view to render for this component. */
-const Mosaic = function($base, { attributes, view }) {
+const Mosaic = function($base, { attributes, view, created, willUpdate, updated }) {
 	// Define variables.
-	this.$base = getDOMElement($base);		// DOM element (not virtual).
-	this.attributes = attributes || {}		// Object for this component's attributse.
-	this.view = view || ((self) => ({}));	// Function that returns h-tree.
-	this.parent = null;						// Component for the parent element holding this one.
-	this.references = {};					// Object for the reference nodes in this component.
+	this.$base = getDOMElement(arguments.length > 1 ? $base : null);	// DOM element (not virtual).
+	this.attributes = attributes || {}									// Object for this component's attributse.
+	this.view = view || ((self) => ({}));								// Function that returns h-tree.
+	this.parent = null;													// Component for this parent element.
+	this.references = {};												// Object for the reference components.
+	
+	const _created = () => { if(created) created.call(this); }
+	const _willUpdate = (oldSelf) => { if(willUpdate) willUpdate.call(this, oldSelf); }
+	const _updated = (oldSelf) => { if(updated) updated.call(this, oldSelf); }
+	this.lifecycle = {													// The lifecycle methods.
+		created: _created,
+		willUpdate: _willUpdate,
+		updated: _updated
+	}
+}
+
+/** Returns a copy of this component.
+* @returns {Mosaic} A copy of this Mosaic component. */
+Mosaic.prototype.copy = function() {
+	const cpy = new Mosaic(this.$base, {
+		attributes: this.attributes,
+		view: (comp) => this.view,
+		created: this.created,
+		willUpdate: this.willUpdate,
+		updated: this.updated
+	});
+	cpy.parent = this.parent;
+	cpy.references = Object.assign({}, this.references);
+	cpy.lifecycle = Object.assign({}, this.lifecycle);
+	return cpy;
 }
 
 
@@ -40,6 +65,9 @@ Mosaic.prototype.paint = function(attributes = {}) {
 
 	// Replace the component of this DOM element with the new one.
 	this.$base = $rootElement;
+
+	// Run the created function.
+	this.lifecycle.created();
 }
 
 
@@ -66,6 +94,9 @@ Mosaic.prototype.mount = function(identifyingName, mountingComponent, attributes
 
 	// Return the htree view of the mounted component.
 	const ret = mountingComponent.view(mountingComponent);
+
+	// Run the created function.
+	mountingComponent.lifecycle.created();
 	return ret;
 }
 
@@ -74,6 +105,10 @@ Mosaic.prototype.mount = function(identifyingName, mountingComponent, attributes
 * @param {Object} newAttributes The new state of this component.
 * @param {Function} then (Optional) What to do after the state has been set. */
 Mosaic.prototype.setAttributes = function(newAttributes) {
+	// Run the will update function on this component before we change its attributes.
+	const cpy = this.copy();
+	cpy.lifecycle.willUpdate(cpy);
+
 	// Get a copy of this component before setting the new attributes.
 	const $oldNode = this.$base;
 	const oldVNode = this.view(this);
@@ -109,6 +144,9 @@ Mosaic.prototype.setAttributes = function(newAttributes) {
 			children = children.concat(temp);
 		}
 	}
+
+	// Run the updated function.
+	this.lifecycle.updated(cpy);
 }
 
 
