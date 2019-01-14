@@ -21,6 +21,7 @@ const diffProperties = (oldProps, newProps) => {
                 $node.removeAttribute(i);
                 return $node;
             }
+            patches.push(_patch);
         }
     }
 

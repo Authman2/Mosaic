@@ -10,10 +10,20 @@ const counter = new Mosaic('div', {
     },
 
     created: function() {
-        setInterval(() => {
+        // console.log("CREATED THIS NESTED COMPONENT: ", this);
+        // console.log(this);
+        // setInterval(() => {
             const n = Math.floor(Math.random() * 10);
             this.setAttributes({ count: n });
-        }, 1000);
+        // }, 1000);
+    },
+
+    willUpdate: function() {
+        // console.log("ABOUT TO UPDATE: ", this);
+    },
+
+    updated: function() {
+        
     },
 
     view: function() {
@@ -35,16 +45,23 @@ const app = new Mosaic(root, {
     },
     
     created: function() {
-        console.log('1.) Created: ', this);
+        // console.log('1.) Created: ', this);
 
-        setTimeout(() => this.setAttributes({ title: "Adeola's Front End JavaScript Library" }), 3000);
+        // setInterval(() => {
+        //     const n = Math.floor(Math.random() * 10);
+        //     const n2 = Math.floor(Math.random() * 10);
+        //     this.references.comp1.setAttributes({ count: n });
+        //     // this.references.comp2.setAttributes({ count: n2 });
+        // }, 1000);
+
+        // setTimeout(() => this.setAttributes({ title: "Adeola's Front End JavaScript Library" }), 3000);
     },
     willUpdate: function(oldSelf) {
-        console.log('2.) About to update old component: ', oldSelf);
+        // console.log('2.) About to update old component: ', oldSelf);
     },
     updated: function(oldSelf) {
-        console.log('3.) Update Old: ', oldSelf);
-        console.log('4.) Update New: ', this);
+        // console.log('3.) Update Old: ', oldSelf);
+        // console.log('4.) Update New: ', this);
     },
 
     view: function() {
