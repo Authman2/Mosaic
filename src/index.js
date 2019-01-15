@@ -13,6 +13,9 @@ const MosaicOptions = {
 	/** The state of this component. */
 	data: Object.create(null),
 
+	/** The actions that modify this component's data. */
+	actions: Function,
+
 	/** The view that this component will take on. */
 	view: Function,
 
@@ -26,30 +29,12 @@ const MosaicOptions = {
 	updated: Function
 }
 
-// const MosaicDOM = function(component, root) {
-// 	this.component = component;
-// 	this.root = root;
-// }
-// MosaicDOM.prototype.paint = function() {
-// 	this.$appNode = render(this.component);
-// 	this.$mountedDOMElement = mount(this.$appNode, this.root);
-
-// 	this.component.created();
-// }
-// MosaicDOM.prototype.update = function() {
-// 	const newVApp = this.component.view();
-// 	const patch = diff(this.component, newVApp);
-
-// 	this.$mountedDOMElement = patch(this.$mountedDOMElement);
-// 	// this.component.view = function() { return newVApp };
-// }
-
-
 /** Creates a new Mosaic component.
 * @param {MosaicOptions} options The configuration options for a Mosaic component. */
 const Mosaic = function(options) {
 	this.key = randomID();
 	this.data = options.data || {};
+	this.actions = options.actions ? options.actions(this) : ((comp) => {});
 	this.view = options.view || ((comp) => {});
 	this.created = options.created || (() => {});
 	this.willUpdate = options.willUpdate || (() => {});
@@ -60,6 +45,8 @@ const Mosaic = function(options) {
 	this.$domElement = document.createElement(this.$component || 'div');
 	this.$domElement.setAttribute('identifier', this.key);
 	
+
+	/** Returns a copy of this Mosaic component. */
 	this.copy = function() {
 		return new Mosaic(Object.assign({}, options));
 	}
@@ -88,7 +75,7 @@ Mosaic.prototype.setData = function(newData = {}) {
 	// 2.) The component having its data set is not the entry point but instead an "n-th level" child
 	// of the entry point. It should have it's dom element already added to a parent. Look for it and
 	// update it.
-	let oldCopy = this.copy();
+	this.willUpdate(this.data);
 	if(this.parent) {
 		let $oldDomNode = this.$domElement.cloneNode(true);
 		let oldVnode = this.view();
@@ -115,7 +102,7 @@ Mosaic.prototype.setData = function(newData = {}) {
 		this.$domElement.replaceWith($newRoot);
 		this.$domElement = $newRoot;
 	}
-	this.updated(oldCopy);
+	this.updated();
 }
 
 /** Places another component inside of this one and adds a reference to it. */

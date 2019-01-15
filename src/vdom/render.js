@@ -1,3 +1,8 @@
+/** Checks whether or not the property is an event handler. */
+const isEventProperty = (name) => {
+    return /^on/.test(name);
+}
+
 /** Handles setting attributse on a real DOM element when it might be an object, etc.
 * @param {Element} $element The dom element to set attributes on.
 * @param {String} propName The name of the attribute.
@@ -5,15 +10,29 @@
 const setDomAttributes = ($element, propName, propVal) => {
     if(propName === 'style') {
         let styleString = "";
-        Object.keys(propVal).forEach(styleName => {
-            const hypenated = styleName.replace( /([a-z])([A-Z])/g, '$1-$2' ).toLowerCase();
-            styleString += `${hypenated}:${propVal[styleName]};`;
-        })
+
+        if(typeof propVal === 'object') {
+            Object.keys(propVal).forEach(styleName => {
+                const hypenated = styleName.replace( /([a-z])([A-Z])/g, '$1-$2' ).toLowerCase();
+                styleString += `${hypenated}:${propVal[styleName]};`;
+            });
+        } else if(typeof propVal === 'string') {
+            styleString = propVal;
+        }
+
         $element.setAttribute(propName, styleString);
     } else {
         $element.setAttribute(propName, propVal);
     }
 }
+
+
+/** Handles adding event handlers to a real DOM element. */
+const setEventHandlers = ($element, eventName, eventValue) => {
+    const name = eventName.slice(2).toLowerCase();
+    $element.addEventListener(name, eventValue);
+}
+
 
 /** Renders any regular dom element that is not a text node. */
 const renderRegularNode = (vNode) => {
@@ -22,7 +41,11 @@ const renderRegularNode = (vNode) => {
 
     // Add all of the properties to this element.
     Object.keys(vNode.properties).forEach(propName => {
-        setDomAttributes($element, propName, vNode.properties[propName]);
+        if(isEventProperty(propName)) {
+            setEventHandlers($element, propName, vNode.properties[propName]);
+        } else {
+            setDomAttributes($element, propName, vNode.properties[propName]);
+        }
     });
 
     // Append all of the children to this element.
@@ -72,3 +95,5 @@ const render = (vNode) => {
 }
 exports.render = render;
 exports.setDomAttributes = setDomAttributes;
+exports.setEventHandlers = setEventHandlers;
+exports.isEventProperty = isEventProperty;

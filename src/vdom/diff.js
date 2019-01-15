@@ -1,4 +1,4 @@
-const { render, setDomAttributes } = require('./render');
+const { render, setDomAttributes, setEventHandlers, isEventProperty} = require('./render');
 
 const diffProperties = (oldProps, newProps) => {
     // The array of patches to perform.
@@ -8,7 +8,11 @@ const diffProperties = (oldProps, newProps) => {
     Object.keys(newProps).forEach(nPropName => {
         let nPropVal = newProps[nPropName];
         let _patch = ($node) => {
-            setDomAttributes($node, nPropName, nPropVal);
+            if(isEventProperty(nPropName)) {
+                setEventHandlers($node, nPropName, nPropVal);
+            } else {
+                setDomAttributes($node, nPropName, nPropVal);
+            }
             return $node;
         }
         patches.push(_patch);
