@@ -6,7 +6,7 @@ Every "Mosaic" is its own component that can be reused throughout your project. 
 # Usage
 The easiest way to use Mosaic is to first install the npm package by using:
 ```shell
-npm install --save @authman2/Mosaic
+npm install --save authman2/Mosaic
 ```
 Then, for fast builds and hot reloading, install the build tool "Parcel." You will also need to create a .babelrc file so that you can transpile JSX into JS. The .babelrc file should look similar to this:
 ```js
