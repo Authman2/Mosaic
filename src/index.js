@@ -79,7 +79,7 @@ Mosaic.prototype.paint = function($onto) {
 }
 
 /** Sets the data on this Mosaic component and triggers a rerender. */
-Mosaic.prototype.setData = function(newData) {
+Mosaic.prototype.setData = function(newData = {}) {
 	// When you set data you have to account for two cases:
 	// 1.) The component that you're setting the data on is the entry point so the entire
 	// dom tree must be updated anyway. This is also fine because it will have a direct reference
@@ -88,23 +88,25 @@ Mosaic.prototype.setData = function(newData) {
 	// 2.) The component having its data set is not the entry point but instead an "n-th level" child
 	// of the entry point. It should have it's dom element already added to a parent. Look for it and
 	// update it.
+	let oldCopy = this.copy();
 	if(this.parent) {
 		let $oldDomNode = this.$domElement.cloneNode(true);
 		let oldVnode = this.view();
 		oldVnode = createElement(oldVnode.nodeName, { identifier: this.key }, oldVnode);
-		this.data = newData || this.data;
+		this.data = Object.assign({}, this.data, newData);
 		let newVnode = this.view();
 		newVnode = createElement(newVnode.nodeName, { identifier: this.key }, newVnode);
 		
 		let patches = diff(oldVnode, newVnode);
 		this.$domElement = patches(this.$domElement);
-		// console.log($oldDomNode, this.$domElement);
 		
 		let array = Array.prototype.slice.call(this.parent.$domElement.childNodes);
-		let itm = array.find((obj) => obj.outerHTML === $oldDomNode.firstChild.outerHTML);
-		itm.replaceWith(this.$domElement.firstChild);
+		let itm = array.find((obj) => {
+			return obj.outerHTML === $oldDomNode.firstChild.outerHTML
+		});
+		if(itm) itm.replaceWith(this.$domElement);
 	} else {
-		this.data = newData || this.data;
+		this.data = Object.assign({}, this.data, newData);
 		const htree = this.view();
 		htree.properties['identifier'] = this.key;
 
@@ -113,6 +115,7 @@ Mosaic.prototype.setData = function(newData) {
 		this.$domElement.replaceWith($newRoot);
 		this.$domElement = $newRoot;
 	}
+	this.updated(oldCopy);
 }
 
 /** Places another component inside of this one and adds a reference to it. */
