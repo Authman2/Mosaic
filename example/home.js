@@ -18,7 +18,7 @@ const buttonStyles = {
 
 
 module.exports = new Mosaic({
-    component: 'div',
+    element: 'div',
     data: {
         count: 0
     },

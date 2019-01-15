@@ -7,8 +7,8 @@ const { getDOMElement, randomID } = require('./util');
 
 /** The attributes that go along with a Mosaic component. */
 const MosaicOptions = {
-	/** The component to use to wrap around a Mosaic component. */
-	component: String,
+	/** The DOM element to use to wrap around a Mosaic component. */
+	element: Element || String,
 
 	/** The state of this component. */
 	data: Object.create(null),
@@ -41,8 +41,8 @@ const Mosaic = function(options) {
 	this.updated = options.updated || (() => {});
 	this.references = {};
 	this.parent = null;
-	this.$component = options.component;
-	this.$domElement = document.createElement(this.$component || 'div');
+	this.$element = options.element;
+	this.$domElement = typeof this.$element === 'string' ? document.createElement(this.$element || 'div') : document.createElement('div');
 	this.$domElement.setAttribute('identifier', this.key);
 	
 
@@ -53,19 +53,28 @@ const Mosaic = function(options) {
 }
 
 /** "Paints" your Mosaic onto the screen. Renders a real DOM element for this Mosaic component. */
-Mosaic.prototype.paint = function($onto) {
+Mosaic.prototype.paint = function() {
+	if(!this.$element) {
+		console.error("This Mosaic could not be painted because no component was supplied");
+		return;
+	} else if(typeof this.$element === 'string') {
+		console.error("You cannot paint this Mosaic because it's component must be an already existing DOM element");
+		return;
+	}
+
 	const copy = this.copy();
 	const htree = copy.view();
 	htree.properties['identifier'] = this.key;
 
 	const $element = render(htree);
-	const $newRoot = mount($element, $onto);
+	const $newRoot = mount($element, this.$element);
 
 	copy.$domElement = $newRoot;
 	copy.created();
 }
 
-/** Sets the data on this Mosaic component and triggers a rerender. */
+/** Sets the data on this Mosaic component and triggers a rerender. 
+* @param {Object} newData The new data to set on this Mosaic component. */
 Mosaic.prototype.setData = function(newData = {}) {
 	// When you set data you have to account for two cases:
 	// 1.) The component that you're setting the data on is the entry point so the entire
@@ -105,7 +114,9 @@ Mosaic.prototype.setData = function(newData = {}) {
 	this.updated();
 }
 
-/** Places another component inside of this one and adds a reference to it. */
+/** Places another component inside of this one and adds a reference to it.
+* @param {String} name The identifying reference name for the mounting component.
+* @param {Mosaic} component A Mosaic component that will be placed into the page. */
 Mosaic.prototype.mount = function(name, component) {
 	let copy = component.copy();
 	copy.parent = this;
@@ -123,151 +134,6 @@ Mosaic.prototype.mount = function(name, component) {
 	copy.created();
 	return copy;
 }
-
-
-
-// /** Creates a new Mosaic component.
-// * @param {DOMElement | String} $base The DOM element to inject this component into, or
-// * the HTML tag name of the element to create.
-// * @param {Object} attributes The attributes associated with this Mosaic component.
-// * @param {Function} view The view to render for this component. */
-// const Mosaic = function($base, { attributes, view, created, willUpdate, updated }) {
-// 	// A random ID for this component for easy identification later.
-// 	this.identifier = randomID();
-
-// 	// DOM element (not virtual).
-// 	this.$base = getDOMElement(arguments.length > 1 ? $base : null);
-	
-// 	// Object for this component's attributse.
-// 	this.attributes = attributes || {};
-	
-// 	// Component for this parent element.
-// 	this.parent = null;
-
-// 	// Object for the reference components.
-// 	this.references = {};
-	
-// 	// Lifecycle methods.
-// 	const _created = (obj) => { if(created) created.call(obj || this); }
-// 	const _willUpdate = (oldSelf) => { if(willUpdate) willUpdate.call(this, oldSelf); }
-// 	const _updated = (oldSelf) => { if(updated) updated.call(this, oldSelf); }
-// 	this.lifecycle = {													// The lifecycle methods.
-// 		created: _created,
-// 		willUpdate: _willUpdate,
-// 		updated: _updated
-// 	}
-
-// 	// Function that returns h-tree.
-// 	this.view = view;
-// }
-
-// /** Returns a copy of this component.
-// * @returns {Mosaic} A copy of this Mosaic component. */
-// Mosaic.prototype.copy = function() {
-// 	const obj = {
-// 		attributes: this.attributes,
-// 		view: this.view,
-// 		created: this.created,
-// 		willUpdate: this.willUpdate,
-// 		updated: this.updated
-// 	};
-// 	const cpy = new Mosaic(this.$base, Object.assign({}, obj));
-// 	cpy.references = Object.assign({}, this.references);
-// 	cpy.lifecycle = Object.assign({}, this.lifecycle);
-// 	cpy.parent = this.parent;
-// 	return cpy;
-// }
-
-// /** "Paints" your Mosaic onto the screen. Renders a real DOM element for this Mosaic component.
-// * @param {Object} attributes (Optional) Attributes to render into this component, in case it does not
-// * already hvae some. This will add onto existing attributes, not reset them. */
-// Mosaic.prototype.paint = function(attributes = {}) {
-// 	// Update with any new attributes.
-// 	this.attributes = attributes || this.attributes;
-
-// 	// Get a DOM element by rendering the view part of this component.
-// 	const val = this.view(this);
-// 	val.properties = Object.assign({}, val.properties, { identifier: `${this.identifier}` });
-// 	const $domView = render(val);
-
-// 	// Get the new root element.
-// 	const $rootElement = mount($domView, this.$base);
-
-// 	// Replace the component of this DOM element with the new one.
-// 	this.$base = $rootElement;
-	
-// 	// Run the created function.
-// 	this.lifecycle.created();
-// }
-
-// /** Mounts a child component onto a larger component, when building apps with
-// * multiple Mosaic components.
-// * @param {String} name An identifying name given to this instance of the mounting component.
-// * @param {Mosaic} mountingComponent The Mosaic component to mount onto this parent component.
-// * @param {Object} attributes (Optional) Attributes to render into this component, in case it does not already have some.
-// * @returns An h-tree describing the rendered element. */
-// Mosaic.prototype.mount = function(identifyingName, mountingComponent, attributes) {
-// 	// Make copy of the mounted component.
-// 	const cpyMount = mountingComponent.copy.call(mountingComponent);
-
-// 	// Set the new attributes and the parent of the mounting component.
-// 	cpyMount.attributes = attributes || cpyMount.attributes;
-// 	cpyMount.parent = this;
-	
-// 	// Create an identifying name for this mounted component so it can be found later.
-// 	const ret = cpyMount.view(cpyMount);
-// 	ret.properties = Object.assign({}, ret.properties, {
-// 		identifyingName: `${this.identifier}-${identifyingName}`
-// 	});
-	
-// 	// Render a dom element and mount it onto the dom.
-// 	const $domView = render(ret);
-// 	const $rootElement = mount($domView, cpyMount.$base);
-// 	cpyMount.$base = $rootElement;
-	
-// 	/* Just a test for now */
-// 	this.$base.appendChild(cpyMount.$base);
-
-// 	// Update this components references.
-// 	let _temp = {};
-// 	_temp[identifyingName] = cpyMount;
-// 	this.references = Object.assign({}, this.references, _temp);
-
-// 	cpyMount.lifecycle.created(cpyMount);
-// 	return ret;
-// }
-
-
-// /** Sets the attributes of this component and calls for an update of the DOM element. 
-// * @param {Object} newAttributes The new state of this component.
-// * @param {Function} then (Optional) What to do after the state has been set. */
-// Mosaic.prototype.setAttributes = function(newAttributes, then) {
-// 	// Run the will update function on this component before we change its attributes.
-// 	const cpy = this.copy();
-// 	cpy.lifecycle.willUpdate(cpy);
-
-// 	// Get a copy of this component before setting the new attributes.
-// 	const $oldNode = cpy.$base;
-// 	const oldVNode = cpy.view;
-
-// 	// Update the attributes and get a new virtual dom node. Also make sure it still has the identifier.
-// 	this.attributes = newAttributes || cpy.attributes;
-// 	const newVNode = this.view(this);
-// 	if($oldNode.getAttribute('identifyingname')) {
-// 		newVNode.properties = Object.assign({}, newVNode.properties, {
-// 			identifyingName: $oldNode.getAttribute('identifyingname')
-// 		});
-// 	}
-	
-// 	// Find the differences that need to be completed and patch them into this component's base element.
-//     const patch = diff(oldVNode, newVNode);
-// 	this.$base = patch(this.$base);	// This is updated.
-
-// 	// Run the updated function.
-// 	if(then) then();
-// 	this.lifecycle.updated(cpy);
-// }
-
 
 exports.Mosaic = Mosaic;
 exports.h = createElement;
