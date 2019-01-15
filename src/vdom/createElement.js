@@ -1,4 +1,4 @@
-const createElement = (nodeName, properties = {}, children = []) => {
-    return { nodeName, properties, children };
+const createElement = (nodeName, properties = {}, ...children) => {
+    return { nodeName, properties: properties || {}, children };
 };
 exports.createElement = createElement;

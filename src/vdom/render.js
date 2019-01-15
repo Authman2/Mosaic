@@ -16,7 +16,7 @@ const setDomAttributes = ($element, propName, propVal) => {
 }
 
 /** Renders any regular dom element that is not a text node. */
-const _render = (vNode) => {
+const renderRegularNode = (vNode) => {
     // Create the actual dom element.
     const $element = document.createElement(vNode.nodeName);
 
@@ -34,6 +34,28 @@ const _render = (vNode) => {
     return $element;
 }
 
+/** Renders a component as a VNode. */
+const renderMosaicComponent = (component) => {
+    // Get the view.
+    const val = component.view();
+
+    // Create the actual dom element.
+    const $element = document.createElement(val.nodeName);
+
+    // Add all of the properties to this element.
+    Object.keys(val.properties).forEach(propName => {
+        setDomAttributes($element, propName, val.properties[propName]);
+    });
+
+    // Append all of the children to this element.
+    Object.keys(val.children).forEach(childIndex => {
+        const x = render(val.children[childIndex]);
+        $element.appendChild(x);
+    });
+
+    return $element;
+}
+
 /** Takes a virtual dom node and returns a real dom node. 
 * @param {Object} vNode A virtual dom node.
 * @returns {Element} A real dom node. */
@@ -41,7 +63,12 @@ const render = (vNode) => {
     if(typeof vNode === 'string' || typeof vNode === 'number') {
         return document.createTextNode(vNode);
     }
-    return _render(vNode);
+    else if(vNode.key) {
+        return renderMosaicComponent(vNode);
+    }
+    else {
+        return renderRegularNode(vNode);
+    }
 }
 exports.render = render;
 exports.setDomAttributes = setDomAttributes;

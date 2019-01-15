@@ -1,101 +1,57 @@
 const { h, Mosaic } = require('../src/index');
-
 const root = document.getElementById('root');
 root.innerHTML = '';
 
-/** A counter component. */
-const counter = new Mosaic('div', {
-    attributes: {
-        count: 0
+const counter = new Mosaic({
+    component: 'div',
+    data: {
+        count: 5
+    },
+    view: function() {
+        return (
+            <h1>Count: {this.data.count}</h1>
+        )
     },
 
     created: function() {
-        // console.log("CREATED THIS NESTED COMPONENT: ", this);
-        // console.log(this);
-        // setInterval(() => {
+        // console.log("Created Child: ", this);
+        setTimeout(() => {
             const n = Math.floor(Math.random() * 10);
-            this.setAttributes({ count: n });
-        // }, 1000);
+            this.setData({ count: n });
+        }, 5000);
     },
-
-    willUpdate: function() {
-        // console.log("ABOUT TO UPDATE: ", this);
-    },
-
     updated: function() {
-        
+        console.log("Updated: ", this);
+    }
+})
+const app = new Mosaic({
+    data: {
+        title: "Mosaic"
     },
-
     view: function() {
         return (
-            h('h1', { 
-                style: { 
-                    color: 'white',
-                    fontFamily: 'Avenir',
+            <div style={{ color: 'white', backgroundColor: '#4341B5' }}>
+                <h1 style={{ fontFamily: 'Avenir' }}>Welcome to {this.data.title}</h1>
+                <h1 style={{ fontFamily: 'Avenir' }}>Welcome to {this.data.title}</h1>
+                {
+                    this.mount('comp1', counter, root)
                 }
-            }, 
-            [`Count: ${this.attributes.count}`])
+                {
+                    this.mount('comp2', counter, root)
+                }
+            </div>
         )
-    }
-});
-
-/** The actual app component. */
-const app = new Mosaic(root, {
-    attributes: {
     },
-    
+
     created: function() {
-        // console.log('1.) Created: ', this);
-
-        // setInterval(() => {
-        //     const n = Math.floor(Math.random() * 10);
-        //     const n2 = Math.floor(Math.random() * 10);
-        //     this.references.comp1.setAttributes({ count: n });
-        //     // this.references.comp2.setAttributes({ count: n2 });
-        // }, 1000);
-
-        // setTimeout(() => this.setAttributes({ title: "Adeola's Front End JavaScript Library" }), 3000);
-    },
-    willUpdate: function(oldSelf) {
-        // console.log('2.) About to update old component: ', oldSelf);
-    },
-    updated: function(oldSelf) {
-        // console.log('3.) Update Old: ', oldSelf);
-        // console.log('4.) Update New: ', this);
-    },
-
-    view: function() {
-        return (
-            h('div', {
-                id: "myDiv",
-                style: {
-                    width: '100%',
-                    height: '100%',
-                    textAlign: 'center',
-                    backgroundColor: '#4341B5' 
-                }
-            }, [
-                h('p', {
-                    style: {
-                        position: 'relative',
-                        top: '40%',
-                        color: 'white',
-                        fontFamily: 'Avenir',
-                        tranform: 'translateY(-40%)',
-                    }
-                },
-                [
-                    `Working with a cool title called ${this.attributes.title}`,
-                    app.mount('comp1', counter, { count: 0 }),
-                    app.mount('comp2', counter, { count: 5 })
-                ])
-            ])
-        )
+        setTimeout(() => {
+            this.setData({ title: "Mosaic App" });
+        }, 2000);
     }
 });
+app.paint(root);
 
-// Paint the Mosaic onto the page.
-app.paint({ title: "Mosaic" });
+
 
 
 
