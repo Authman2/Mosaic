@@ -20,8 +20,9 @@ Then, for fast builds and hot reloading, install the build tool "Parcel." You wi
 Now you are ready to use Mosaic!
 
 # Example
+Here is an example of a simple Mosaic application. All you need is an index.html file and an index.js file.
+For a more detailed example, run the project inside the "example" folder.
 **index.html**:
-<br></br>
 ```
 <html>
   <head>
