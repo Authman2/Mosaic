@@ -2,7 +2,7 @@ const { createElement } = require('./vdom/createElement');
 const { render, setDomAttributes } = require('./vdom/render');
 const { mount } = require('./vdom/mount');
 const { diff } = require('./vdom/diff');
-const { getDOMElement, randomID } = require('./util');
+const { getDOMElement, randomID, incrementallyCreateMosaics } = require('./util');
 
 
 /** The attributes that go along with a Mosaic component. */
@@ -32,7 +32,6 @@ const MosaicOptions = {
 /** Creates a new Mosaic component.
 * @param {MosaicOptions} options The configuration options for a Mosaic component. */
 const Mosaic = function(options) {
-	this.key = randomID();
 	this.data = options.data || {};
 	this.actions = options.actions ? options.actions(this) : ((comp) => {});
 	this.view = options.view || ((comp) => {});
@@ -40,11 +39,11 @@ const Mosaic = function(options) {
 	this.willUpdate = options.willUpdate || (() => {});
 	this.updated = options.updated || (() => {});
 	this.references = {};
-	this.parent = null;
-	this.$element = options.element;
-	this.$domElement = typeof this.$element === 'string' ? document.createElement(this.$element || 'div') : document.createElement('div');
-	this.$domElement.setAttribute('identifier', this.key);
+	this.localParent = null;	// This is the parent directly above this component.
 	
+	// This is either the root dom node or a wrapper around a component.
+	this.$element = typeof options.element === 'string' ? document.createElement(options.element) : options.element;
+
 
 	/** Returns a copy of this Mosaic component. */
 	this.copy = function() {
@@ -62,15 +61,13 @@ Mosaic.prototype.paint = function() {
 		return;
 	}
 
-	const copy = this.copy();
-	const htree = copy.view();
-	htree.properties['identifier'] = this.key;
-
+	const htree = this.view();
 	const $element = render(htree);
-	const $newRoot = mount($element, this.$element);
+	const $newRoot = mount($element, this.$element, this);
 
-	copy.$domElement = $newRoot;
-	copy.created();
+	this.$element = $newRoot;
+	// this.created();
+	incrementallyCreateMosaics(this);
 }
 
 /** Sets the data on this Mosaic component and triggers a rerender. 
@@ -85,32 +82,26 @@ Mosaic.prototype.setData = function(newData = {}) {
 	// of the entry point. It should have it's dom element already added to a parent. Look for it and
 	// update it.
 	this.willUpdate(this.data);
-	if(this.parent) {
-		let $oldDomNode = this.$domElement.cloneNode(true);
-		let oldVnode = this.view();
-		oldVnode = createElement(oldVnode.nodeName, { identifier: this.key }, oldVnode);
-		this.data = Object.assign({}, this.data, newData);
-		let newVnode = this.view();
-		newVnode = createElement(newVnode.nodeName, { identifier: this.key }, newVnode);
-		
-		let patches = diff(oldVnode, newVnode);
-		this.$domElement = patches(this.$domElement);
-		
-		let array = Array.prototype.slice.call(this.parent.$domElement.childNodes);
-		let itm = array.find((obj) => {
-			return obj.outerHTML === $oldDomNode.firstChild.outerHTML
-		});
-		if(itm) itm.replaceWith(this.$domElement);
-	} else {
-		this.data = Object.assign({}, this.data, newData);
-		const htree = this.view();
-		htree.properties['identifier'] = this.key;
-
-		const $element = render(htree);
-		const $newRoot = mount($element, this.$domElement);
-		this.$domElement.replaceWith($newRoot);
-		this.$domElement = $newRoot;
+	
+	// First make sure that you have an absolute parent.
+	let lookAt = this;
+	while(lookAt.localParent !== null) {
+		lookAt = lookAt.localParent;
 	}
+
+	// First things first, get a copy of the current HTree.
+	let oldHTree = lookAt.view();
+
+	// Then set the new data.
+	this.data = Object.assign({}, this.data, newData);
+
+	// Get a new HTree for the absolute parent.
+	let newHTree = lookAt.view();
+	
+	// Find the patches that need to be done to update the DOM.
+	let patches = diff(oldHTree, newHTree);
+	lookAt.$element = patches(lookAt.$element);
+
 	this.updated();
 }
 
@@ -118,21 +109,16 @@ Mosaic.prototype.setData = function(newData = {}) {
 * @param {String} name The identifying reference name for the mounting component.
 * @param {Mosaic} component A Mosaic component that will be placed into the page. */
 Mosaic.prototype.mount = function(name, component) {
-	let copy = component.copy();
-	copy.parent = this;
+	// Create a copy of the Mosaic you are trying to mount.
+	let copy = component;
+	copy.localParent = this;
 
+	// Create an HTree and place it into this component's HTree structure.
 	let htree = copy.view();
-	// htree.properties['identifier'] = copy.key;
-	htree = createElement(copy.$component, { identifier: copy.key }, htree);
-
-	let $dom = render(htree);
-	let $mountedChild = mount($dom, this.$domElement);
-	copy.$domElement = $mountedChild;
-	
 	this.references[name] = copy;
 
-	copy.created();
-	return copy;
+	// copy.created();
+	return htree;
 }
 
 exports.Mosaic = Mosaic;

@@ -1,4 +1,6 @@
-const { h, Mosaic } = require('../src/index');
+import { h, Mosaic } from '../src/index';
+import Footer from './footer';
+
 
 const homeStyles = {
     paddingTop: '30px'
@@ -38,17 +40,16 @@ module.exports = new Mosaic({
                 <h1>Count: {this.data.count}</h1>
                 <button style={buttonStyles} onClick={this.actions.countDown}>-</button>
                 <button style={buttonStyles} onClick={this.actions.countUp}>+</button>
+                { this.mount('footer', Footer) }
             </div>
         );
     },
 
     created: function() {
-        console.log("Created the Home page", this);
+        console.log("Created Home: ", this);
+        setInterval(() => {
+            const n = Math.floor(Math.random() * 10);
+            this.setData({ count: n });
+        }, 1000);
     },
-    willUpdate: function(oldState) {
-        console.log("About to update this old version: ", oldState);
-    },
-    updated: function() {
-        console.log("Just updated to this new version: ", this.data);
-    }
 });
