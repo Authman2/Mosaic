@@ -14,13 +14,14 @@ const randomID = () => {
 * will run created on Footer first, then on Home, then on App.
 * @param {Mosaic} start The entry point of the Mosaic app. */
 const incrementallyCreateMosaics = (start) => {
-	let children = Object.values(start.references);
-	if(children.length === 1) {
-		children[0].created();
-	}
+	// let children = Object.values(start.references);
+	// if(children.length === 1) {
+	// 	children[0].created();
+	// }
 
-	children.forEach(child => incrementallyCreateMosaics(child));
+	// children.forEach(child => incrementallyCreateMosaics(child));
 }
+
 
 exports.getDOMElement = getDOMElement;
 exports.randomID = randomID;

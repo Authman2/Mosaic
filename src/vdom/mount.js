@@ -14,7 +14,7 @@ const mount = ($newNode, $realNode, component) => {
 
     // This works.
     // $realNode.replaceWith($newNode);
-    component.created();
+    if(component.created) component.created();
     return $newNode;
 }
 exports.mount = mount;

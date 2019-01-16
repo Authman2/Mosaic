@@ -78,6 +78,8 @@ const diffChildren = (oldVChildren, newVChildren) => {
 * @param {Object} oldVNode The old virtual dom node.
 * @param {Object} newVNode The new virtual dom node. */
 const diff = (oldVNode, newVNode) => {
+    // console.log(oldVNode, newVNode);
+
     // Case 1: The old virtual node does not exist.
     if(newVNode === undefined) {
         let patch = ($node) => { $node.remove(); return undefined };
@@ -102,9 +104,9 @@ const diff = (oldVNode, newVNode) => {
         }
     }
 
-    // Case 2: They are both numbers, so compare them.
+    // Case 3: They are both numbers, so compare them.
     if(typeof oldVNode === 'number' && typeof newVNode === 'number') {
-        // Case 2.1: One is a text node and one is an element.
+        // Case 3.1: One is a text node and one is an element.
         if(oldVNode !== newVNode) {
             let patch = ($node) => {
                 const $newDomNode = render(newVNode);
@@ -113,11 +115,19 @@ const diff = (oldVNode, newVNode) => {
             }
             return patch;
         }
-        // Case 2.2: Both virtual nodes are strings and they match.
+        // Case 3.2: Both virtual nodes are strings and they match.
         else {
             let patch = ($node) => { return $node; }
             return patch;
         }
+    }
+
+    // Case 4: They are both Mosaic components, so diff their views.
+    if(typeof oldVNode === 'object' && typeof newVNode === 'object' && (oldVNode.created || newVNode.created)) {
+        let oldTree = oldVNode.view();
+        let newTree = newVNode.view();
+        let patch = diff(oldTree, newTree);
+        return patch;
     }
 
     // Case 4: In order to make the diff algo more efficient, assume that if the trees

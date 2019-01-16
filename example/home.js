@@ -40,16 +40,16 @@ module.exports = new Mosaic({
                 <h1>Count: {this.data.count}</h1>
                 <button style={buttonStyles} onClick={this.actions.countDown}>-</button>
                 <button style={buttonStyles} onClick={this.actions.countUp}>+</button>
-                { this.mount('footer', Footer) }
+                { this.put('footer', Footer) }
             </div>
         );
     },
 
     created: function() {
-        console.log("Created Home: ", this);
-        setInterval(() => {
-            const n = Math.floor(Math.random() * 10);
-            this.setData({ count: n });
-        }, 1000);
+        // console.log("Created Home: ", this);
+        // setInterval(() => {
+        //     const n = Math.floor(Math.random() * 10);
+        //     this.setData({ count: n });
+        // }, 1000);
     },
 });

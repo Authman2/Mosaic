@@ -19,13 +19,13 @@ export default new Mosaic({
             </div>
         )
     },
-    created: function() {
-        console.log("Created Footer: ", this);
-    },
-    willUpdate: function(old) {
-        console.log("About to update: ", old);
-    },
-    updated: function() {
-        console.log("Just updated footer");
-    }
+    // created: function() {
+    //     console.log("Created Footer: ", this);
+    // },
+    // willUpdate: function(old) {
+    //     console.log("About to update: ", old);
+    // },
+    // updated: function() {
+    //     console.log("Just updated footer");
+    // }
 });

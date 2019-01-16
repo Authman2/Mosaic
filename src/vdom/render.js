@@ -86,7 +86,7 @@ const render = (vNode) => {
     if(typeof vNode === 'string' || typeof vNode === 'number') {
         return document.createTextNode(vNode);
     }
-    else if(vNode.created) {
+    else if(vNode.view) {
         return renderMosaicComponent(vNode);
     }
     else {

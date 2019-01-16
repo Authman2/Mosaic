@@ -29,35 +29,57 @@ const MosaicOptions = {
 	updated: Function
 }
 
+Function.prototype.clone = function() {
+    var that = this;
+    var temp = function temporary() { return that.apply(this, arguments); };
+    for(var key in this) {
+        if (this.hasOwnProperty(key)) {
+            temp[key] = this[key];
+        }
+    }
+    return temp;
+};
+
 /** Creates a new Mosaic component.
 * @param {MosaicOptions} options The configuration options for a Mosaic component. */
 const Mosaic = function(options) {
+	this.key = options.key || randomID();
 	this.data = options.data || {};
 	this.actions = options.actions ? options.actions(this) : ((comp) => {});
 	this.view = options.view || ((comp) => {});
 	this.created = options.created || (() => {});
 	this.willUpdate = options.willUpdate || (() => {});
 	this.updated = options.updated || (() => {});
-	this.references = {};
-	this.localParent = null;	// This is the parent directly above this component.
+	this.references = options.references || {}; // <--- remember to put this back later.
+	this.localParent = options.parent || null;	// This is the parent directly above this component.
 	
 	// This is either the root dom node or a wrapper around a component.
 	this.$element = typeof options.element === 'string' ? document.createElement(options.element) : options.element;
 
 
 	/** Returns a copy of this Mosaic component. */
-	this.copy = function() {
-		return new Mosaic(Object.assign({}, options));
+	this.copy = function(parent = null) {
+		let clone = Object.assign( Object.create( Object.getPrototypeOf(this)), this);
+		// console.log("COPY: ", clone);
+		return clone;
+
+		// let cpy = new Mosaic(Object.assign({}, options, {
+		// 	references: this.references,
+		// 	parent: parent,
+		// 	// key: this.key
+		// }));
+		// cpy.$element = this.$element;
+		// return cpy;
 	}
 }
 
 /** "Paints" your Mosaic onto the screen. Renders a real DOM element for this Mosaic component. */
 Mosaic.prototype.paint = function() {
 	if(!this.$element) {
-		console.error("This Mosaic could not be painted because no component was supplied");
+		console.error("This Mosaic could not be painted because no base element was supplied");
 		return;
 	} else if(typeof this.$element === 'string') {
-		console.error("You cannot paint this Mosaic because it's component must be an already existing DOM element");
+		console.error("You cannot paint this Mosaic because it's base element must be an already existing DOM element");
 		return;
 	}
 
@@ -66,7 +88,6 @@ Mosaic.prototype.paint = function() {
 	const $newRoot = mount($element, this.$element, this);
 
 	this.$element = $newRoot;
-	// this.created();
 	incrementallyCreateMosaics(this);
 }
 
@@ -97,6 +118,7 @@ Mosaic.prototype.setData = function(newData = {}) {
 
 	// Get a new HTree for the absolute parent.
 	let newHTree = lookAt.view();
+	console.log(this, oldHTree, newHTree);
 	
 	// Find the patches that need to be done to update the DOM.
 	let patches = diff(oldHTree, newHTree);
@@ -108,16 +130,15 @@ Mosaic.prototype.setData = function(newData = {}) {
 /** Places another component inside of this one and adds a reference to it.
 * @param {String} name The identifying reference name for the mounting component.
 * @param {Mosaic} component A Mosaic component that will be placed into the page. */
-Mosaic.prototype.mount = function(name, component) {
+Mosaic.prototype.put = function(name, component) {
 	// Create a copy of the Mosaic you are trying to mount.
-	let copy = component;
-	copy.localParent = this;
+	component.localParent = this;
+	component.key = randomID();
 
 	// Create an HTree and place it into this component's HTree structure.
-	let htree = copy.view();
-	this.references[name] = copy;
+	let htree = component.view();
+	this.references[name] = component;
 
-	// copy.created();
 	return htree;
 }
 
