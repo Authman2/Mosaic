@@ -23,6 +23,10 @@ const app = new Mosaic({
         title: "Mosaic",
         subtitle: "A front-end JavaScript library for building user interfaces"
     },
+    components: {
+        home1: { type: Home },
+        home2: { type: Home },
+    },
     view: function() {
         return (
             <div style={appStyles}>
@@ -30,46 +34,13 @@ const app = new Mosaic({
                 <h4>{this.data.subtitle}</h4>
                 <p>Use the buttons below to try out the counter!</p>
 
-                { this.put('home', Home) }
-                {/* { this.put('home2', Home) } */}
+                { this.home1 }
+                { this.home2 }
             </div>
         )
     },
     created: function() {
-        // console.log("Created App: ", this);
+        this.home1.setData({ count: 10 });
     }
 });
 app.paint();
-
-// let counter = function(data) {
-//     this.data = data;
-//     this.view = function(parent) {
-//         return CE.createElement('h1', {}, this.data.count);
-//     }
-// }
-// let copy = new counter({ count: 0 });
-// let component = function(data) {
-//     this.data = data;
-//     this.references = { comp1: copy };
-//     this.view = function() {
-//         copy.data.count = 305;
-//         return (
-//             CE.createElement('div', { id: "myDiv" }, "Welcome to ", (this.data.title || "Adeola's js library"), 
-//                 CE.createElement('div', {}, 
-//                     CE.createElement('div', {}, this.references.comp1 )))
-//         )
-//     }
-// }
-// let app = new component({ title: "Mosaic" });
-// let htree = app.view();
-// let $element = R.render(htree);
-// let $newRoot = M.mount($element, root, app);
-
-// setInterval(() => {
-//     const n = Math.floor(Math.random() * 10);
-//     app.data.count = n;
-
-//     let newHTree = app.view();
-//     let patches = D.diff(htree, newHTree);
-//     $newRoot = patches($newRoot);
-// }, 1000);

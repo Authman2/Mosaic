@@ -87,7 +87,8 @@ const render = (vNode) => {
         return document.createTextNode(vNode);
     }
     else if(vNode.view) {
-        return renderMosaicComponent(vNode);
+        // return renderMosaicComponent(vNode);
+        return render(vNode.view());
     }
     else {
         return renderRegularNode(vNode);

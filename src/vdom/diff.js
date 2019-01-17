@@ -124,9 +124,11 @@ const diff = (oldVNode, newVNode) => {
 
     // Case 4: They are both Mosaic components, so diff their views.
     if(typeof oldVNode === 'object' && typeof newVNode === 'object' && (oldVNode.created || newVNode.created)) {
-        let oldTree = oldVNode.view();
-        let newTree = newVNode.view();
-        let patch = diff(oldTree, newTree);
+        let patch = ($node) => {
+            const $newDomNode = render(newVNode.view());
+            $node.replaceWith($newDomNode);
+            return $newDomNode;
+        }
         return patch;
     }
 

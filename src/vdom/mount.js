@@ -2,7 +2,7 @@
 * @param {Element} $newNode The node that you want to show on the page.
 * @param {Element} $realNode The real node that will be replaced.
 */
-const mount = ($newNode, $realNode, component) => {
+const mount = ($newNode, $realNode) => {
     // This "works" by making the new node sit inside of root instead of replacing root.
     // however, there is a problem where you update different component states and every now and
     // then, if the updates comes at different times, we end up with child-child elements.
@@ -14,7 +14,6 @@ const mount = ($newNode, $realNode, component) => {
 
     // This works.
     // $realNode.replaceWith($newNode);
-    if(component.created) component.created();
     return $newNode;
 }
 exports.mount = mount;

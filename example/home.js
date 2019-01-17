@@ -3,7 +3,7 @@ import Footer from './footer';
 
 
 const homeStyles = {
-    paddingTop: '30px'
+    paddingTop: '10px'
 }
 const buttonStyles = {
     width: '50px',
@@ -24,6 +24,9 @@ module.exports = new Mosaic({
     data: {
         count: 0
     },
+    components: {
+        footer: { type: Footer }
+    },
     actions: function(self) {
         return {
             countUp: function() {
@@ -40,16 +43,15 @@ module.exports = new Mosaic({
                 <h1>Count: {this.data.count}</h1>
                 <button style={buttonStyles} onClick={this.actions.countDown}>-</button>
                 <button style={buttonStyles} onClick={this.actions.countUp}>+</button>
-                { this.put('footer', Footer) }
+                { this.footer }
             </div>
         );
     },
 
     created: function() {
-        // console.log("Created Home: ", this);
-        // setInterval(() => {
-        //     const n = Math.floor(Math.random() * 10);
-        //     this.setData({ count: n });
-        // }, 1000);
+        setInterval(() => {
+            const n = Math.floor(Math.random() * 100);
+            this.setData({ count: n });
+        }, 1000);
     },
 });
