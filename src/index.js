@@ -51,6 +51,7 @@ const Mosaic = function(options) {
 	let componentStructures = validateMosaicChildren(options.components) ? options.components : {};
 	for(var key in componentStructures) {
 		this[key] = componentStructures[key].type.copy(this);
+		this[key].data = Object.assign({}, this[key].data, componentStructures[key].data);
 		this[key].created();
 	}
 	
@@ -68,6 +69,14 @@ const Mosaic = function(options) {
 		return cpy;
 	}
 }
+
+/** A child component that is of type Mosaic. 
+* @param {Mosaic} type The Mosaic component to use as a blueprint.
+* @param {Object} data (Optional) Extra data to add to the component. */
+Mosaic.Child = function(type, data = {}) {
+	return { type: type, data: data };
+}
+
 
 /** "Paints" your Mosaic onto the screen. Renders a real DOM element for this Mosaic component. */
 Mosaic.prototype.paint = function() {

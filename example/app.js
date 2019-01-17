@@ -1,8 +1,4 @@
 import { h, Mosaic } from '../src/index';
-import CE from '../src/vdom/createElement';
-import R from '../src/vdom/render';
-import D from '../src/vdom/diff';
-import M from '../src/vdom/mount';
 import Home from './home';
 
 const root = document.getElementById('root');
@@ -10,11 +6,11 @@ root.innerHTML = '';
 
 const appStyles = {
     width: '100%',
-    height: '100%',
     color: 'white',
     paddingTop: '10px',
     textAlign: 'center',
     fontFamily: 'Avenir',
+    paddingBottom: '100px',
     backgroundColor: '#4341B5'
 }
 const app = new Mosaic({
@@ -24,8 +20,8 @@ const app = new Mosaic({
         subtitle: "A front-end JavaScript library for building user interfaces"
     },
     components: {
-        home1: { type: Home },
-        home2: { type: Home },
+        home1: Mosaic.Child(Home, { instance: 0, componentInstance: "First Home Instance: " }),
+        home2: Mosaic.Child(Home, { instance: 1, componentInstance: "Second Home Instance: " }),
     },
     view: function() {
         return (

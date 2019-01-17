@@ -25,7 +25,7 @@ module.exports = new Mosaic({
         count: 0
     },
     components: {
-        footer: { type: Footer }
+        footer: Mosaic.Child(Footer)
     },
     actions: function(self) {
         return {
@@ -40,7 +40,8 @@ module.exports = new Mosaic({
     view: function() {
         return (
             <div style={homeStyles}>
-                <h1>Count: {this.data.count}</h1>
+                <h2>{this.data.componentInstance || ""}</h2>
+                <h2>Count: {this.data.count}</h2>
                 <button style={buttonStyles} onClick={this.actions.countDown}>-</button>
                 <button style={buttonStyles} onClick={this.actions.countUp}>+</button>
                 { this.footer }
@@ -49,9 +50,12 @@ module.exports = new Mosaic({
     },
 
     created: function() {
-        setInterval(() => {
-            const n = Math.floor(Math.random() * 100);
-            this.setData({ count: n });
-        }, 1000);
+        // Only put a timer on the second instance.
+        if(this.data.instance === 1) {
+            setInterval(() => {
+                const n = Math.floor(Math.random() * 100);
+                this.setData({ count: n });
+            }, 1000);
+        }
     },
 });
