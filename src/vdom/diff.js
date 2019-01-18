@@ -1,3 +1,4 @@
+const { createElement } = require('./createElement');
 const { render, setDomAttributes, setEventHandlers, isEventProperty} = require('./render');
 
 const diffProperties = (oldProps, newProps) => {
@@ -123,12 +124,16 @@ const diff = (oldVNode, newVNode) => {
     }
 
     // Case 4: They are both Mosaic components, so diff their views.
-    if(typeof oldVNode === 'object' && typeof newVNode === 'object' && (oldVNode.created || newVNode.created)) {
-        let patch = ($node) => {
-            const $newDomNode = render(newVNode.view());
-            $node.replaceWith($newDomNode);
-            return $newDomNode;
-        }
+    if(typeof oldVNode === 'object' && typeof newVNode === 'object' && (oldVNode.view || newVNode.view)) {
+        let patch = diff(oldVNode.view(), newVNode.view());
+        return patch;
+        // let patch = ($node) => {
+        //     const $newDomNode = render(newVNode.view());
+        //     $node.replaceWith($newDomNode);
+        //     return $newDomNode;
+        // }
+        // return patch;
+        // let patch = ($node) => { return $node; };
         return patch;
     }
 

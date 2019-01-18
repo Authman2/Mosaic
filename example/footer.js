@@ -1,7 +1,6 @@
 import { h, Mosaic } from '../src/index';
 
 export default new Mosaic({
-    element: 'div',
     data: {
         name: "Example Text"
     },

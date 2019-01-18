@@ -1,11 +1,12 @@
 {
   "name": "@authman2/mosaic",
-  "version": "0.0.3",
+  "version": "0.1.1",
   "description": "A front-end JavaScript library for creating user interfaces",
   "main": "src/index.js",
   "scripts": {
     "test": "parcel -p 3000 example/app.html",
     "clean": "rm -rf .cache dist",
+    "build": "parcel build src/index.js",
     "deploy": "npm publish --access=public"
   },
   "keywords": [

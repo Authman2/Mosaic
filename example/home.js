@@ -20,7 +20,6 @@ const buttonStyles = {
 
 
 module.exports = new Mosaic({
-    element: 'div',
     data: {
         count: 0
     },
@@ -44,18 +43,18 @@ module.exports = new Mosaic({
                 <h2>Count: {this.data.count}</h2>
                 <button style={buttonStyles} onClick={this.actions.countDown}>-</button>
                 <button style={buttonStyles} onClick={this.actions.countUp}>+</button>
-                { this.footer }
+                { this.footer.view() }
             </div>
         );
     },
 
     created: function() {
         // Only put a timer on the second instance.
-        if(this.data.instance === 1) {
-            setInterval(() => {
-                const n = Math.floor(Math.random() * 100);
-                this.setData({ count: n });
-            }, 1000);
-        }
+        // if(this.data.instance === 1) {
+        //     setInterval(() => {
+        //         const n = Math.floor(Math.random() * 100);
+        //         this.setData({ count: n });
+        //     }, 1000);
+        // }
     },
 });

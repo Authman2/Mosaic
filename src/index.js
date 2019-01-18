@@ -38,9 +38,9 @@ const Mosaic = function(options) {
 	this.data = options.data || {};
 	this.actions = options.actions ? options.actions(this) : ((comp) => {});
 	this.view = options.view || ((comp) => {});
-	this.created = options.created || (() => {});
-	this.willUpdate = options.willUpdate || (() => {});
-	this.updated = options.updated || (() => {});
+	this.created = options.created;
+	this.willUpdate = options.willUpdate;
+	this.updated = options.updated;
 	this.localParent = options.parent || null;	// This is the parent directly above this component.
 	
 	// This is either the root dom node or a wrapper around a component.
@@ -52,7 +52,7 @@ const Mosaic = function(options) {
 	for(var key in componentStructures) {
 		this[key] = componentStructures[key].type.copy(this);
 		this[key].data = Object.assign({}, this[key].data, componentStructures[key].data);
-		this[key].created();
+		if(this[key].created) this[key].created();
 	}
 	
 
@@ -88,12 +88,12 @@ Mosaic.prototype.paint = function() {
 		return;
 	}
 
-	const htree = this.view();
+	const htree = createElement(this);
 	const $element = render(htree);
 	const $newRoot = mount($element, this.$element);
 
 	this.$element = $newRoot;
-	this.created();
+	if(this.created) this.created();
 }
 
 /** Sets the data on this Mosaic component and triggers a rerender. 
@@ -107,7 +107,7 @@ Mosaic.prototype.setData = function(newData = {}) {
 	// 2.) The component having its data set is not the entry point but instead an "n-th level" child
 	// of the entry point. It should have it's dom element already added to a parent. Look for it and
 	// update it.
-	this.willUpdate(this.data);
+	if(this.willUpdate) this.willUpdate(this.data);
 	
 	// First make sure that you have an absolute parent.
 	let lookAt = this;
@@ -131,7 +131,7 @@ Mosaic.prototype.setData = function(newData = {}) {
 	let patches = diff(oldHTree, newHTree);
 	lookAt.$element = patches(lookAt.$element);
 
-	this.updated();
+	if(this.updated) this.updated();
 }
 
 

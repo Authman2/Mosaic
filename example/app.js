@@ -30,8 +30,8 @@ const app = new Mosaic({
                 <h4>{this.data.subtitle}</h4>
                 <p>Use the buttons below to try out the counter!</p>
 
-                { this.home1 }
-                { this.home2 }
+                { this.home1.view() }
+                { this.home2.view() }
             </div>
         )
     },

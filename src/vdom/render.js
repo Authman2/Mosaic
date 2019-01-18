@@ -1,3 +1,5 @@
+const { createElement } = require('./createElement');
+
 /** Checks whether or not the property is an event handler. */
 const isEventProperty = (name) => {
     return /^on/.test(name);
@@ -60,14 +62,18 @@ const renderRegularNode = (vNode) => {
 /** Renders a component as a VNode. */
 const renderMosaicComponent = (component) => {
     // Get the view.
-    const val = component.view();
+    const val = createElement(component);
 
     // Create the actual dom element.
     const $element = document.createElement(val.nodeName);
 
     // Add all of the properties to this element.
     Object.keys(val.properties).forEach(propName => {
-        setDomAttributes($element, propName, val.properties[propName]);
+        if(isEventProperty(propName)) {
+            setEventHandlers($element, propName, vNode.properties[propName]);
+        } else {
+            setDomAttributes($element, propName, val.properties[propName]);
+        }
     });
 
     // Append all of the children to this element.
@@ -86,9 +92,8 @@ const render = (vNode) => {
     if(typeof vNode === 'string' || typeof vNode === 'number') {
         return document.createTextNode(vNode);
     }
-    else if(vNode.view) {
-        // return renderMosaicComponent(vNode);
-        return render(vNode.view());
+    else if(typeof vNode === 'object' && vNode.view) {
+        return renderMosaicComponent(vNode);
     }
     else {
         return renderRegularNode(vNode);
