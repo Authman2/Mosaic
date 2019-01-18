@@ -49,11 +49,10 @@ For a more detailed example, run the project inside the "example" folder.
 **index.js**:
 ```js
 // Import Mosaic
-const { h, Mosaic } = require('@authman2/Mosaic');
+import { h, Mosaic } from '@authman2/mosaic';
     
 // Create a label and button component.
 const NavButton = new Mosaic({
-    element: 'div',
     data: {
         label: "Default Label",
         buttonTitle: "Default Button Title"
@@ -98,9 +97,9 @@ const app = new Mosaic({
               <button onClick={this.actions.sayHello}>Click Here</button>
               <br/>
               <br/>
-              { this.homeButton }
-              { this.aboutButton }
-              { this.contactButton }
+              { this.homeButton.view() }
+              { this.aboutButton.view() }
+              { this.contactButton.view() }
           </div>
       )
     }
