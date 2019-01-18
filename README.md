@@ -10,7 +10,7 @@
 ## Usage
 The easiest way to use Mosaic is to first install the npm package by using:
 ```shell
-npm install --save authman2/Mosaic
+npm install --save @authman2/mosaic
 ```
 Then, for fast builds and hot reloading, install the build tool "Parcel."
 ```shell
