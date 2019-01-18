@@ -57,12 +57,19 @@ const NavButton = new Mosaic({
         label: "Default Label",
         buttonTitle: "Default Button Title"
     },
+    actions: function(self) {
+        return {
+            print: function() {
+                console.log(self.data.buttonTitle);
+            }
+        }
+    },
     view: function() {
         // The data will be passed in from the parent component.
         return (
             <div>
                 <p>{this.data.label}</p>
-                <button onClick={() => console.log(this.data.buttonTitle)}>
+                <button onClick={this.actions.print}>
                     Click to go to {this.data.buttonTitle}
                 </button>
             </div>
