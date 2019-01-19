@@ -1,6 +1,14 @@
 const { createElement } = require('./createElement');
 const { render, setDomAttributes, setEventHandlers, isEventProperty} = require('./render');
 
+const zip = (xs, ys) => {
+    const zipped = [];
+    for(let i = 0; i < Math.min(xs.length, ys.length); i++) {
+        zipped.push([xs[i], ys[i]]);
+    }
+    return zipped;
+}
+
 const diffProperties = (oldProps, newProps) => {
     // The array of patches to perform.
     const patches = [];
@@ -51,9 +59,10 @@ const diffChildren = (oldVChildren, newVChildren) => {
     // Make additional patches for unequal children lengths of the old and new vNodes.
     const additionalPatches = [];
     const sliced = newVChildren.slice(oldVChildren.length);
-    for(var i in sliced) {
+    for(var i = 0; i < sliced.length; i++) {
+        let s = sliced[i];
         let _patch = ($node) => {
-            let res = render(newVChildren);
+            let res = render(s);
             $node.appendChild(res);
             return $node;
         }
@@ -62,12 +71,12 @@ const diffChildren = (oldVChildren, newVChildren) => {
 
 
     let patch = ($parent) => {
-        $parent.childNodes.forEach(($child, index) => {
-            patches[index]($child);
-        });
+        for(const [p, $child] of zip(patches, $parent.childNodes)) {
+            p($child);
+        }
         for(var i in additionalPatches) {
             const p = additionalPatches[i];
-            patch(p);
+            p($parent);
         }
         return $parent;
     }

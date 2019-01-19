@@ -17,9 +17,7 @@ const buttonStyles = {
     borderRadius: '100%',
     fontFamily: 'Avenir',
 }
-
-
-module.exports = new Mosaic({
+export default new Mosaic({
     data: {
         count: 0
     },

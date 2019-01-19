@@ -110,10 +110,17 @@ Mosaic.prototype.setData = function(newData = {}) {
 	if(this.willUpdate) this.willUpdate(this.data);
 	
 	// First make sure that you have an absolute parent.
+	// Also do a bit of caching so the component can quickly find the absolute parent
+	// on the next update.
 	let lookAt = this;
-	while(lookAt.localParent !== null) {
-		// console.log("Checking: ", lookAt);
-		lookAt = lookAt.localParent;
+	if(!this.absoluteParent) {
+		while(lookAt.localParent !== null) {
+			// console.log("Checking: ", lookAt);
+			lookAt = lookAt.localParent;
+		}
+		this.absoluteParent = lookAt;
+	} else {
+		lookAt = this.absoluteParent;
 	}
 	// console.log("Absolute Parent: ", lookAt);
 
