@@ -48,11 +48,11 @@ export default new Mosaic({
 
     created: function() {
         // Only put a timer on the second instance.
-        // if(this.data.instance === 1) {
-        //     setInterval(() => {
-        //         const n = Math.floor(Math.random() * 100);
-        //         this.setData({ count: n });
-        //     }, 1000);
-        // }
+        if(this.data.instance === 1) {
+            setInterval(() => {
+                const n = Math.floor(Math.random() * 100);
+                this.setData({ count: n });
+            }, 1000);
+        }
     },
 });

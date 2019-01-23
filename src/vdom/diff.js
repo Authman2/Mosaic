@@ -146,7 +146,25 @@ const diff = (oldVNode, newVNode) => {
         return patch;
     }
 
-    // Case 4: In order to make the diff algo more efficient, assume that if the trees
+    // Case 5: They are arrays of elements, so go through each one and diff the objects.
+    if(typeof oldVNode === 'object' && typeof newVNode === 'object' && (oldVNode.length || newVNode.length)) {
+        // Create a patch for each child.
+        let allPatches = [];
+        for(var i = 0; i < oldVNode.length; i++) {
+            let patch = diff(oldVNode[i], newVNode[i]);
+            allPatches.push(patch);
+        }
+        // Create a final patch that applies all patch changes in the list.
+        let finalPatch = ($node) => {
+            allPatches.forEach((p, index) => {
+                p($node.childNodes[index]);
+            });
+            return $node;
+        }
+        return finalPatch;
+    }
+
+    // Case 6: In order to make the diff algo more efficient, assume that if the trees
     // are of different types then we just replace the entire thing.
     if(oldVNode.nodeName !== newVNode.nodeName) {
         let patch = ($node) => {
@@ -157,7 +175,7 @@ const diff = (oldVNode, newVNode) => {
         return patch;
     }
 
-    // Case 5: If we reach this point, it means that the only differences exist in either the
+    // Case 7: If we reach this point, it means that the only differences exist in either the
     // properties or the child nodes. Handle these cases separately and return a patch that just
     // updates the node, not neccessarily replaces them.
     const propsPatch = diffProperties(oldVNode.properties, newVNode.properties);

@@ -1,6 +1,6 @@
 {
   "name": "@authman2/mosaic",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "A front-end JavaScript library for creating user interfaces",
   "main": "src/index.js",
   "scripts": {
@@ -15,7 +15,11 @@
     "ui"
   ],
   "author": "Adeola Uthman",
-  "license": "ISC",
+  "license": "MIT",
+  "repository": {
+    "url": "https://github.com/authman2/Mosaic"
+  },
+  "homepage": "http://mosaicjs.herokuapp.com",
   "devDependencies": {
     "babel-core": "^6.26.3",
     "babel-plugin-transform-react-jsx": "^6.24.1"

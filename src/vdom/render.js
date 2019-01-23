@@ -35,30 +35,6 @@ const setEventHandlers = ($element, eventName, eventValue) => {
     $element.addEventListener(name, eventValue);
 }
 
-
-/** Renders any regular dom element that is not a text node. */
-const renderRegularNode = (vNode) => {
-    // Create the actual dom element.
-    const $element = document.createElement(vNode.nodeName);
-
-    // Add all of the properties to this element.
-    Object.keys(vNode.properties).forEach(propName => {
-        if(isEventProperty(propName)) {
-            setEventHandlers($element, propName, vNode.properties[propName]);
-        } else {
-            setDomAttributes($element, propName, vNode.properties[propName]);
-        }
-    });
-
-    // Append all of the children to this element.
-    Object.keys(vNode.children).forEach(childIndex => {
-        const x = render(vNode.children[childIndex]);
-        $element.appendChild(x);
-    });
-
-    return $element;
-}
-
 /** Renders a component as a VNode. */
 const renderMosaicComponent = (component) => {
     // Get the view.
@@ -85,6 +61,29 @@ const renderMosaicComponent = (component) => {
     return $element;
 }
 
+/** Renders any regular dom element that is not a text node. */
+const renderRegularNode = (vNode) => {
+    // Create the actual dom element.
+    const $element = document.createElement(vNode.nodeName);
+
+    // Add all of the properties to this element.
+    Object.keys(vNode.properties).forEach(propName => {
+        if(isEventProperty(propName)) {
+            setEventHandlers($element, propName, vNode.properties[propName]);
+        } else {
+            setDomAttributes($element, propName, vNode.properties[propName]);
+        }
+    });
+
+    // Append all of the children to this element.
+    Object.keys(vNode.children).forEach(childIndex => {
+        const x = render(vNode.children[childIndex]);
+        if(typeof x !== 'undefined') $element.appendChild(x);
+    });
+
+    return $element;
+}
+
 /** Takes a virtual dom node and returns a real dom node. 
 * @param {Object} vNode A virtual dom node.
 * @returns {Element} A real dom node. */
@@ -94,6 +93,15 @@ const render = (vNode) => {
     }
     else if(typeof vNode === 'object' && vNode.view) {
         return renderMosaicComponent(vNode);
+    }
+    else if(typeof vNode === 'object' && vNode.length) {
+        // Basically create a holder element and create elements for each child.
+        let $holder = document.createElement('div');
+        for(var i = 0; i < vNode.length; i++) {
+            let $node = render(vNode[i]);
+            $holder.appendChild($node);
+        }
+        return $holder;
     }
     else {
         return renderRegularNode(vNode);
