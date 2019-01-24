@@ -1,4 +1,5 @@
-<a target='_blank' rel='noopener noreferrer' href='http://mosaicjs.herokuapp.com' align="center"><img src='./MosaicLogo.png' align='center' width='80' height='80'/></a>
+<p align="center"><a href="http://mosaicjs.herokuapp.com" target="_blank" rel="noopener noreferrer"><img width="100" height="100" src="./MosaicLogo.png" alt="Mosaic logo"></a></p>
+<a href="https://www.npmjs.com/package/@authman2/mosaic"><img src="https://img.shields.io/npm/v/@authman2/mosaic.svg" alt="Version"></a>
 
 # <a target='_blank' rel='noopener noreferrer' href='http://mosaicjs.herokuapp.com'>Mosaic</a>
 > Mosaic is a front-end JavaScript library for building user interfaces. It is a component-based library that uses a virtual dom for fast rendering and JSX for creating views. Mosaic handles the views of a web app, which means that you can choose to include it in a project here and there or you can create an entire application based around it.
