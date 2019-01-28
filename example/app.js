@@ -1,42 +1,104 @@
-import { h, Mosaic } from '../src/index';
-import Home from './home';
+import { createElement, render, Component, Mosaic } from '../src/index';
 
 const root = document.getElementById('root');
 root.innerHTML = '';
 
-const appStyles = {
-    width: '100%',
-    color: 'white',
-    paddingTop: '10px',
-    textAlign: 'center',
-    fontFamily: 'Avenir',
-    paddingBottom: '100px',
-    backgroundColor: '#4341B5'
-}
-const app = new Mosaic({
-    element: root,
-    data: {
-        title: "Mosaic",
-        subtitle: "A front-end JavaScript library for building user interfaces"
-    },
-    components: {
-        home1: Mosaic.Child(Home, { instance: 0, componentInstance: "First Home Instance: " }),
-        home2: Mosaic.Child(Home, { instance: 1, componentInstance: "Second Home Instance: " }),
-    },
-    view: function() {
-        return (
-            <div style={appStyles}>
-                <h1>Welcome to {this.data.title}!</h1>
-                <h4>{this.data.subtitle}</h4>
-                <p>Use the buttons below to try out the counter!</p>
+// class App extends Component {
+//     render() {
+//         return <div>
+//             <h1>Working</h1>
+//         </div>
+//     }
+// }
+// render(<App />, document.getElementById('root'));
 
-                { this.home1.view() }
-                { this.home2.view() }
-            </div>
-        )
+const Counter = new Mosaic({
+    state: { count: 0 },
+    view: function() {
+        return <i>{this.state.count}</i>
     },
     created: function() {
-        this.home1.setData({ count: 10 });
+        setInterval(() => {
+            this.setState({ count: Math.floor(Math.random() * 100) });
+        }, 1000);
+    }
+})
+const Label = new Mosaic({
+    state: {},
+    view: function() {
+        return <h1>Count: <Counter /></h1>
+    },
+    created: function() {
+        
+    }
+})
+const App = new Mosaic({
+    element: document.getElementById('root'),
+    state: { title: "Mosaic" },
+    view: function() {
+        return <div>
+            <h1>Welcome to {this.state.title}!</h1>
+            <Label />
+            <Label />
+            <Label />
+        </div>
+    },
+    created: function() {
+        
     }
 });
-app.paint();
+App.paint();
+
+
+// import Gooact, { render, Component } from '../src/index';
+
+// class Title extends Component {
+//     componentDidMount() {
+//         console.log('title');
+//         console.log(document.getElementById('title'));
+//     }
+
+//     render() {
+//         return (
+//             <h1 id="title">{this.props.children}</h1>
+//         );
+//     }
+// }
+
+// class App extends Component {
+//     constructor(props) {
+//         super(props);
+//         this.state = {counter: 0};
+//         this.onIncrease = this.onIncrease.bind(this);
+//         this.onDecrease = this.onDecrease.bind(this);
+//     }
+
+//     componentDidMount() {
+//         console.log('app');
+//     }
+
+//     onIncrease() {
+//         this.setState({counter: this.state.counter + 1});
+//     }
+
+//     onDecrease() {
+//         this.setState({counter: this.state.counter - 1});
+//     }
+
+//     render() {
+//         const {counter} = this.state;
+//         return (
+//             <div>
+//                 <Title>Hello Gooact!!!!</Title>
+//                 <p>
+//                     <button onClick={this.onDecrease}>-</button>
+//                     {' '}Counter: {counter}{' '}
+//                     <button onClick={this.onIncrease}>+</button>
+//                 </p>
+//             </div>
+//         );
+//     }
+// }
+
+// let app = <App />;
+// render(app, document.getElementById('root'));
