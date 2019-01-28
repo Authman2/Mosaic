@@ -1,106 +1,42 @@
-import { setAttributes } from './util';
-
-const createElement = function(type, props = {}, ...children) {
-    return {
-        type: type,
-        props: props || {},
-        children,
-    };
-}
-
-const render = function(vnode, $parent = null) {
-    const mount = $parent ? ($el => $parent.appendChild($el)) : ($el => $el);
-
-    // 1.) Primitive types.
-    if(typeof vnode === 'string' || typeof vnode === 'number') {
-        let $e = document.createTextNode(typeof vnode === 'boolean' ? '' : vnode);
-        return mount($e);
-    }
-    // 2.) A Mosaic component.
-    else if(typeof vnode === 'object' && typeof vnode.type === 'object' && vnode.type.__isMosaic === true) {
-        return Mosaic.view(vnode, $parent);
-    }
-    // 3.) Handle child components and attributes.
-    else if(typeof vnode === 'object' && typeof vnode.type === 'string') {
-        const $e = document.createElement(vnode.type);
-        const $dom = mount($e);
-        for(var child of [].concat(...vnode.children)) render(child, $dom);
-        for(var prop in vnode.props) setAttributes($dom, prop, vnode.props[prop]);
-        return $dom;
-    }
-    // 4.) Otherwise, throw an error.
-    else {
-        throw new Error(`Invalid Virtual DOM Node: ${vnode}.`);
-    }
-}
-
-const patch = function($dom, vnode, $parent = $dom.parentNode) {
-    const replace = $parent ? ($el => { $parent.replaceChild($el, $dom); return $el }) : ($el => $el);
-
-    // 1.) Patch the differences of a Mosaic type.
-    if(typeof vnode === 'object' && typeof vnode.type === 'object' && vnode.type.__isMosaic === true) {
-        return Mosaic.patch($dom, vnode, $parent);
-    }
-    // 2.) Compare plain text nodes.
-    else if(typeof vnode !== 'object' && $dom instanceof Text) {
-        return ($dom.textContent !== vnode) ? replace(render(vnode, $parent)) : $dom;
-    }
-    // 3.) If one is an object and one is text, just replace completely.
-    else if(typeof vnode === 'object' && $dom instanceof Text) {
-        return replace(render(vnode, $parent));
-    }
-    // 4.) One is an object and the tags are different, so replace completely.
-    // else if(typeof vnode === 'object' && $dom.nodeName !== (typeof vnode.type).toUpperCase()) {
-    //     console.log('GOT HERE: ', vnode, $dom);
-    //     let n = replace(render(vnode, $parent));
-    //     console.log(n);
-    // }
-    // 5.) If they are objects and their tags are equal, patch their children recursively.
-    else if(typeof vnode === 'object' && $dom.nodeName === vnode.type.toUpperCase()) {
-        const pool = {};
-        const active = document.activeElement;
-
-        [].concat(...$dom.childNodes).map((child, index) => {
-            const key = child.__mosaicKey || `__index_${index}`;
-            pool[key] = child;
-        });
-        [].concat(...vnode.children).map((child, index) => {
-            const key = child.props && child.props.key || `__index_${index}`;
-            $dom.appendChild(pool[key] ? patch(pool[key], child) : render(child, $dom));
-            delete pool[key];
-        });
-
-        // Unmount the component and call the lifecycle function.
-        for(const key in pool) {
-            const instance = pool[key].__mosaicInstance;
-            if(instance && instance.willDestroy) instance.willDestroy();
-            pool[key].remove();
-        }
-
-        // Remove and reset the necessary attributes.
-        for(var attr in $dom.attributes) $dom.removeAttribute(attr.name);
-        for(var prop in vnode.props) setAttributes($dom, prop, vnode.props[prop]);
-        active.focus();
-        
-        // Return the real dom node.
-        return $dom;
-    }
-}
+import createElement from './vdom/createElement';
+import render from './vdom/render';
+import patch from './vdom/patch';
 
 
+/** The configuration options for a Mosaic component. */
 const MosaicOptions = {
+    /** The HTML element to inject this Mosaic component into. */
     element: HTMLElement,
-    state: Object,
+
+    /** The state of this component. */
+    data: Object,
+
+    /** The view that will be rendered on the screen. */
     view: Function,
+
+    /** The function to run when this component is created and injected into the DOM. */
     created: Function,
+
+    /** The function to run when this component is about to update its data. */
     willUpdate: Function,
+
+    /** The function to run after this component has been updated. */
     updated: Function,
+
+    /** The function that runs just before this component gets removed from the DOM. */
     willDestroy: Function,
+
+    /** The function to run when this component gets removed from the DOM.  */
     destroyed: Function,
-}
+};
+
+
+/** Creates a new Mosaic component with configuration options.
+ * @param {MosaicOptions} options The configuration options for this Mosaic.
+*/
 const Mosaic = function(options) {
     this.base = options.element
-    this.state = options.state;
+    this.data = options.data;
     this.view = options.view;
     this.created = options.created;
     this.willUpdate = options.willUpdate;
@@ -109,22 +45,30 @@ const Mosaic = function(options) {
     this.destroyed = options.destroyed;
     this.__isMosaic = true;
 
-    this.setState = function(next) {
-        const compat = (a) => typeof this.state == 'object' && typeof a == 'object';
-        if(this.base) {
-            if(this.willUpdate) this.willUpdate();
-
-            this.state = compat(next) ? Object.assign({}, this.state, next) : next;
-            patch(this.base, this.view());
-            
-            if(this.updated) this.updated();
-        }
-    }
-    this.paint = function() {
-        render(createElement(this), this.base);
-    }
     return this;
 }
+
+/** "Paints" the Mosaic onto the page by injecting it into its base element. */
+Mosaic.prototype.paint = function() {
+    render(createElement(this), this.base);
+}
+
+/** Function that sets the data on this component and triggers a re-render. */
+Mosaic.prototype.setData = function(newData = {}) {
+    if(this.base) {
+        if(this.willUpdate) this.willUpdate();
+
+        this.data = Object.assign({}, this.data, newData);
+        patch(this.base, this.view());
+        
+        if(this.updated) this.updated();
+    }
+}
+
+
+/** Static function for building a new instance of a Mosaic. Basically just takes a given VNode of a Mosaic
+ * and uses it as a blueprint for how to build reusable instances of that component.
+ */
 Mosaic.view = function(vnode, $parent = null) {
     const props = Object.assign({}, vnode.props, { children: vnode.children });
     
@@ -132,7 +76,7 @@ Mosaic.view = function(vnode, $parent = null) {
     if(typeof vnode.type === 'object' && vnode.type.__isMosaic) {
         const options = {
             element: vnode.type.base,
-            state: Object.assign({}, vnode.type.state),
+            data: Object.assign({}, vnode.type.data),
             view: vnode.type.view,
             created: vnode.type.created,
         }
@@ -147,6 +91,8 @@ Mosaic.view = function(vnode, $parent = null) {
         return render(vnode.type.view(props), $parent);
     }
 }
+
+/** Static function for diffing and patching changes between instances of Mosaics. */
 Mosaic.patch = function($dom, vnode, $parent = $dom.parentNode) {
     const props = Object.assign({}, vnode.props, { children: vnode.children });
     
@@ -163,84 +109,5 @@ Mosaic.patch = function($dom, vnode, $parent = $dom.parentNode) {
     }
 }
 
-
-
-const Component = class {
-
-    constructor() {
-        this.state = null;
-    }
-
-    static render(vnode, $parent = null) {
-        const props = Object.assign({}, vnode.props, { children: vnode.children });
-        // Render a new instance of this component.
-        if(Component.isPrototypeOf(vnode.type)) {
-            const instance = new (vnode.type)(props);
-            instance.componentWillMount();
-            instance.base = render(instance.render(), $parent);
-            instance.base.__mosaicInstance = instance;
-            instance.base.__mosaicKey = vnode.props.key;
-            instance.componentDidMount();
-            return instance.base;
-        } else {
-            return render(vnode.type(props), $parent);
-        }
-    }
-    static patch($dom, vnode, $parent = $dom.parentNode) {
-        const props = Object.assign({}, vnode.props, { children: vnode.children });
-        
-        if($dom.__mosaicInstance && $dom.__mosaicInstance.constructor === vnode.type) {
-            $dom.__gooactInstance.props = props;
-            return patch($dom, $dom.__gooactInstance.render(), $parent);
-        }
-        else if(Component.isPrototypeOf(vnode.type)) {
-            const $ndom = Component.render(vnode, $parent);
-            return $parent ? ($parent.replaceChild($ndom, $dom) && $ndom) : $ndom;
-        }
-        else if(!Component.isPrototypeOf(vnode.type)) {
-            return patch($dom, vnode.type(props), $parent);
-        }
-    }
-
-    setState(next) {
-        const compat = (a) => typeof this.state == 'object' && typeof a == 'object';
-        if(this.base) {
-            const prevState = this.state;
-            this.componentWillUpdate(this.props, next);
-            this.state = compat(next) ? Object.assign({}, this.state, next) : next;
-            patch(this.base, this.render());
-            this.componentDidUpdate(this.props, prevState);
-        }
-    }
-
-    componentWillReceiveProps(nextProps) {
-        return undefined;
-    }
-
-    componentWillUpdate(nextProps, nextState) {
-        return undefined;
-    }
-
-    componentDidUpdate(prevProps, prevState) {
-        return undefined;
-    }
-
-    componentWillMount() {
-        return undefined;
-    }
-
-    componentDidMount() {
-        return undefined;
-    }
-
-    componentWillUnmount() {
-        return undefined;
-    }
-}
-
-
-
-exports.createElement = createElement;
-exports.render = render;
-exports.Component = Component;
+exports.h = createElement;
 exports.Mosaic = Mosaic;

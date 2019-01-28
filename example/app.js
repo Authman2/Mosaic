@@ -1,4 +1,4 @@
-import { createElement, render, Component, Mosaic } from '../src/index';
+import { h, Mosaic } from '../src/index';
 
 const root = document.getElementById('root');
 root.innerHTML = '';
@@ -13,18 +13,18 @@ root.innerHTML = '';
 // render(<App />, document.getElementById('root'));
 
 const Counter = new Mosaic({
-    state: { count: 0 },
+    data: { count: 0 },
     view: function() {
-        return <i>{this.state.count}</i>
+        return <i>{this.data.count}</i>
     },
     created: function() {
         setInterval(() => {
-            this.setState({ count: Math.floor(Math.random() * 100) });
+            this.setData({ count: Math.floor(Math.random() * 100) });
         }, 1000);
     }
 })
 const Label = new Mosaic({
-    state: {},
+    data: {},
     view: function() {
         return <h1>Count: <Counter /></h1>
     },
@@ -34,10 +34,10 @@ const Label = new Mosaic({
 })
 const App = new Mosaic({
     element: document.getElementById('root'),
-    state: { title: "Mosaic" },
+    data: { title: "Mosaic" },
     view: function() {
         return <div>
-            <h1>Welcome to {this.state.title}!</h1>
+            <h1>Welcome to {this.data.title}!</h1>
             <Label />
             <Label />
             <Label />

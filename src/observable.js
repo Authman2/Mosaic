@@ -1,0 +1,38 @@
+/** Basically an object that can perform a certain function when a property changes. 
+* @param {Object} observingObject The object to look for changes in.. */
+const Observable = (observingObject, willChange, didChange) => {
+    this.willChange = willChange;
+    this.didChange = didChange;
+
+    const Handler = {
+        get(object, name, receiver) {
+            if(name === '__TARGET') { return Object.assign({}, observingObject); };
+            if(name === '__IS_PROXY') { return true };
+
+            try { return new Proxy(object[name], Handler); }
+            catch(err) { return Reflect.get(object, name, receiver); }
+        },
+        set(object, name, value) {
+            // About to update.
+            let old = Object.assign({}, observingObject);
+            if(willChange) willChange(old);
+            
+            // Did update.
+            object[name] = value;
+            if(didChange) didChange(object);
+
+            return Reflect.set(object, name, value);
+        },
+        // defineProperty(object, name, descriptor) {
+        //     didChange(object);
+        //     return Reflect.defineProperty(object, name, descriptor);
+        // },
+        // deleteProperty(object, name) {
+        //     didChange(object);
+        //     return Reflect.deleteProperty(object, name);
+        // }
+    };
+    return new Proxy(observingObject, Handler);
+}
+
+exports.Observable = Observable;
