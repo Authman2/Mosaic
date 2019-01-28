@@ -8,7 +8,7 @@ const Counter = new Mosaic({
         count: 0
     },
     view: function() {
-        return <button onClick={this.actions.countUp}>
+        return <button onclick={this.actions.countUp}>
             {this.data.count}
         </button>
     },
@@ -16,7 +16,6 @@ const Counter = new Mosaic({
         // setInterval(() => {
         //     this.data.count = Math.floor(Math.random() * 100);
         // }, 1000);
-        console.log(this);
     },
     actions: {
         countUp: function() {
@@ -27,19 +26,19 @@ const Counter = new Mosaic({
 const Label = new Mosaic({
     data: {},
     view: function() {
-        return <h1>Count: <Counter /></h1>
+        return <h1>Count: <Counter /><br/>Something: {this.data.name || "nothing"}</h1>
     }
 })
 const App = new Mosaic({
-    element: document.getElementById('root'),
+    element: root,
     data: { title: "Mosaic" },
     view: function() {
         return <div>
             <h1>Welcome to {this.data.title}!</h1>
             <p>Added property: {this.data.author || 'none'}</p>
+            <Label data={{ name: "bob ross" }}/>
             <Label />
-            <Label />
-            <Label />
+            <Label data={{ name: "My name is jeff" }}/>
         </div>
     }
 });

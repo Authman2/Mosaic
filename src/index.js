@@ -2,6 +2,7 @@ import createElement from './vdom/createElement';
 import render from './vdom/render';
 import patch from './vdom/patch';
 import Observable from './observable';
+import { isHTMLElement, findInvalidOptions } from './validations';
 
 
 /** The configuration options for a Mosaic component. */
@@ -16,7 +17,7 @@ const MosaicOptions = {
     view: Function,
 
     /** The actions that can be used on this Mosaic component. */
-    actions: Array,
+    actions: Object,
 
     /** The function to run when this component is created and injected into the DOM. */
     created: Function,
@@ -39,6 +40,9 @@ const MosaicOptions = {
  * @param {MosaicOptions} options The configuration options for this Mosaic.
 */
 const Mosaic = function(options) {
+    let invalids = findInvalidOptions(options);
+    if(invalids !== undefined) throw new Error(invalids);
+
     this.base = options.element
     this.view = options.view;
     this.actions = options.actions;
@@ -55,29 +59,18 @@ const Mosaic = function(options) {
     });
     this.__isMosaic = true;
 
-    // Handle actions properties, which need to be bound to this component.
-    
-
-
     return this;
 }
 
 /** "Paints" the Mosaic onto the page by injecting it into its base element. */
 Mosaic.prototype.paint = function() {
+    if(!this.base || !isHTMLElement(this.base)) {
+        throw new Error(`This Mosaic could not be painted because its element property is either not set
+        or is not a valid HTML element.`);
+    }
     render(createElement(this), this.base);
 }
 
-/** Function that sets the data on this component and triggers a re-render. */
-Mosaic.prototype.setData = function(newData = {}) {
-    if(this.base) {
-        if(this.willUpdate) this.willUpdate();
-
-        this.data = Object.assign({}, this.data, newData);
-        patch(this.base, this.view());
-        
-        if(this.updated) this.updated();
-    }
-}
 
 
 /** Static function for building a new instance of a Mosaic. Basically just takes a given VNode of a Mosaic
@@ -90,7 +83,7 @@ Mosaic.view = function(vnode, $parent = null) {
     if(typeof vnode.type === 'object' && vnode.type.__isMosaic) {
         const options = {
             element: vnode.type.base,
-            data: Object.assign({}, vnode.type.data),
+            data: Object.assign({}, vnode.type.data, props.data ? props.data : {}),
             view: vnode.type.view,
             actions: Object.assign({}, vnode.type.actions),
             created: vnode.type.created,

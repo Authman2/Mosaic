@@ -1,13 +1,3 @@
-/** Generates a random id for a component. */
-const randomID = () => {
-    return '_' + Math.random().toString(36).substr(2, 9);
-}
-
-/** Checks whether or not the property is an event handler. */
-const isEventProperty = (name) => {
-    return /^on/.test(name);
-}
-
 const setAttributes = function($element, key, value, instance = null) {
     // 1.) Function handler for dom element.
     if(typeof value === 'function' && key.startsWith('on')) {
@@ -45,28 +35,6 @@ const setAttributes = function($element, key, value, instance = null) {
     }
 }
 
-/** Validates the child Mosaic components of a parent Mosaic component to make sure they
-* all follow the same schema. 
-* @param {Object} components The components to check for.
-* @returns {Boolean} Whether or not there are no errors in the types of the input components. */
-const validateMosaicChildren = (components) => {
-	if(!components) return true;
-	
-	let children = Object.values(components);
-	if(children.length === 0) return true;
-
-	let foundOneWrong = children.find(comp => {
-		if(!('type' in comp)) {
-			return false;
-		} else if('type' in comp) {
-			if(!comp['type'].view) {
-				return true;
-			}
-		}
-	});
-	return foundOneWrong === undefined || foundOneWrong === null;
-}
-
 /** Start with a particular VNode and traverse the entire tree and only return the ones that match
 * the comparator.
 * @param {Object} head The absolute parent VNode.
@@ -88,7 +56,7 @@ const traverseVDomTree = function(head, start, array, comparator, action) {
 }
 
 /** Clones a function. */
-const clone = function() {
+const cloneFunction = function() {
     var that = this;
     var f = function() { return that.apply(this, arguments); };
     for(var key in this) {
@@ -105,7 +73,7 @@ const clone = function() {
 const deepClone = function(from) {
 	let out = Object.create({});
 	if(typeof from === 'function') {
-		return clone.call(from);
+		return cloneFunction.call(from);
 	}
 	for(var i in from) {
 		if(from.hasOwnProperty(i)) {
@@ -129,9 +97,6 @@ const deepClone = function(from) {
 	return out;
 }
 
-exports.randomID = randomID;
-exports.isEventProperty = isEventProperty;
 exports.setAttributes = setAttributes;
-exports.validateMosaicChildren = validateMosaicChildren;
 exports.traverseVDomTree = traverseVDomTree;
 exports.deepClone = deepClone;
