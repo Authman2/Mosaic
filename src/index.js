@@ -1,7 +1,7 @@
-import createElement from './vdom/createElement';
-import render from './vdom/render';
-import patch from './vdom/patch';
-import Observable from './observable';
+import { createElement } from './vdom/createElement';
+import { render } from './vdom/render';
+import { patch } from './vdom/patch';
+import { Observable } from './observable';
 import { isHTMLElement, findInvalidOptions } from './validations';
 
 /** The configuration options for a Mosaic component. */
@@ -119,7 +119,7 @@ Mosaic.patch = function($dom, vnode, $parent = $dom.parentNode) {
     }
 }
 
-exports.h = createElement;
-exports.Mosaic = Mosaic;
 window.h = createElement;
 window.Mosaic = Mosaic;
+exports.h = createElement;
+exports.Mosaic = Mosaic;

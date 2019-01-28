@@ -26,4 +26,4 @@ const render = function(vnode, $parent = null, instance = null) {
         throw new Error(`Invalid Virtual DOM Node: ${vnode}.`);
     }
 }
-export default render;
+exports.render = render;
