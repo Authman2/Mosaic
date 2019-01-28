@@ -9,11 +9,13 @@
 
 ## Features
 - **Component-Based**: Mosaic components are reusable pieces of code that each keep track of their own state (referred to as "data"), actions, lifecycle functions, and more.
+- **Observable Data Pattern**: Mosaic uses Observables to keep track of changes to a component's data. This means 
+that there is no need to call "setState" or anything like that, instead just change the data directly.
 - **Virtual DOM**: The use of a virtual dom makes updating web apps very fast.
-- **Written in JSX**: You can use jsx or the "h" function that comes with Mosaic to write a component's view.
+- **JSX**: You can use jsx or the "h" function that comes with Mosaic to write a component's view.
 - **Easy to Learn**: The syntax and structure of Mosaic components is meant to make it easy to learn so that it does not require a lot of setup to start using.
 
-## Usage
+## Installation
 The easiest way to use Mosaic is to first install the npm package by using:
 ```shell
 npm install --save @authman2/mosaic
@@ -26,9 +28,7 @@ You will also need to create a .babelrc file so that you can transpile JSX into 
 ```js
 {
     "presets": ["env"],
-    "plugins": [["babel-plugin-transform-react-jsx", {
-        "pragma": "h"
-    }]]
+    "plugins": [["babel-plugin-transform-react-jsx", { "pragma": "h" }]]
 }
 ```
 Now you are ready to use Mosaic!
@@ -63,11 +63,9 @@ const NavButton = new Mosaic({
         label: "Default Label",
         buttonTitle: "Default Button Title"
     },
-    actions: function(self) {
-        return {
-            print: function() {
-                console.log(self.data.buttonTitle);
-            }
+    actions: {
+        print: function() {
+            console.log(this.data.buttonTitle);
         }
     },
     view: function() {
@@ -75,7 +73,7 @@ const NavButton = new Mosaic({
         return (
             <div>
                 <p>{this.data.label}</p>
-                <button onClick={this.actions.print}>
+                <button onclick={this.actions.print}>
                     Click to go to {this.data.buttonTitle}
                 </button>
             </div>
@@ -89,18 +87,11 @@ const app = new Mosaic({
     data: {
       title: "Mosaic App"
     },
-    components: {
-        homeButton: Mosaic.Child(NavButton, { label: "Home Button", buttonTitle: "Home" }),
-        aboutButton: Mosaic.Child(NavButton, { label: "About Button", buttonTitle: "About" }),
-        contactButton: Mosaic.Child(NavButton, { label: "Contact Button", buttonTitle: "Contact" }),
-    },
-    actions: function(thisComponent) {
-      return {
-          sayHello: function() {
-              console.log("Hello World!!");
-              console.log("This component is ", thisComponent);
-          }
-      }
+    actions: {
+        sayHello: function() {
+            console.log("Hello World!!");
+            console.log("This component is ", this);
+        }
     },
     view: function() {
       return (
@@ -110,9 +101,9 @@ const app = new Mosaic({
               <button onClick={this.actions.sayHello}>Click Here</button>
               <br/>
               <br/>
-              { this.homeButton.view() }
-              { this.aboutButton.view() }
-              { this.contactButton.view() }
+              <NavButton data={{ label: "Home", buttonTitle: "Home Button" }}/>
+              <NavButton data={{ label: "About", buttonTitle: "Home Button" }}/>
+              <NavButton data={{ label: "Contact", buttonTitle: "Contact Button" }}/>
           </div>
       )
     }

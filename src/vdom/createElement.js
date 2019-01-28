@@ -1,7 +1,8 @@
-const createElement = (nodeName, properties = {}, ...children) => {
-    if(typeof nodeName === 'object' && nodeName.view) {
-        return nodeName.view();
-    }
-    return { nodeName, properties: properties || {}, children };
-};
-exports.createElement = createElement;
+const createElement = function(type, props = {}, ...children) {
+    return {
+        type: type,
+        props: props || {},
+        children,
+    };
+}
+export default createElement;

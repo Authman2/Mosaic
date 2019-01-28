@@ -1,113 +1,29 @@
-const { createElement } = require('./createElement');
+import { Mosaic } from '../index';
+import { setAttributes } from '../util';
 
-/** Checks whether or not the property is an event handler. */
-const isEventProperty = (name) => {
-    return /^on/.test(name);
-}
+const render = function(vnode, $parent = null, instance = null) {
+    const mount = $parent ? ($el => $parent.appendChild($el)) : ($el => $el);
 
-/** Handles setting attributse on a real DOM element when it might be an object, etc.
-* @param {Element} $element The dom element to set attributes on.
-* @param {String} propName The name of the attribute.
-* @param {String | Number | Object} propVal The value of the attribute. */
-const setDomAttributes = ($element, propName, propVal) => {
-    if(propName === 'style') {
-        let styleString = "";
-
-        if(typeof propVal === 'object') {
-            Object.keys(propVal).forEach(styleName => {
-                const hypenated = styleName.replace( /([a-z])([A-Z])/g, '$1-$2' ).toLowerCase();
-                styleString += `${hypenated}:${propVal[styleName]};`;
-            });
-        } else if(typeof propVal === 'string') {
-            styleString = propVal;
-        }
-
-        $element.setAttribute(propName, styleString);
-    } else {
-        $element.setAttribute(propName, propVal);
+    // 1.) Primitive types.
+    if(typeof vnode === 'string' || typeof vnode === 'number') {
+        let $e = document.createTextNode(typeof vnode === 'boolean' ? '' : vnode);
+        return mount($e);
     }
-}
-
-
-/** Handles adding event handlers to a real DOM element. */
-const setEventHandlers = ($element, eventName, eventValue) => {
-    const name = eventName.slice(2).toLowerCase();
-    $element.addEventListener(name, eventValue);
-}
-
-/** Renders a component as a VNode. */
-const renderMosaicComponent = (component) => {
-    // Get the view.
-    const val = createElement(component);
-
-    // Create the actual dom element.
-    const $element = document.createElement(val.nodeName);
-
-    // Add all of the properties to this element.
-    Object.keys(val.properties).forEach(propName => {
-        if(isEventProperty(propName)) {
-            setEventHandlers($element, propName, vNode.properties[propName]);
-        } else {
-            setDomAttributes($element, propName, val.properties[propName]);
-        }
-    });
-
-    // Append all of the children to this element.
-    Object.keys(val.children).forEach(childIndex => {
-        const x = render(val.children[childIndex]);
-        $element.appendChild(x);
-    });
-
-    return $element;
-}
-
-/** Renders any regular dom element that is not a text node. */
-const renderRegularNode = (vNode) => {
-    // Create the actual dom element.
-    const $element = document.createElement(vNode.nodeName);
-
-    // Add all of the properties to this element.
-    Object.keys(vNode.properties).forEach(propName => {
-        if(isEventProperty(propName)) {
-            setEventHandlers($element, propName, vNode.properties[propName]);
-        } else {
-            setDomAttributes($element, propName, vNode.properties[propName]);
-        }
-    });
-
-    // Append all of the children to this element.
-    Object.keys(vNode.children).forEach(childIndex => {
-        const x = render(vNode.children[childIndex]);
-        if(typeof x !== 'undefined') $element.appendChild(x);
-    });
-
-    return $element;
-}
-
-/** Takes a virtual dom node and returns a real dom node. 
-* @param {Object} vNode A virtual dom node.
-* @returns {Element} A real dom node. */
-const render = (vNode) => {
-    if(typeof vNode === 'string' || typeof vNode === 'number') {
-        return document.createTextNode(vNode);
+    // 2.) A Mosaic component.
+    else if(typeof vnode === 'object' && typeof vnode.type === 'object' && vnode.type.__isMosaic === true) {
+        return Mosaic.view(vnode, $parent);
     }
-    else if(typeof vNode === 'object' && vNode.view) {
-        return renderMosaicComponent(vNode);
+    // 3.) Handle child components and attributes.
+    else if(typeof vnode === 'object' && typeof vnode.type === 'string') {
+        const $e = document.createElement(vnode.type);
+        const $dom = mount($e);
+        for(var child of [].concat(...vnode.children)) render(child, $dom, instance);
+        for(var prop in vnode.props) setAttributes($dom, prop, vnode.props[prop], instance);
+        return $dom;
     }
-    else if(typeof vNode === 'object' && vNode.length) {
-        // Basically create a holder element and create elements for each child.
-        let $holder = document.createElement('div');
-        for(var i = 0; i < vNode.length; i++) {
-            let $node = render(vNode[i]);
-            $holder.appendChild($node);
-        }
-        return $holder;
-    }
+    // 4.) Otherwise, throw an error.
     else {
-        return renderRegularNode(vNode);
+        throw new Error(`Invalid Virtual DOM Node: ${vnode}.`);
     }
 }
-exports.render = render;
-exports.setDomAttributes = setDomAttributes;
-exports.setEventHandlers = setEventHandlers;
-exports.isEventProperty = isEventProperty;
+export default render;
