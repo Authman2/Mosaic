@@ -42,9 +42,8 @@ const findInvalidOptions = function(options) {
     if((options.created && typeof options.created !== 'function') || 
         (options.willUpdate && typeof options.willUpdate !== 'function') ||
         (options.updated && typeof options.updated !== 'function') || 
-        (options.willDestory && typeof options.willDestory !== 'function') ||
-        (options.destroyed && typeof options.destroyed !== 'function')) {
-        return `All lifecycle methods (created, willUpdate, updated, willDestroy, and destroyed) must be
+        (options.willDestory && typeof options.willDestory !== 'function')) {
+        return `All lifecycle methods (created, willUpdate, updated, and willDestroy) must be
         function types.`;
     }
 

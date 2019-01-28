@@ -6,8 +6,7 @@ const Observable = (observingObject, willChange, didChange) => {
             if(name === '__TARGET') { return Object.assign({}, observingObject); };
             if(name === '__IS_PROXY') { return true };
 
-            try { return new Proxy(object[name], Handler); }
-            catch(err) { return Reflect.get(object, name, receiver); }
+            return Reflect.get(object, name, receiver);
         },
         set(object, name, value) {
             // About to update.

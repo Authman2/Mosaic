@@ -9,11 +9,11 @@
 
 ## Features
 - **Component-Based**: Mosaic components are reusable pieces of code that each keep track of their own state (referred to as "data"), actions, lifecycle functions, and more.
+- **Observable Data Pattern**: Mosaic uses Observables to keep track of changes to a component's data. This means 
+that there is no need to call "setState" or anything like that, instead just change the data directly.
 - **Virtual DOM**: The use of a virtual dom makes updating web apps very fast.
 - **JSX**: You can use jsx or the "h" function that comes with Mosaic to write a component's view.
 - **Easy to Learn**: The syntax and structure of Mosaic components is meant to make it easy to learn so that it does not require a lot of setup to start using.
-- **Observable Data Pattern**: Mosaic uses Observables to keep track of changes to a component's data. This means 
-that there is no need to call "setState" or anything like that, instead just change the data directly.
 
 ## Installation
 The easiest way to use Mosaic is to first install the npm package by using:
