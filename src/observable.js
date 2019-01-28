@@ -33,4 +33,4 @@ const Observable = (observingObject, willChange, didChange) => {
     return new Proxy(observingObject, Handler);
 }
 
-export default Observable;
+exports.Observable = Observable;

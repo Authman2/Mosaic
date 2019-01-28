@@ -1,5 +1,5 @@
 import { Mosaic } from '../index';
-import render from './render';
+import { render } from './render';
 import { setAttributes } from '../util';
 
 const patch = function($dom, vnode, $parent = $dom.parentNode, instance = null) {
@@ -59,4 +59,4 @@ const patch = function($dom, vnode, $parent = $dom.parentNode, instance = null) 
     }
 }
 
-export default patch;
+exports.patch = patch;

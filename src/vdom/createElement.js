@@ -5,4 +5,4 @@ const createElement = function(type, props = {}, ...children) {
         children,
     };
 }
-export default createElement;
+exports.createElement = createElement;
