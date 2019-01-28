@@ -1,3 +1,4 @@
+import { Mosaic } from '../index';
 import render from './render';
 
 const patch = function($dom, vnode, $parent = $dom.parentNode) {

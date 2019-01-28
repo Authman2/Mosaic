@@ -1,9 +1,6 @@
 /** Basically an object that can perform a certain function when a property changes. 
 * @param {Object} observingObject The object to look for changes in.. */
 const Observable = (observingObject, willChange, didChange) => {
-    this.willChange = willChange;
-    this.didChange = didChange;
-
     const Handler = {
         get(object, name, receiver) {
             if(name === '__TARGET') { return Object.assign({}, observingObject); };
@@ -23,16 +20,16 @@ const Observable = (observingObject, willChange, didChange) => {
 
             return Reflect.set(object, name, value);
         },
-        // defineProperty(object, name, descriptor) {
-        //     didChange(object);
-        //     return Reflect.defineProperty(object, name, descriptor);
-        // },
-        // deleteProperty(object, name) {
-        //     didChange(object);
-        //     return Reflect.deleteProperty(object, name);
-        // }
+        defineProperty(object, name, descriptor) {
+            didChange(object);
+            return Reflect.defineProperty(object, name, descriptor);
+        },
+        deleteProperty(object, name) {
+            didChange(object);
+            return Reflect.deleteProperty(object, name);
+        }
     };
     return new Proxy(observingObject, Handler);
 }
 
-exports.Observable = Observable;
+export default Observable;

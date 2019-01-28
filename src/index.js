@@ -1,6 +1,7 @@
 import createElement from './vdom/createElement';
 import render from './vdom/render';
 import patch from './vdom/patch';
+import Observable from './observable';
 
 
 /** The configuration options for a Mosaic component. */
@@ -36,13 +37,18 @@ const MosaicOptions = {
 */
 const Mosaic = function(options) {
     this.base = options.element
-    this.data = options.data;
     this.view = options.view;
     this.created = options.created;
     this.willUpdate = options.willUpdate;
     this.updated = options.updated;
     this.willDestroy = options.willDestroy;
     this.destroyed = options.destroyed;
+    this.data = new Observable(options.data, (oldData) => {
+        if(this.willUpdate) this.willUpdate(oldData);
+    }, () => {
+        patch(this.base, this.view());
+        if(this.updated) this.updated();
+    });
     this.__isMosaic = true;
 
     return this;
@@ -79,6 +85,10 @@ Mosaic.view = function(vnode, $parent = null) {
             data: Object.assign({}, vnode.type.data),
             view: vnode.type.view,
             created: vnode.type.created,
+            willUpdate: vnode.type.willUpdate,
+            updated: vnode.type.updated,
+            willDestroy: vnode.type.willDestroy,
+            destroyed: vnode.type.destroyed
         }
         const instance = new Mosaic(options);
         instance.base = render(instance.view(), $parent);
