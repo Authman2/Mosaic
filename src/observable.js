@@ -1,6 +1,6 @@
 /** Basically an object that can perform a certain function when a property changes. 
 * @param {Object} observingObject The object to look for changes in.. */
-const Observable = (observingObject, willChange, didChange) => {
+const Observable = function(observingObject, willChange, didChange) {
     const Handler = {
         get(object, name, receiver) {
             if(name === '__TARGET') { return Object.assign({}, observingObject); };
