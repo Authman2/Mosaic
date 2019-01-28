@@ -17,7 +17,7 @@ const render = function(vnode, $parent = null, instance = null) {
     else if(typeof vnode === 'object' && typeof vnode.type === 'string') {
         const $e = document.createElement(vnode.type);
         const $dom = mount($e);
-        for(var child of [].concat(...vnode.children)) render(child, $dom);
+        for(var child of [].concat(...vnode.children)) render(child, $dom, instance);
         for(var prop in vnode.props) setAttributes($dom, prop, vnode.props[prop], instance);
         return $dom;
     }

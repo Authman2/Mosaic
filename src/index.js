@@ -43,7 +43,7 @@ const Mosaic = function(options) {
     let invalids = findInvalidOptions(options);
     if(invalids !== undefined) throw new Error(invalids);
 
-    this.base = options.element
+    this.element = options.element
     this.view = options.view;
     this.actions = options.actions;
     this.created = options.created;
@@ -51,10 +51,10 @@ const Mosaic = function(options) {
     this.updated = options.updated;
     this.willDestroy = options.willDestroy;
     this.destroyed = options.destroyed;
-    this.data = new Observable(options.data, (oldData) => {
+    this.data = new Observable(options.data || {}, (oldData) => {
         if(this.willUpdate) this.willUpdate(oldData);
     }, () => {
-        patch(this.base, this.view());
+        patch(this.element, this.view());
         if(this.updated) this.updated();
     });
     this.__isMosaic = true;
@@ -64,11 +64,11 @@ const Mosaic = function(options) {
 
 /** "Paints" the Mosaic onto the page by injecting it into its base element. */
 Mosaic.prototype.paint = function() {
-    if(!this.base || !isHTMLElement(this.base)) {
+    if(!this.element || !isHTMLElement(this.element)) {
         throw new Error(`This Mosaic could not be painted because its element property is either not set
         or is not a valid HTML element.`);
     }
-    render(createElement(this), this.base);
+    render(createElement(this), this.element);
 }
 
 
@@ -82,7 +82,7 @@ Mosaic.view = function(vnode, $parent = null) {
     // Render a new instance of this component.
     if(typeof vnode.type === 'object' && vnode.type.__isMosaic) {
         const options = {
-            element: vnode.type.base,
+            element: vnode.type.element,
             data: Object.assign({}, vnode.type.data, props.data ? props.data : {}),
             view: vnode.type.view,
             actions: Object.assign({}, vnode.type.actions),
@@ -93,12 +93,12 @@ Mosaic.view = function(vnode, $parent = null) {
             destroyed: vnode.type.destroyed
         }
         const instance = new Mosaic(options);
-        instance.base = render(instance.view(), $parent, instance);
-        instance.base.__mosaicInstance = instance;
-        instance.base.__mosaicKey = vnode.props.key;
+        instance.element = render(instance.view(), $parent, instance);
+        instance.element.__mosaicInstance = instance;
+        instance.element.__mosaicKey = vnode.props.key;
 
         if(instance.created) instance.created();
-        return instance.base;
+        return instance.element;
     } else {
         return render(vnode.type.view(props), $parent);
     }

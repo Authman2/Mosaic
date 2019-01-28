@@ -5,15 +5,13 @@ const setAttributes = function($element, key, value, instance = null) {
         $element.__mosaicHandlers = $element.__mosaicHandlers || {};
         $element.removeEventListener(event, $element.__mosaicHandlers[event]);
         
-        $element.__mosaicHandlers[event] = value;
-        $element.addEventListener(event, () => {
-			// Make sure you bind all actions to a Mosaic instance so they can update themselves.
-			if(instance) $element.__mosaicHandlers[event].call(instance);
-			else $element.__mosaicHandlers[event];
-		});
+        $element.__mosaicHandlers[event] = function() {
+            value.call(instance);
+        }
+        $element.addEventListener(event, $element.__mosaicHandlers[event]);
     }
     // 2.) Particular types of attributes.
-    else if(key === 'checked' || key === 'value' || key === 'className' || key === 'class') {
+    else if(key === 'checked' || key === 'value' || key === 'className') {
         $element[key] = value;
     }
     // 3.) Style property.

@@ -1,0 +1,51 @@
+.app {
+    position: absolute;
+    margin: 0px;
+    width: 100%;
+    height: 100%;
+    padding: 0px;
+    text-align: center;
+    background-color: #4341b5;
+}
+
+.app-title {
+    color: white;
+    font-weight: 300;
+    font-family: 'Avenir';
+}
+
+input {
+    width: 70%;
+    height: 50px;
+    border: none;
+    padding: 15px;
+    font-size: 16px;
+    border-radius: 10px;
+    font-family: 'Avenir';
+}
+
+button {
+    position: relative;
+    width: 70%;
+    height: 50px;
+    border: none;
+    outline: none;
+    display: block;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 10px;
+    transition-duration: 0.1s;
+    background-color: #6866d8;
+}
+button:hover {
+    color: lightgray;
+    background-color: #5856b9;
+}
+button:active {
+    color: gray;
+    background-color: #333194;
+}

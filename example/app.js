@@ -1,45 +1,51 @@
 import { h, Mosaic } from '../src/index';
+import Observable from '../src/observable';
 
-const root = document.getElementById('root');
-root.innerHTML = '';
+/* Example of a Todo application using Mosaic. */
 
-const Counter = new Mosaic({
-    data: {
-        count: 0
-    },
+const TodoItem = new Mosaic({
+    data: { title: "" },
     view: function() {
-        return <button onclick={this.actions.countUp}>
-            {this.data.count}
-        </button>
-    },
-    created: function() {
-        // setInterval(() => {
-        //     this.data.count = Math.floor(Math.random() * 100);
-        // }, 1000);
+        return <li>{this.data.title}</li>
+    }
+});
+
+const TodoApp = new Mosaic({
+    element: document.getElementById('root'),
+    data: {
+        todos: ['a', 'b', 'c']
     },
     actions: {
-        countUp: function() {
-            this.data.count += 1;
+        addTodo: function() {
+            let value = document.getElementById('inp').value;
+            document.getElementById('inp').value = '';
+
+            console.log(this.data.todos);
+            this.data.todos.push(1);
         }
-    }
-})
-const Label = new Mosaic({
-    data: {},
+    },
     view: function() {
-        return <h1>Count: <Counter /><br/>Something: {this.data.name || "nothing"}</h1>
-    }
-})
-const App = new Mosaic({
-    element: root,
-    data: { title: "Mosaic" },
-    view: function() {
-        return <div>
-            <h1>Welcome to {this.data.title}!</h1>
-            <p>Added property: {this.data.author || 'none'}</p>
-            <Label data={{ name: "bob ross" }}/>
-            <Label />
-            <Label data={{ name: "My name is jeff" }}/>
+        return <div class='app'>
+            <h1 class='app-title'>Mosaic Todo List</h1>
+            <input id='inp' type='text' placeholder='Enter your todo item'/>
+            <button onclick={this.actions.addTodo}>Add Todo</button>
+
+            {/* <div>{this.data.todos.map(todo => {
+                return <li>{todo}</li>
+            })}</div> */}
         </div>
     }
 });
-App.paint();
+TodoApp.paint();
+
+// var obj = {
+//     todos: []
+// };
+// const prox = new Observable(obj, () => {}, () => {
+//     console.log('UPDATED: ', prox);
+// });
+// prox.todos.push(1);
+// prox.todos.push(2);
+// prox.todos.push(3);
+// prox.todos.push(4);
+// prox.todos.push(5);

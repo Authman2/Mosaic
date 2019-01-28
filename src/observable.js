@@ -14,8 +14,10 @@ const Observable = (observingObject, willChange, didChange) => {
             let old = Object.assign({}, observingObject);
             if(willChange) willChange(old);
             
-            // Did update.
+            // Make changes.
             object[name] = value;
+            
+            // Did update.
             if(didChange) didChange(object);
 
             return Reflect.set(object, name, value);

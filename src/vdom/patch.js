@@ -33,6 +33,8 @@ const patch = function($dom, vnode, $parent = $dom.parentNode) {
             pool[key] = child;
         });
         [].concat(...vnode.children).map((child, index) => {
+            console.log(pool[key]);
+            // console.log(index);
             const key = child.props && child.props.key || `__index_${index}`;
             $dom.appendChild(pool[key] ? patch(pool[key], child) : render(child, $dom));
             delete pool[key];
