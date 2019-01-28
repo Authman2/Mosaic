@@ -8,7 +8,7 @@ const isEventProperty = (name) => {
     return /^on/.test(name);
 }
 
-const setAttributes = function($element, key, value) {
+const setAttributes = function($element, key, value, instance = null) {
     // 1.) Function handler for dom element.
     if(typeof value === 'function' && key.startsWith('on')) {
         const event = key.slice(2).toLowerCase();
@@ -16,7 +16,11 @@ const setAttributes = function($element, key, value) {
         $element.removeEventListener(event, $element.__mosaicHandlers[event]);
         
         $element.__mosaicHandlers[event] = value;
-        $element.addEventListener(event, $element.__mosaicHandlers[event]);
+        $element.addEventListener(event, () => {
+			// Make sure you bind all actions to a Mosaic instance so they can update themselves.
+			if(instance) $element.__mosaicHandlers[event].call(instance);
+			else $element.__mosaicHandlers[event];
+		});
     }
     // 2.) Particular types of attributes.
     else if(key === 'checked' || key === 'value' || key === 'className' || key === 'class') {

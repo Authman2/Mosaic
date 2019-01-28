@@ -1,7 +1,7 @@
 import { Mosaic } from '../index';
 import { setAttributes } from '../util';
 
-const render = function(vnode, $parent = null) {
+const render = function(vnode, $parent = null, instance = null) {
     const mount = $parent ? ($el => $parent.appendChild($el)) : ($el => $el);
 
     // 1.) Primitive types.
@@ -18,7 +18,7 @@ const render = function(vnode, $parent = null) {
         const $e = document.createElement(vnode.type);
         const $dom = mount($e);
         for(var child of [].concat(...vnode.children)) render(child, $dom);
-        for(var prop in vnode.props) setAttributes($dom, prop, vnode.props[prop]);
+        for(var prop in vnode.props) setAttributes($dom, prop, vnode.props[prop], instance);
         return $dom;
     }
     // 4.) Otherwise, throw an error.

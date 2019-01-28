@@ -15,6 +15,9 @@ const MosaicOptions = {
     /** The view that will be rendered on the screen. */
     view: Function,
 
+    /** The actions that can be used on this Mosaic component. */
+    actions: Array,
+
     /** The function to run when this component is created and injected into the DOM. */
     created: Function,
 
@@ -38,6 +41,7 @@ const MosaicOptions = {
 const Mosaic = function(options) {
     this.base = options.element
     this.view = options.view;
+    this.actions = options.actions;
     this.created = options.created;
     this.willUpdate = options.willUpdate;
     this.updated = options.updated;
@@ -50,6 +54,10 @@ const Mosaic = function(options) {
         if(this.updated) this.updated();
     });
     this.__isMosaic = true;
+
+    // Handle actions properties, which need to be bound to this component.
+    
+
 
     return this;
 }
@@ -84,6 +92,7 @@ Mosaic.view = function(vnode, $parent = null) {
             element: vnode.type.base,
             data: Object.assign({}, vnode.type.data),
             view: vnode.type.view,
+            actions: Object.assign({}, vnode.type.actions),
             created: vnode.type.created,
             willUpdate: vnode.type.willUpdate,
             updated: vnode.type.updated,
@@ -91,7 +100,7 @@ Mosaic.view = function(vnode, $parent = null) {
             destroyed: vnode.type.destroyed
         }
         const instance = new Mosaic(options);
-        instance.base = render(instance.view(), $parent);
+        instance.base = render(instance.view(), $parent, instance);
         instance.base.__mosaicInstance = instance;
         instance.base.__mosaicKey = vnode.props.key;
 

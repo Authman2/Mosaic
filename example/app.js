@@ -8,14 +8,20 @@ const Counter = new Mosaic({
         count: 0
     },
     view: function() {
-        return <i>
+        return <button onClick={this.actions.countUp}>
             {this.data.count}
-        </i>
+        </button>
     },
     created: function() {
-        setInterval(() => {
-            this.data.count = Math.floor(Math.random() * 100);
-        }, 1000);
+        // setInterval(() => {
+        //     this.data.count = Math.floor(Math.random() * 100);
+        // }, 1000);
+        console.log(this);
+    },
+    actions: {
+        countUp: function() {
+            this.data.count += 1;
+        }
     }
 })
 const Label = new Mosaic({
