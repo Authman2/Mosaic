@@ -19,7 +19,7 @@
   "repository": {
     "url": "https://github.com/authman2/Mosaic"
   },
-  "homepage": "http://mosaicjs.herokuapp.com",
+  "homepage": "https://mosaicjs.netlify.com",
   "devDependencies": {
     "babel-core": "^6.26.3",
     "babel-plugin-transform-react-jsx": "^6.24.1"
