@@ -40,7 +40,6 @@ const Mosaic = function(options) {
 
     this.element = options.element
     this.view = options.view;
-    this.actions = options.actions;
     this.created = options.created;
     this.willUpdate = options.willUpdate;
     this.updated = options.updated;
@@ -51,10 +50,11 @@ const Mosaic = function(options) {
         patch(this.element, this.view());
         if(this.updated) this.updated();
     });
+    this.actions = options.actions;
     this.__isMosaic = true;
 
     // Bind all actions to this instance.
-    for(var i in this.actions) this.actions[i] = this.actions[i].bind(this);
+    // for(var i in this.actions) this.actions[i] = this.actions[i].bind(this);
 
     return this;
 }
@@ -75,9 +75,9 @@ Mosaic.prototype.paint = function() {
  * and uses it as a blueprint for how to build reusable instances of that component.
  */
 Mosaic.view = function(vnode, $parent = null) {
-    const props = Object.assign({}, vnode.props, { children: vnode.children });
-    const _data = Object.assign({}, vnode.type.data, props.data ? props.data : {});
-
+    const props = Object.assign({}, vnode.props);
+    const _data = Object.assign({}, vnode.type.data, props);
+    
     // Render a new instance of this component.
     if(typeof vnode.type === 'object' && vnode.type.__isMosaic) {
         const options = {
@@ -91,6 +91,7 @@ Mosaic.view = function(vnode, $parent = null) {
             willDestroy: vnode.type.willDestroy,
         }
         const instance = new Mosaic(options);
+        instance.children = vnode.children;
         instance.element = render(instance.view(), $parent, instance);
         instance.element.__mosaicInstance = instance;
         instance.element.__mosaicKey = vnode.props.key;
@@ -98,7 +99,7 @@ Mosaic.view = function(vnode, $parent = null) {
         if(instance.created) instance.created();
         return instance.element;
     } else {
-        return render(vnode.type.view(props), $parent);
+        return render(vnode.type.view(), $parent);
     }
 }
 
