@@ -1,15 +1,11 @@
 import { h, Mosaic } from '../src/index';
 
 /* Example of a Todo application using Mosaic. */
+
 const TodoItem = new Mosaic({
     data: { title: "" },
-    actions: {
-        work: function() {
-            
-        }
-    },
     view: function() {
-        return <div class='todo-item' onclick={this.actions.work}>
+        return <div class='todo-item' onclick={this.data.deleteTodo}>
             {this.data.title}
         </div>
     }
@@ -42,8 +38,7 @@ const todoApp = new Mosaic({
             {
                 this.data.todos.map((todo, index) => {
                     return <TodoItem title={todo}
-                                    deleteTodo={this.actions.deleteTodo.bind(this, index)}
-                                    main={this} />
+                                    deleteTodo={this.actions.deleteTodo.bind(this, index)}/>
                 })
             }
         </div>

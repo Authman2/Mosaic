@@ -53,8 +53,8 @@ const Mosaic = function(options) {
     this.actions = options.actions;
     this.__isMosaic = true;
 
-    // Bind all actions to this instance.
-    // for(var i in this.actions) this.actions[i] = this.actions[i].bind(this);
+    // Bind actions.
+    for(var i in this.actions) this.actions[i] = this.actions[i].bind(this);
 
     return this;
 }
@@ -75,7 +75,12 @@ Mosaic.prototype.paint = function() {
  * and uses it as a blueprint for how to build reusable instances of that component.
  */
 Mosaic.view = function(vnode, $parent = null) {
-    const props = Object.assign({}, vnode.props);
+    let props = Object.assign({}, vnode.props);
+    
+    // Link is an optional relationship that can be added to each component.
+    let link = props.link ? props.link : undefined;
+    if('link' in props) delete props['link'];
+
     const _data = Object.assign({}, vnode.type.data, props);
     
     // Render a new instance of this component.
@@ -91,7 +96,13 @@ Mosaic.view = function(vnode, $parent = null) {
             willDestroy: vnode.type.willDestroy,
         }
         const instance = new Mosaic(options);
-        instance.children = vnode.children;
+        if(typeof link !== 'undefined') {
+            instance.parent = link.parent;
+            link.parent[link.name] = instance;
+        }
+        if(vnode.children && vnode.children.length > 0) {
+            instance.children = vnode.children;
+        }
         instance.element = render(instance.view(), $parent, instance);
         instance.element.__mosaicInstance = instance;
         instance.element.__mosaicKey = vnode.props.key;

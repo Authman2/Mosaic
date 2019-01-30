@@ -5,7 +5,7 @@ const setAttributes = function($element, key, value, instance = null) {
         $element.__mosaicHandlers = $element.__mosaicHandlers || {};
         $element.removeEventListener(event, $element.__mosaicHandlers[event]);
         
-        $element.__mosaicHandlers[event] = value.bind(instance);
+        $element.__mosaicHandlers[event] = value;
         $element.addEventListener(event, $element.__mosaicHandlers[event]);
     }
     // 2.) Particular types of attributes.
