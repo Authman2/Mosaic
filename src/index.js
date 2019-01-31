@@ -3,6 +3,7 @@ import { render } from './vdom/render';
 import { patch } from './vdom/patch';
 import { Observable } from './observable';
 import { isHTMLElement, findInvalidOptions } from './validations';
+import { viewToDOM } from './util';
 
 /** The configuration options for a Mosaic component. */
 const MosaicOptions = {
@@ -35,8 +36,8 @@ const MosaicOptions = {
 /** Creates a new Mosaic component with configuration options.
 * @param {MosaicOptions} options The configuration options for this Mosaic. */
 const Mosaic = function(options) {
-    let invalids = findInvalidOptions(options);
-    if(invalids !== undefined) throw new Error(invalids);
+    // let invalids = findInvalidOptions(options);
+    // if(invalids !== undefined) throw new Error(invalids);
 
     this.element = options.element
     this.view = options.view;
@@ -47,7 +48,8 @@ const Mosaic = function(options) {
     this.data = new Observable(options.data || {}, (oldData) => {
         if(this.willUpdate) this.willUpdate(oldData);
     }, () => {
-        patch(this.element, this.view());
+        let htree = viewToDOM(this.view, this);
+        patch(this.element, htree);
         if(this.updated) this.updated();
     });
     this.actions = options.actions;
@@ -103,14 +105,16 @@ Mosaic.view = function(vnode, $parent = null) {
         if(vnode.children && vnode.children.length > 0) {
             instance.children = vnode.children;
         }
-        instance.element = render(instance.view(), $parent, instance);
+        let htree = viewToDOM(instance.view, instance);
+        instance.element = render(htree, $parent, instance);
         instance.element.__mosaicInstance = instance;
         instance.element.__mosaicKey = vnode.props.key;
 
         if(instance.created) instance.created();
         return instance.element;
     } else {
-        return render(vnode.type.view(), $parent);
+        let htree = viewToDOM(vnode.type.view, vnode);
+        return render(htree, $parent);
     }
 }
 
@@ -120,14 +124,16 @@ Mosaic.patch = function($dom, vnode, $parent = $dom.parentNode) {
     
     if($dom.__mosaicInstance && $dom.__mosaicInstance.constructor === vnode.type) {
         $dom.__mosaicInstance.props = props;
-        return patch($dom, $dom.__mosaicInstance.view(), $parent, $dom.__mosaicInstance);
+        let htree = viewToDOM($dom.__mosaicInstance.view, $dom.__mosaicInstance);
+        return patch($dom, htree, $parent, $dom.__mosaicInstance);
     }
     else if(typeof vnode.type === 'object' && vnode.type.__isMosaic === true) {
         const $ndom = Mosaic.view(vnode, $parent);
         return $parent ? ($parent.replaceChild($ndom, $dom) && $ndom) : $ndom;
     }
     else if(typeof vnode.type !== 'object' || vnode.type.__isMosaic === false) {
-        return patch($dom, vnode.type.view(props), $parent, $dom.__mosaicInstance);
+        let htree = viewToDOM(vnode.type.view.bind(props), vnode.type);
+        return patch($dom, htree, $parent, $dom.__mosaicInstance);
     }
 }
 

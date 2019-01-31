@@ -1,3 +1,4 @@
+/** Sets the attributes on the HTML elements that were mounted by the virtual DOM. */
 const setAttributes = function($element, key, value, instance = null) {
     // 1.) Function handler for dom element.
     if(typeof value === 'function' && key.startsWith('on')) {
@@ -16,10 +17,6 @@ const setAttributes = function($element, key, value, instance = null) {
     else if(key === 'style') {
         if(typeof value === 'object') Object.assign($element.style, value);
         else if(typeof value === 'string') $element[key] = value;
-    }
-    // 4.) Check for the reference type.
-    else if(key === 'ref' && typeof value === 'function') {
-        value($element);
     }
     // 5.) Support the key property for more efficient rendering.
     else if(key === 'key') {
@@ -93,6 +90,44 @@ const deepClone = function(from) {
 	return out;
 }
 
+/** Returns whether or not an object is an HTML element. */
+function isHTMLElement(obj) {
+    try { return obj instanceof HTMLElement; }
+    catch(e){
+      return (typeof obj === "object") && (obj.nodeType === 1) && (typeof obj.style === "object") &&
+        (typeof obj.ownerDocument ==="object");
+    }
+}
+
+
+/** Functions that converts a real DOM tree into a virtual one. This is used for string-based views. */
+
+
+/** Converts an html string or file into actual DOM elements. If the view function is passed in, it will
+* just be returned.
+* @param {String} input Either and HTML string or the file path containg .html at the end. */
+const viewToDOM = function(input, caller) {
+    if(typeof input === 'function') return input.call(caller);
+
+    if(input.endsWith('.html')) {
+
+    } else {
+        var replaced = input;
+        for(var dataProp in caller.data) {
+            let propName = dataProp;
+            let propVal = caller.data[dataProp];
+            let re = new RegExp('{{[ ]*this.data.' + propName + '[ ]*}}', "gim");
+            let nstring = input.replace(re, propVal);
+            replaced = nstring;
+        }
+        let parser = new DOMParser();
+        let $element = parser.parseFromString(replaced, 'text/html').body.firstChild;
+        return $element;
+    }
+}
+
 exports.setAttributes = setAttributes;
 exports.traverseVDomTree = traverseVDomTree;
 exports.deepClone = deepClone;
+exports.isHTMLElement = isHTMLElement;
+exports.viewToDOM = viewToDOM;
