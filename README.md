@@ -16,7 +16,7 @@ that there is no need to call "setState" or anything like that, instead just cha
 - **JSX/HTML-Templates**: You can use jsx or the "h" function that comes with Mosaic to write a component's view. If
 you are not a fan of JSX, you can also write some basic HTML-templates that can be dynamically updated using the data
 property and the double curly brackets like so: ```html <h1>{{ this.data.title }}</h1>```
-- **Easy to Learn**: The syntax and structure of Mosaic components is meant to make it easy to learn so that it does not require a lot of setup to start using.
+- **Router**: Mosaic comes with a basic router for navigating between components.
 
 ## Installation
 The easiest way to use Mosaic is to first install the npm package by using:
@@ -25,7 +25,7 @@ npm install --save @authman2/mosaic
 ```
 or with a script tag.
 ```html
-<script src='https://unpkg.com/@authman2/mosaic@0.2.0/dist/index.js'></script>
+<script src='https://unpkg.com/@authman2/mosaic@latest/dist/index.js'></script>
 ```
 Then, for fast builds and hot reloading, install the build tool "Parcel."
 ```shell
