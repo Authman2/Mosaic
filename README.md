@@ -5,14 +5,17 @@
 </p>
 
 # <a target='_blank' rel='noopener noreferrer' href='https://mosaicjs.netlify.com'>Mosaic</a>
-> Mosaic is a front-end JavaScript library for building user interfaces. It is a component-based library that uses a virtual dom for fast rendering and JSX for creating views. Mosaic handles the views of a web app, which means that you can choose to include it in a project here and there or you can create an entire application based around it.
+> Mosaic is a front-end JavaScript library for building user interfaces. It is a component-based library that uses a virtual dom for fast rendering and JSX as well as HTML-templates for creating views. Mosaic handles the views of a 
+web app, which means that you can choose to include it in a project here and there or you can create an entire application based around it.
 
 ## Features
 - **Component-Based**: Mosaic components are reusable pieces of code that each keep track of their own state (referred to as "data"), actions, lifecycle functions, and more.
 - **Observable/Reactive Data**: Mosaic uses Observables to keep track of changes to a component's data. This means 
 that there is no need to call "setState" or anything like that, instead just change the data directly.
 - **Virtual DOM**: The use of a virtual dom makes updating web apps very fast.
-- **JSX**: You can use jsx or the "h" function that comes with Mosaic to write a component's view.
+- **JSX/HTML-Templates**: You can use jsx or the "h" function that comes with Mosaic to write a component's view. If
+you are not a fan of JSX, you can also write some basic HTML-templates that can be dynamically updated using the data
+property and the double curly brackets like so: ```html <h1>{{ this.data.title }}</h1>```
 - **Easy to Learn**: The syntax and structure of Mosaic components is meant to make it easy to learn so that it does not require a lot of setup to start using.
 
 ## Installation
@@ -22,7 +25,7 @@ npm install --save @authman2/mosaic
 ```
 or with a script tag.
 ```html
-<script src='https://unpkg.com/@authman2/mosaic@0.1.9/dist/index.js'></script>
+<script src='https://unpkg.com/@authman2/mosaic@0.2.0/dist/index.js'></script>
 ```
 Then, for fast builds and hot reloading, install the build tool "Parcel."
 ```shell
