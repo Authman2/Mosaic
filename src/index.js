@@ -77,6 +77,20 @@ const Mosaic = function(options) {
     /** Destroys this instance of the Mosaic and triggers the willDestory lifecycle function. */
     this.destroy = function() {
         const instance = this.element.__mosaicInstance;
+        const parent = instance.parent;
+        
+        // Remove the parent-child link.
+        if(parent) {
+            let keys = Object.keys(parent);
+            for(var i in keys) {
+                let val = parent[keys[i]];
+                if(val && val === this) {
+                    parent[keys[i]] = undefined;
+                    break;
+                }
+            };
+        }
+
         if(instance && instance.willDestroy) instance.willDestroy();
         this.element.remove();
     }

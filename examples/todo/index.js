@@ -37,7 +37,7 @@ const todoApp = new Mosaic({
             {
                 this.data.todos.map((todo, index) => {
                     return <TodoItem title={todo}
-                                    deleteTodo={this.actions.deleteTodo.bind(this, index)}/>
+                                    deleteTodo={this.actions.deleteTodo.bind(this, index)} />
                 })
             }
         </div>
