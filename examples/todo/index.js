@@ -1,4 +1,4 @@
-import { h, Mosaic } from '../../src/index';
+import { Mosaic } from '../../src/index';
 
 /* Example of a Todo application using Mosaic. */
 const TodoItem = new Mosaic({

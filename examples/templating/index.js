@@ -1,4 +1,4 @@
-import { h, Mosaic } from '../../src/index';
+import { Mosaic } from '../../src/index';
 import template from './templating.html';
 
 const TemplateLabel = new Mosaic({

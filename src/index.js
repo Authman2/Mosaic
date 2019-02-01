@@ -2,6 +2,7 @@ import { createElement } from './vdom/createElement';
 import { render } from './vdom/render';
 import { patch } from './vdom/patch';
 import { Observable } from './observable';
+import { Router } from './router';
 import { isHTMLElement, findInvalidOptions } from './validations';
 import { viewToDOM } from './util';
 
@@ -67,9 +68,20 @@ Mosaic.prototype.paint = function() {
         throw new Error(`This Mosaic could not be painted because its element property is either not set
         or is not a valid HTML element.`);
     }
+    
+    // Clear anything that is there.
+    while(this.element.firstChild) this.element.removeChild(this.element.firstChild);
+
+    // Render an h-tree.
     let htree = createElement(this);
     render(htree, this.element, this);
 }
+
+
+/** A basic routing solution for Mosaic apps.
+* @param {Array} routes A list of routes of the form { path: String | Array of Strings, mosaic: Mosaic }. */
+Mosaic.Router = Router;
+
 
 
 
