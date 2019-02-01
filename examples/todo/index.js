@@ -2,10 +2,9 @@ import { Mosaic } from '../../src/index';
 
 /* Example of a Todo application using Mosaic. */
 const TodoItem = new Mosaic({
-    data: { title: "" },
     view: function() {
         return <div class='todo-item' onclick={this.data.deleteTodo}>
-            {this.data.title}
+            { this.data.title || '' }
         </div>
     }
 });

@@ -59,6 +59,14 @@ const Mosaic = function(options) {
     // Bind actions.
     for(var i in this.actions) this.actions[i] = this.actions[i].bind(this);
 
+    
+    /** Destroys this instance of the Mosaic and triggers the willDestory lifecycle function. */
+    this.destroy = function() {
+        const instance = this.element.__mosaicInstance;
+        if(instance && instance.willDestroy) instance.willDestroy();
+        this.element.remove();
+    }
+
     return this;
 }
 
