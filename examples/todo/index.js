@@ -1,25 +1,32 @@
 import { h, Mosaic } from '../../src/index';
 
 /* Example of a Todo application using Mosaic. */
-
 const TodoItem = new Mosaic({
     data: { title: "" },
     view: function() {
-        return <div>
-            <h1>Random Number: { this.data.number }</h1>
+        return <div class='todo-item' onclick={this.data.deleteTodo}>
+            {this.data.title}
         </div>
-    },
-    created: function() {
-        // Once this component is created, set up a timer that 
-        // will change the data to a random number between 0 and 100.
-        setTimeout(() => {
-            this.data.number = Math.floor(Math.random() * 100);
-        }, 1000);
     }
 });
 
-const app = new Mosaic({
+const todoApp = new Mosaic({
     element: document.getElementById('root'),
+    data: {
+        todos: ['Click the "Add Todo" button to add another todo item!',
+                'Click on a todo item to delete it.']
+    },
+    actions: {
+        addTodo: function() {
+            let value = document.getElementById('inp').value;
+            document.getElementById('inp').value = '';
+
+            this.data.todos = this.data.todos.concat(value);
+        },
+        deleteTodo: function(todoIndex) {
+            this.data.todos = this.data.todos.filter((_, index) => index !== todoIndex);
+        }
+    },
     view: function() {
         return <div class='app'>
             <h1 class='app-title'>Mosaic Todo List</h1>
@@ -36,4 +43,4 @@ const app = new Mosaic({
         </div>
     }
 });
-app.paint();
+todoApp.paint();
