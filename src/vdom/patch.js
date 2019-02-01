@@ -1,6 +1,7 @@
 import { Mosaic } from '../index';
 import { render } from './render';
-import { setAttributes, isHTMLElement, viewToDOM } from '../util';
+import { isHTMLElement } from  '../validations';
+import { setAttributes, viewToDOM } from '../util';
 
 const patch = function($dom, vnode, $parent = $dom.parentNode, instance = null) {
     const replace = $parent ? ($el => { $parent.replaceChild($el, $dom); return $el }) : ($el => $el);
