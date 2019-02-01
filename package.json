@@ -14,7 +14,10 @@
     "javascipt",
     "ui"
   ],
-  "files": ["src/", "dist/"],
+  "files": [
+    "src/",
+    "dist/"
+  ],
   "author": "Adeola Uthman",
   "license": "MIT",
   "repository": {
