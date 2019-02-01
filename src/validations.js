@@ -39,10 +39,19 @@ const findInvalidOptions = function(options) {
     }
 
     // Lifecycle
-    if((options.created && typeof options.created !== 'function') || 
-        (options.willUpdate && typeof options.willUpdate !== 'function') ||
-        (options.updated && typeof options.updated !== 'function') || 
-        (options.willDestory && typeof options.willDestory !== 'function')) {
+    if((options.created && typeof options.created !== 'function')) {
+        return `All lifecycle methods (created, willUpdate, updated, and willDestroy) must be
+        function types.`;
+    }
+    if(options.willUpdate && typeof options.willUpdate !== 'function') {
+        return `All lifecycle methods (created, willUpdate, updated, and willDestroy) must be
+        function types.`;
+    }
+    if(options.updated && typeof options.updated !== 'function') {
+        return `All lifecycle methods (created, willUpdate, updated, and willDestroy) must be
+        function types.`;
+    }
+    if(options.willDestory && typeof options.willDestory !== 'function') {
         return `All lifecycle methods (created, willUpdate, updated, and willDestroy) must be
         function types.`;
     }
