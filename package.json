@@ -1,8 +1,8 @@
 {
   "name": "@authman2/mosaic",
-  "version": "0.1.7",
+  "version": "0.1.9",
   "description": "A front-end JavaScript library for creating user interfaces",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "parcel -p 3000 example/app.html",
     "clean": "rm -rf .cache dist",
@@ -14,6 +14,7 @@
     "javascipt",
     "ui"
   ],
+  "files": ["src/", "dist/"],
   "author": "Adeola Uthman",
   "license": "MIT",
   "repository": {

@@ -20,6 +20,10 @@ The easiest way to use Mosaic is to first install the npm package by using:
 ```shell
 npm install --save @authman2/mosaic
 ```
+or with a script tag.
+```html
+<script src='https://unpkg.com/@authman2/mosaic@0.1.9/dist/index.js'></script>
+```
 Then, for fast builds and hot reloading, install the build tool "Parcel."
 ```shell
 npm install --save-dev parcel-bundler

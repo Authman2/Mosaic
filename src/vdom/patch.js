@@ -1,9 +1,10 @@
 import { Mosaic } from '../index';
 import { render } from './render';
-import { setAttributes } from '../util';
+import { setAttributes, isHTMLElement, viewToDOM } from '../util';
 
 const patch = function($dom, vnode, $parent = $dom.parentNode, instance = null) {
     const replace = $parent ? ($el => { $parent.replaceChild($el, $dom); return $el }) : ($el => $el);
+    // console.log($dom, vnode);
 
     // 1.) Patch the differences of a Mosaic type.
     if(typeof vnode === 'object' && typeof vnode.type === 'object' && vnode.type.__isMosaic === true) {
@@ -13,16 +14,21 @@ const patch = function($dom, vnode, $parent = $dom.parentNode, instance = null) 
     else if(typeof vnode !== 'object' && $dom instanceof Text) {
         return ($dom.textContent !== vnode) ? replace(render(vnode, $parent, instance)) : $dom;
     }
-    // 3.) If one is an object and one is text, just replace completely.
+    // 3.) If it is an HTML element, just replace the dom element.
+    else if(isHTMLElement(vnode)) {
+        let $s = render(vnode, $dom, instance, true);
+        return $s;
+    }
+    // 4.) If one is an object and one is text, just replace completely.
     else if(typeof vnode === 'object' && $dom instanceof Text) {
         return replace(render(vnode, $parent, instance));
     }
-    // 4.) One is an object and the tags are different, so replace completely.
+    // 5.) One is an object and the tags are different, so replace completely.
     else if(typeof vnode === 'object' && (vnode.type && !vnode.type.__isMosaic) && $dom.nodeName !== vnode.type.toUpperCase()) {
         let n = replace(render(vnode, $parent, instance));
         return n;
     }
-    // 5.) If they are objects and their tags are equal, patch their children recursively.
+    // 6.) If they are objects and their tags are equal, patch their children recursively.
     else if(typeof vnode === 'object' && $dom.nodeName === vnode.type.toUpperCase()) {
         const pool = {};
         const active = document.activeElement;
