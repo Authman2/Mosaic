@@ -36,8 +36,8 @@ const MosaicOptions = {
 /** Creates a new Mosaic component with configuration options.
 * @param {MosaicOptions} options The configuration options for this Mosaic. */
 const Mosaic = function(options) {
-    // let invalids = findInvalidOptions(options);
-    // if(invalids !== undefined) throw new Error(invalids);
+    let invalids = findInvalidOptions(options);
+    if(invalids !== undefined) throw new Error(invalids);
 
     this.element = options.element
     this.view = options.view;
@@ -49,7 +49,7 @@ const Mosaic = function(options) {
         if(this.willUpdate) this.willUpdate(oldData);
     }, () => {
         let htree = viewToDOM(this.view, this);
-        patch(this.element, htree);
+        patch(this.element, htree, this.element.parentNode, this);
         if(this.updated) this.updated();
     });
     this.actions = options.actions;

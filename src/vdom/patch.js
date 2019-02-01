@@ -4,7 +4,6 @@ import { setAttributes, isHTMLElement, viewToDOM } from '../util';
 
 const patch = function($dom, vnode, $parent = $dom.parentNode, instance = null) {
     const replace = $parent ? ($el => { $parent.replaceChild($el, $dom); return $el }) : ($el => $el);
-    // console.log($dom, vnode);
 
     // 1.) Patch the differences of a Mosaic type.
     if(typeof vnode === 'object' && typeof vnode.type === 'object' && vnode.type.__isMosaic === true) {
@@ -16,8 +15,9 @@ const patch = function($dom, vnode, $parent = $dom.parentNode, instance = null) 
     }
     // 3.) If it is an HTML element, just replace the dom element.
     else if(isHTMLElement(vnode)) {
-        let $s = render(vnode, $dom, instance, true);
-        return $s;
+        let $node = replace(vnode);
+        instance.element = $node;
+        return $node;
     }
     // 4.) If one is an object and one is text, just replace completely.
     else if(typeof vnode === 'object' && $dom instanceof Text) {

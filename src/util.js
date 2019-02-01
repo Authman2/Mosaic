@@ -1,3 +1,6 @@
+const path = require('path');
+const fs = require('fs');
+
 /** Sets the attributes on the HTML elements that were mounted by the virtual DOM. */
 const setAttributes = function($element, key, value, instance = null) {
     // 1.) Function handler for dom element.
@@ -99,31 +102,23 @@ function isHTMLElement(obj) {
     }
 }
 
-
-/** Functions that converts a real DOM tree into a virtual one. This is used for string-based views. */
-
-
-/** Converts an html string or file into actual DOM elements. If the view function is passed in, it will
+/** Converts an html string into actual DOM elements. If the view function is passed in, it will
 * just be returned.
-* @param {String} input Either and HTML string or the file path containg .html at the end. */
+* @param {String} input The HTML string. */
 const viewToDOM = function(input, caller) {
     if(typeof input === 'function') return input.call(caller);
 
-    if(input.endsWith('.html')) {
-
-    } else {
-        var replaced = input;
-        for(var dataProp in caller.data) {
-            let propName = dataProp;
-            let propVal = caller.data[dataProp];
-            let re = new RegExp('{{[ ]*this.data.' + propName + '[ ]*}}', "gim");
-            let nstring = input.replace(re, propVal);
-            replaced = nstring;
-        }
-        let parser = new DOMParser();
-        let $element = parser.parseFromString(replaced, 'text/html').body.firstChild;
-        return $element;
+    var replaced = input;
+    for(var dataProp in caller.data) {
+        let propName = dataProp;
+        let propVal = caller.data[dataProp];
+        let re = new RegExp('{{[ ]*this.data.' + propName + '[ ]*}}', "gim");
+        let nstring = input.replace(re, propVal);
+        replaced = nstring;
     }
+    let parser = new DOMParser();
+    let $element = parser.parseFromString(replaced, 'text/html').body.firstChild;
+    return $element;
 }
 
 exports.setAttributes = setAttributes;
