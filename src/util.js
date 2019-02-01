@@ -1,6 +1,3 @@
-const path = require('path');
-const fs = require('fs');
-
 /** Sets the attributes on the HTML elements that were mounted by the virtual DOM. */
 const setAttributes = function($element, key, value, instance = null) {
     // 1.) Function handler for dom element.
