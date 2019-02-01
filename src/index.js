@@ -3,6 +3,7 @@ import { render } from './vdom/render';
 import { patch } from './vdom/patch';
 import { Observable } from './observable';
 import { isHTMLElement, findInvalidOptions } from './validations';
+import { viewToDOM } from './util';
 
 /** The configuration options for a Mosaic component. */
 const MosaicOptions = {
@@ -40,7 +41,6 @@ const Mosaic = function(options) {
 
     this.element = options.element
     this.view = options.view;
-    this.actions = options.actions;
     this.created = options.created;
     this.willUpdate = options.willUpdate;
     this.updated = options.updated;
@@ -48,12 +48,14 @@ const Mosaic = function(options) {
     this.data = new Observable(options.data || {}, (oldData) => {
         if(this.willUpdate) this.willUpdate(oldData);
     }, () => {
-        patch(this.element, this.view());
+        let htree = viewToDOM(this.view, this);
+        patch(this.element, htree, this.element.parentNode, this);
         if(this.updated) this.updated();
     });
+    this.actions = options.actions;
     this.__isMosaic = true;
 
-    // Bind all actions to this instance.
+    // Bind actions.
     for(var i in this.actions) this.actions[i] = this.actions[i].bind(this);
 
     return this;
@@ -75,9 +77,14 @@ Mosaic.prototype.paint = function() {
  * and uses it as a blueprint for how to build reusable instances of that component.
  */
 Mosaic.view = function(vnode, $parent = null) {
-    const props = Object.assign({}, vnode.props, { children: vnode.children });
-    const _data = Object.assign({}, vnode.type.data, props.data ? props.data : {});
+    let props = Object.assign({}, vnode.props);
+    
+    // Link is an optional relationship that can be added to each component.
+    let link = props.link ? props.link : undefined;
+    if('link' in props) delete props['link'];
 
+    const _data = Object.assign({}, vnode.type.data, props);
+    
     // Render a new instance of this component.
     if(typeof vnode.type === 'object' && vnode.type.__isMosaic) {
         const options = {
@@ -91,14 +98,23 @@ Mosaic.view = function(vnode, $parent = null) {
             willDestroy: vnode.type.willDestroy,
         }
         const instance = new Mosaic(options);
-        instance.element = render(instance.view(), $parent, instance);
+        if(typeof link !== 'undefined') {
+            instance.parent = link.parent;
+            link.parent[link.name] = instance;
+        }
+        if(vnode.children && vnode.children.length > 0) {
+            instance.children = vnode.children;
+        }
+        let htree = viewToDOM(instance.view, instance);
+        instance.element = render(htree, $parent, instance);
         instance.element.__mosaicInstance = instance;
         instance.element.__mosaicKey = vnode.props.key;
 
         if(instance.created) instance.created();
         return instance.element;
     } else {
-        return render(vnode.type.view(props), $parent);
+        let htree = viewToDOM(vnode.type.view, vnode);
+        return render(htree, $parent);
     }
 }
 
@@ -108,14 +124,16 @@ Mosaic.patch = function($dom, vnode, $parent = $dom.parentNode) {
     
     if($dom.__mosaicInstance && $dom.__mosaicInstance.constructor === vnode.type) {
         $dom.__mosaicInstance.props = props;
-        return patch($dom, $dom.__mosaicInstance.view(), $parent, $dom.__mosaicInstance);
+        let htree = viewToDOM($dom.__mosaicInstance.view, $dom.__mosaicInstance);
+        return patch($dom, htree, $parent, $dom.__mosaicInstance);
     }
     else if(typeof vnode.type === 'object' && vnode.type.__isMosaic === true) {
         const $ndom = Mosaic.view(vnode, $parent);
         return $parent ? ($parent.replaceChild($ndom, $dom) && $ndom) : $ndom;
     }
     else if(typeof vnode.type !== 'object' || vnode.type.__isMosaic === false) {
-        return patch($dom, vnode.type.view(props), $parent, $dom.__mosaicInstance);
+        let htree = viewToDOM(vnode.type.view.bind(props), vnode.type);
+        return patch($dom, htree, $parent, $dom.__mosaicInstance);
     }
 }
 

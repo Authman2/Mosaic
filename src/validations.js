@@ -1,10 +1,4 @@
-function isHTMLElement(obj) {
-    try { return obj instanceof HTMLElement; }
-    catch(e){
-      return (typeof obj === "object") && (obj.nodeType === 1) && (typeof obj.style === "object") &&
-        (typeof obj.ownerDocument ==="object");
-    }
-}
+import { isHTMLElement } from './util';
 
 /** Looks at a Mosaic's configuration options and returns undefined if there is nothing wrong, and
  * returns a descriptor sentence if something is wrong.
@@ -29,8 +23,9 @@ const findInvalidOptions = function(options) {
     if(!options.view) {
         return `View is a required property of Mosaic components.`
     }
-    if(typeof options.view !== 'function') {
-        return `The view property must be a function that returns JSX code or an h-tree.`;
+    if(typeof options.view !== 'function' && typeof options.view !== 'string') {
+        return `The view property must either be a function that returns JSX code, an h-tree, a string representation
+        of an HTML tree, or the path to an HTML file.`;
     }
 
     // Actions

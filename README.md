@@ -9,7 +9,7 @@
 
 ## Features
 - **Component-Based**: Mosaic components are reusable pieces of code that each keep track of their own state (referred to as "data"), actions, lifecycle functions, and more.
-- **Observable Data Pattern**: Mosaic uses Observables to keep track of changes to a component's data. This means 
+- **Observable/Reactive Data**: Mosaic uses Observables to keep track of changes to a component's data. This means 
 that there is no need to call "setState" or anything like that, instead just change the data directly.
 - **Virtual DOM**: The use of a virtual dom makes updating web apps very fast.
 - **JSX**: You can use jsx or the "h" function that comes with Mosaic to write a component's view.
@@ -63,10 +63,6 @@ import { h, Mosaic } from '@authman2/mosaic';
     
 // Create a label and button component.
 const NavButton = new Mosaic({
-    data: {
-        label: "Default Label",
-        buttonTitle: "Default Button Title"
-    },
     actions: {
         print: function() {
             console.log(this.data.buttonTitle);
@@ -102,12 +98,12 @@ const app = new Mosaic({
           <div>
               <h1>This is a {this.data.title}!</h1>
               <p>Click below to print a message!</p>
-              <button onClick={this.actions.sayHello}>Click Here</button>
+              <button onclick={this.actions.sayHello}>Click Here</button>
               <br/>
               <br/>
-              <NavButton data={{ label: "Home", buttonTitle: "Home Button" }}/>
-              <NavButton data={{ label: "About", buttonTitle: "Home Button" }}/>
-              <NavButton data={{ label: "Contact", buttonTitle: "Contact Button" }}/>
+              <NavButton label="Home" buttonTitle="Home Button" />
+              <NavButton label="About" buttonTitle="Home Button" />
+              <NavButton label="Contact" buttonTitle="Contact Button" />
           </div>
       )
     }
