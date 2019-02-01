@@ -46,13 +46,27 @@ const Mosaic = function(options) {
     this.willUpdate = options.willUpdate;
     this.updated = options.updated;
     this.willDestroy = options.willDestroy;
-    this.data = new Observable(options.data || {}, (oldData) => {
+
+    // Make each array a proxy of its own so that 
+    let _tempData = options.data;
+    for(var i in _tempData) {
+        if(!Array.isArray(_tempData[i])) continue;
+        
+        _tempData[i] = new Observable(_tempData[i], () => {}, () => {
+            let htree = viewToDOM(this.view, this);
+            patch(this.element, htree, this.element.parentNode, this);
+            if(this.updated) this.updated();
+        });
+    }
+    // Setup the data observer.
+    this.data = new Observable(_tempData || {}, (oldData) => {
         if(this.willUpdate) this.willUpdate(oldData);
     }, () => {
         let htree = viewToDOM(this.view, this);
         patch(this.element, htree, this.element.parentNode, this);
         if(this.updated) this.updated();
     });
+
     this.actions = options.actions;
     this.__isMosaic = true;
 

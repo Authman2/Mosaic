@@ -20,10 +20,10 @@ const todoApp = new Mosaic({
             let value = document.getElementById('inp').value;
             document.getElementById('inp').value = '';
 
-            this.data.todos = this.data.todos.concat(value);
+            this.data.todos.push(value);
         },
         deleteTodo: function(todoIndex) {
-            this.data.todos = this.data.todos.filter((_, index) => index !== todoIndex);
+            this.data.todos.splice(todoIndex, 1);
         }
     },
     view: function() {
@@ -31,6 +31,7 @@ const todoApp = new Mosaic({
             <h1 class='app-title'>Mosaic Todo List</h1>
             <input id='inp' type='text' placeholder='Enter your todo item'
                     onkeypress={(e) => { if(e.keyCode === 13) this.actions.addTodo() }}/>
+                    
             <button onclick={this.actions.addTodo}>Add Todo</button>
 
             {
