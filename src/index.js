@@ -11,6 +11,9 @@ const MosaicOptions = {
     /** The HTML element to inject this Mosaic component into. */
     element: HTMLElement,
 
+    /** The optional router to use for this Mosaic app. */
+    router: Router,
+
     /** The state of this component. */
     data: Object,
 
@@ -40,7 +43,8 @@ const Mosaic = function(options) {
     let invalids = findInvalidOptions(options);
     if(invalids !== undefined) throw new Error(invalids);
 
-    this.element = options.element
+    this.element = options.element;
+    this.router = options.router;
     this.view = options.view;
     this.created = options.created;
     this.willUpdate = options.willUpdate;
@@ -138,6 +142,7 @@ Mosaic.view = function(vnode, $parent = null) {
     if(typeof vnode.type === 'object' && vnode.type.__isMosaic) {
         const options = {
             element: vnode.type.element,
+            router: vnode.type.router,
             data: _data,
             view: vnode.type.view,
             actions: Object.assign({}, vnode.type.actions),

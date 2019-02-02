@@ -1,67 +1,67 @@
+import { Mosaic } from './index';
+
 /** A basic routing solution for Mosaic apps.
 * @param {Array} routes A list of routes of the form { path: String | Array of Strings, mosaic: Mosaic }. */
-const Router = function(...routes) {
-    // Make sure there is at least one default route.
-    let invalid = routes.find(r => {
-        if(!('path' in r) || !('mosaic' in r)) return false;
-        if(Array.isArray(r.path)) return r.path.includes('/');
-        else return r.path === '/';
-    })
-    if(invalid === undefined) {
+const Router = function() {
+    this.currentRoute = '/';
+    this.routes = [];
+    this.__isRouter = true;
+
+    // Setup the 'pop' url state.
+    window.onpopstate = () => {
+        let oldURL = window.location.pathname;
+        let oldRouteObj = this.routes.find(r => {
+            if(Array.isArray(r.path)) return r.path.includes(oldURL);
+            else return r.path === oldURL;
+        });
+        if(oldRouteObj) oldRouteObj.mosaic.paint();
+    }
+}
+
+/** Adds a new route to the Router.
+* @param {String | Array} path The path, or array of paths, that this route will match.
+* @param {Mosaic} mosaic The mosaic to display at this route. */
+Router.prototype.addRoute = function({ path, mosaic }) {
+    if(typeof path !== 'string' && !Array.isArray(path)) {
+        throw new Error(`Mosaic.Router requires a "path" proeprty and a "mosaic" property for each route. There 
+        must be exactly one default route with the path of \'/\'`);
+    }
+    if(typeof mosaic !== 'object' && !mosaic.__isMosaic) {
         throw new Error(`Mosaic.Router requires a "path" proeprty and a "mosaic" property for each route. There 
         must be exactly one default route with the path of \'/\'`);
     }
 
+    this.routes.push({ path, mosaic });
+}
 
-    // Get the default route, which should be the empty path.
-    this.currentRoute = routes.find(r => {
-        if(Array.isArray(r.path)) return r.path.includes('/');
-        else return r.path === '/';
-    }).path || '/';
-    if(Array.isArray(this.currentRoute)) this.currentRoute = '/';
+/** Function to send the app to a different route.
+* @param {String} to The path to point the router to. Must already exist in the router at initialization. */
+Router.prototype.send = function(to) {
+    this.currentRoute = to;
 
+    // Get the route at the path.
+    let routeObj = this.routes.find(r => {
+        if(Array.isArray(r.path)) return r.path.includes(to);
+        else return r.path === to;
+    });
 
-    // Link all of the components to this router, so they can be passed down to children.
-    for(var i in routes) {
-        routes[i].mosaic.mosaicRouter = this;
+    // Go to that url and paint the mosaic.
+    if(routeObj) {
+        window.history.pushState({}, this.currentRoute, window.location.origin + this.currentRoute);
+        routeObj.mosaic.paint();
+    } else {
+        throw new Error(`There was no route defined for ${this.currentRoute}`);
     }
+}
 
-    /** Function to send the app to a different route.
-    * @param {String} to The path to point the router to. Must already exist in the router at initialization. */
-    this.send = function(to) {
-        this.currentRoute = to;
-        let routeObj = routes.find(r => {
-            if(Array.isArray(r.path)) return r.path.includes(to);
-            else return r.path === to;
-        });
+/** A function to send this router back one page. */
+Router.prototype.back = function() {
+    window.history.back();
+}
 
-        if(routeObj) {
-            window.history.pushState({}, this.currentRoute, window.location.origin + this.currentRoute);
-            routeObj.mosaic.paint();
-        } else {
-            throw new Error(`There was no route defined for ${this.currentRoute}`);
-        }
-    }
-
-    /** A function to send this router back one page. */
-    this.back = function() {
-        window.history.back();
-    }
-
-    /** A function to send this router forward one page. */
-    this.back = function() {
-        window.history.forward();
-    }
-
-    // Setup the 'pop' url state.
-    window.onpopstate = function() {
-        let oldURL = window.location.pathname;
-        let oldRouteObj = routes.find(r => {
-            if(Array.isArray(r.path)) return r.path.includes(oldURL);
-            else return r.path === oldURL;
-        });
-        oldRouteObj.mosaic.paint();
-    }
+/** A function to send this router forward one page. */
+Router.prototype.back = function() {
+    window.history.forward();
 }
 
 /** The paint function for the Mosaic Router. Performs the same function as the paint function for Mosaic
@@ -76,6 +76,5 @@ Router.prototype.paint = function() {
     
     this.send(this.currentRoute);
 }
-
 
 exports.Router = Router;

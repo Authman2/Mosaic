@@ -14,6 +14,11 @@ const findInvalidOptions = function(options) {
         existing DOM element such as "document.body" or a div with the id of 'root' for example.`;
     }
 
+    // Router
+    if(options.router && !options.router.__isRouter) {
+        return `The router property must be an instance of Mosaic.Router.`;
+    }
+
     // Data
     if(options.data && typeof options.data !== 'object') {
         return `The data property of a Mosaic must be defined as a plain, JavaScript object.`;
