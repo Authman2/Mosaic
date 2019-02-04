@@ -1,7 +1,6 @@
 import { Mosaic } from './index';
 
-/** A basic routing solution for Mosaic apps.
-* @param {Array} routes A list of routes of the form { path: String | Array of Strings, mosaic: Mosaic }. */
+/** A basic routing solution for Mosaic apps. */
 const Router = function() {
     this.currentRoute = '/';
     this.routes = [];

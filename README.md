@@ -15,8 +15,9 @@ that there is no need to call "setState" or anything like that, instead just cha
 - **Virtual DOM**: The use of a virtual dom makes updating web apps very fast.
 - **JSX/HTML-Templates**: You can use jsx or the "h" function that comes with Mosaic to write a component's view. If
 you are not a fan of JSX, you can also write some basic HTML-templates that can be dynamically updated using the data
-property and the double curly brackets like so: ```html <h1>{{ this.data.title }}</h1>```
-- **Router**: Mosaic comes with a basic router for navigating between components.
+property and the double curly brackets like so: ```<h1>{{ this.data.title }}</h1>```
+- **Built-in Router**: Mosaic comes with a basic router for navigating between components.
+- **Small Library Size**: Mosaic is extremely small, with the minified JavaScript file only 14.4KB.
 
 ## Installation
 The easiest way to use Mosaic is to first install the npm package by using:
@@ -52,17 +53,15 @@ For a more detailed example, run the project inside the "example" folder.
     <title>My Mosaic App</title>
   </head>
     
-  <body>
-    <div id='root'></div>
-    <script type="text/javascript" src='./index.js'></script>
-  </body>
-    
+  <div id='root'></div>
+
+  <script type="text/javascript" src='./index.js'></script>
 </html>
 ```
 **index.js**:
 ```js
 // Import Mosaic
-import { h, Mosaic } from '@authman2/mosaic';
+import { Mosaic } from '@authman2/mosaic';
     
 // Create a label and button component.
 const NavButton = new Mosaic({

@@ -71,12 +71,15 @@ const Mosaic = function(options) {
         if(this.updated) this.updated();
     });
 
+    // Check for a parent-child link.
+    if(options.link) {
+        this.parent = options.link.parent;
+        options.link.parent[options.link.name] = this;
+    }
     this.actions = options.actions;
     this.__isMosaic = true;
 
-    // Bind actions.
-    for(var i in this.actions) this.actions[i] = this.actions[i].bind(this);
-
+    
     
     /** Destroys this instance of the Mosaic and triggers the willDestory lifecycle function. */
     /* this feature is not working yet */
@@ -133,10 +136,17 @@ Mosaic.view = function(vnode, $parent = null) {
     let props = Object.assign({}, vnode.props);
     
     // Link is an optional relationship that can be added to each component.
-    let link = props.link ? props.link : undefined;
-    if('link' in props) delete props['link'];
-
+    let link = props.link || null;
+    
     const _data = Object.assign({}, vnode.type.data, props);
+    if('link' in _data) delete _data['link'];
+    if('key' in _data) delete _data['key'];
+    if('style' in _data) delete _data['style'];
+    if('class' in _data) delete _data['class'];
+    if('id' in _data) delete _data['id'];
+    if('className' in _data) delete _data['className'];
+    if('checked' in _data) delete _data['checked'];
+    if('value' in _data) delete _data['value'];
     
     // Render a new instance of this component.
     if(typeof vnode.type === 'object' && vnode.type.__isMosaic) {
@@ -150,15 +160,15 @@ Mosaic.view = function(vnode, $parent = null) {
             willUpdate: vnode.type.willUpdate,
             updated: vnode.type.updated,
             willDestroy: vnode.type.willDestroy,
+            link: link
         }
         const instance = new Mosaic(options);
-        if(typeof link !== 'undefined') {
-            instance.parent = link.parent;
-            link.parent[link.name] = instance;
-        }
-        if(vnode.children && vnode.children.length > 0) {
-            instance.children = vnode.children;
-        }
+        if(vnode.children && vnode.children.length > 0) instance.children = vnode.children;
+
+        // Bind actions after creation.
+        for(var i in instance.actions) instance.actions[i] = instance.actions[i].bind(instance);
+        
+        // Render the DOM element.
         let htree = viewToDOM(instance.view, instance);
         instance.element = render(htree, $parent, instance);
         instance.element.__mosaicInstance = instance;

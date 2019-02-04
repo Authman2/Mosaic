@@ -53,6 +53,17 @@ const patch = function($dom, vnode, $parent = $dom.parentNode, instance = null) 
         for(const key in pool) {
             const instance = pool[key].__mosaicInstance;
             if(instance && instance.willDestroy) instance.willDestroy();
+
+            // Don't forget to remove references to parents!!
+            let parent = instance.parent || null;
+            if(parent) {
+                for(let i in parent) {
+                    let property = parent[i];
+                    if(property === instance) {
+                        delete parent[i];
+                    }
+                }
+            }
             pool[key].remove();
         }
 
