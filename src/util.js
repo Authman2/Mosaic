@@ -105,6 +105,7 @@ function isHTMLElement(obj) {
 const viewToDOM = function(input, caller) {
     if(typeof input === 'function') return input.call(caller);
 
+    // Handle template strings.
     var replaced = input;
     for(var dataProp in caller.data) {
         let propName = dataProp;

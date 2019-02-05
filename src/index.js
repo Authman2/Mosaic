@@ -59,7 +59,11 @@ const Mosaic = function(options) {
         
         _tempData[i] = new Observable(_tempData[i], () => {}, () => {
             let htree = viewToDOM(this.view, this);
-            patch(this.element, htree, this.element.parentNode, this);
+        
+            let patches = patch(this.oldHtree, htree);
+            this.element = patches(this.element);
+            this.oldHtree = htree;
+
             if(this.updated) this.updated();
         });
     }

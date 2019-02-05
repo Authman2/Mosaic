@@ -14,5 +14,8 @@ new Mosaic({
             
             { this.data.page === 0 ? <Home /> : <About /> }
         </div>
+    },
+    updated: function() {
+        console.log(this.menu);
     }
 }).paint();
