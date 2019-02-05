@@ -55,12 +55,14 @@ const patch = function($dom, vnode, $parent = $dom.parentNode, instance = null) 
             if(instance && instance.willDestroy) instance.willDestroy();
 
             // Don't forget to remove references to parents!!
-            let parent = instance.parent || null;
-            if(parent) {
-                for(let i in parent) {
-                    let property = parent[i];
-                    if(property === instance) {
-                        delete parent[i];
+            if(instance) {
+                let parent = instance.parent || null;
+                if(parent) {
+                    for(let i in parent) {
+                        let property = parent[i];
+                        if(property === instance) {
+                            delete parent[i];
+                        }
                     }
                 }
             }
