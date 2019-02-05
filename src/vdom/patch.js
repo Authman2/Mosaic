@@ -2,81 +2,293 @@ import { Mosaic } from '../index';
 import { render } from './render';
 import { setAttributes, isHTMLElement, viewToDOM } from '../util';
 
-const patch = function($dom, vnode, $parent = $dom.parentNode, instance = null) {
-    const replace = $parent ? ($el => { $parent.replaceChild($el, $dom); return $el }) : ($el => $el);
-    // console.log($dom, vnode);
-
-    // 1.) Patch the differences of a Mosaic type.
-    if(typeof vnode === 'object' && typeof vnode.type === 'object' && vnode.type.__isMosaic === true) {
-        return Mosaic.patch($dom, vnode, $parent);
+const zip = (xs, ys) => {
+    const zipped = [];
+    for(let i = 0; i < Math.min(xs.length, ys.length); i++) {
+        zipped.push([xs[i], ys[i]]);
     }
-    // 2.) Compare plain text nodes.
-    else if(typeof vnode !== 'object' && $dom instanceof Text) {
-        return ($dom.textContent !== vnode) ? replace(render(vnode, $parent, instance)) : $dom;
-    }
-    // 3.) If it is an HTML element, just replace the dom element.
-    else if(isHTMLElement(vnode)) {
-        let $node = replace(vnode);
-        instance.element = $node;
-        return $node;
-    }
-    // 4.) If one is an object and one is text, just replace completely.
-    else if(typeof vnode === 'object' && $dom instanceof Text) {
-        return replace(render(vnode, $parent, instance));
-    }
-    // 5.) One is an object and the tags are different, so replace completely.
-    else if(typeof vnode === 'object' && (vnode.type && !vnode.type.__isMosaic) && $dom.nodeName !== vnode.type.toUpperCase()) {
-        let n = replace(render(vnode, $parent, instance));
-        return n;
-    }
-    // 6.) If they are objects and their tags are equal, patch their children recursively.
-    else if(typeof vnode === 'object' && $dom.nodeName === vnode.type.toUpperCase()) {
-        const pool = {};
-        const active = document.activeElement;
-
-        [].concat(...$dom.childNodes).map((child, index) => {
-            const key = child.__mosaicKey || `__index_${index}`;
-            pool[key] = child;
-        });
-        [].concat(...vnode.children).map((child, index) => {
-            const key = child.props && child.props.key || `__index_${index}`;
-            var $node;
-
-            if(pool[key]) $node = patch(pool[key], child)
-            else $node = render(child, $dom, instance);
-
-            $dom.appendChild($node);
-            delete pool[key];
-        });
-
-        // Unmount the component and call the lifecycle function.
-        for(const key in pool) {
-            const instance = pool[key].__mosaicInstance;
-            if(instance && instance.willDestroy) instance.willDestroy();
-
-            // Don't forget to remove references to parents!!
-            if(instance) {
-                let parent = instance.parent || null;
-                if(parent) {
-                    for(let i in parent) {
-                        let property = parent[i];
-                        if(property === instance) {
-                            delete parent[i];
-                        }
-                    }
-                }
-            }
-            pool[key].remove();
-        }
-
-        // Remove and reset the necessary attributes.
-        for(var attr in $dom.attributes) $dom.removeAttribute(attr.name);
-        for(var prop in vnode.props) setAttributes($dom, prop, vnode.props[prop], vnode);
-        active.focus();
-        
-        // Return the real dom node.
-        return $dom;
-    }
+    return zipped;
 }
 
-exports.patch = patch;
+const diffProperties = (oldProps, newProps) => {
+    // The array of patches to perform.
+    const patches = [];
+    
+    // Go through the new properties and add on to the list of patch functions that will run later.
+    for(var prop in newProps) {
+        let val = newProps[prop];
+        let _patch = ($node) => {
+            setAttributes($node, prop, val);
+            return $node;
+        }
+        patches.push(_patch);
+    }
+
+    // Go through the old properties and remove the ones that are no longer in the new properties.
+    for(var i in oldProps) {
+        if(!(i in newProps)) {
+            let _patch = ($node) => {
+                $node.removeAttribute(i);
+                return $node;
+            }
+            patches.push(_patch);
+        }
+    }
+
+    // Create a patch that just runs all of the accumulated patches.
+    // Applies all of the patch operations.
+    let patch = ($node) => { 
+        for(var i in patches) patches[i]($node);
+        return $node
+    }
+    return patch;
+}
+
+const diffChildren = (oldVChildren, newVChildren) => {
+    const patches = [];
+
+    // Go through the children and add the result of their diffing.
+    oldVChildren.forEach((oldVChild, index) => {
+        let result = diff(oldVChild, newVChildren[index]);
+        patches.push(result);
+    });
+
+    // Make additional patches for unequal children lengths of the old and new vNodes.
+    const additionalPatches = [];
+    const sliced = newVChildren.slice(oldVChildren.length);
+    for(var i = 0; i < sliced.length; i++) {
+        let s = sliced[i];
+        let _patch = ($node) => {
+            let res = render(s);
+            $node.appendChild(res);
+            return $node;
+        }
+        additionalPatches.push(_patch);
+    }
+
+
+    let patch = ($parent) => {
+        for(const [p, $child] of zip(patches, $parent.childNodes)) {
+            p($child);
+        }
+        for(var i in additionalPatches) {
+            const p = additionalPatches[i];
+            p($parent);
+        }
+        return $parent;
+    }
+    return patch;
+}
+
+/** Calculates the difference between different virtual nodes and returns a function
+* to patch them together.
+* @param {Object} oldVNode The old virtual dom node.
+* @param {Object} newVNode The new virtual dom node. */
+const diff = (oldVNode, newVNode) => {
+    // console.log(oldVNode, newVNode);
+
+    // Case 1: The old virtual node does not exist.
+    if(newVNode === undefined) {
+        let patch = ($node) => {
+            $node.remove();
+            return undefined
+        };
+        return patch;
+    }
+
+    // Case 2: They are both strings, so compare them.
+    if(typeof oldVNode === 'string' && typeof newVNode === 'string') {
+        // Case 2.1: One is a text node and one is an element.
+        if(oldVNode !== newVNode) {
+            let patch = ($node) => {
+                const $newDomNode = render(newVNode);
+                $node.replaceWith($newDomNode);
+                return $newDomNode;
+            }
+            return patch;
+        }
+        // Case 2.2: Both virtual nodes are strings and they match.
+        else {
+            let patch = ($node) => { return $node; }
+            return patch;
+        }
+    }
+
+    // Case 3: They are both numbers, so compare them.
+    if(typeof oldVNode === 'number' && typeof newVNode === 'number') {
+        // Case 3.1: One is a text node and one is an element.
+        if(oldVNode !== newVNode) {
+            let patch = ($node) => {
+                const $newDomNode = render(newVNode);
+                $node.replaceWith($newDomNode);
+                return $newDomNode;
+            }
+            return patch;
+        }
+        // Case 3.2: Both virtual nodes are strings and they match.
+        else {
+            let patch = ($node) => { return $node; }
+            return patch;
+        }
+    }
+
+    // Case 4: They are both Mosaic components, so diff their views.
+    if(typeof oldVNode === 'object' && typeof newVNode === 'object' 
+        && (typeof oldVNode.type === 'object' && typeof newVNode.type === 'object') 
+        && oldVNode.type.__isMosaic === true && newVNode.type.__isMosaic === true) {
+        
+        let oldView = viewToDOM(oldVNode.type.view, oldVNode.type);
+        let newView = viewToDOM(newVNode.type.view, newVNode.type);
+        
+        let patch = diff(oldView, newView);
+        return patch;
+        // let oldInstance = oldVNode.type;
+        // let newInstance = newVNode.type;
+        // const props = Object.assign({}, newVNode.props, { children: newVNode.children });
+    
+        // if(oldInstance) {
+        //     oldInstance.props = props;
+        //     let htree = viewToDOM(oldInstance.view, oldInstance);
+        //     return diff(htree, newVNode);
+        // }
+        // else if(typeof vnode.type === 'object' && vnode.type.__isMosaic === true) {
+        //     const $ndom = Mosaic.view(vnode, $parent);
+        //     return $parent ? ($parent.replaceChild($ndom, $dom) && $ndom) : $ndom;
+        // }
+        // else if(typeof vnode.type !== 'object' || vnode.type.__isMosaic === false) {
+        //     let htree = viewToDOM(vnode.type.view.bind(props), vnode.type);
+        //     return patch($dom, htree, $parent, $dom.__mosaicInstance);
+        // }
+
+        // let patch = ($node) => {
+        //     const $newDomNode = render(newVNode.view());
+        //     $node.replaceWith($newDomNode);
+        //     return $newDomNode;
+        // }
+        // return patch;
+        // let patch = ($node) => { return $node; };
+    }
+
+    // // Case 5: They are arrays of elements, so go through each one and diff the objects.
+    // if(typeof oldVNode === 'object' && typeof newVNode === 'object' && (oldVNode.length || newVNode.length)) {
+    //     // Create a patch for each child.
+    //     let allPatches = [];
+    //     for(var i = 0; i < oldVNode.length; i++) {
+    //         let patch = diff(oldVNode[i], newVNode[i]);
+    //         allPatches.push(patch);
+    //     }
+    //     // Create a final patch that applies all patch changes in the list.
+    //     let finalPatch = ($node) => {
+    //         allPatches.forEach((p, index) => {
+    //             p($node.childNodes[index]);
+    //         });
+    //         return $node;
+    //     }
+    //     return finalPatch;
+    // }
+
+    // Case 6: In order to make the diff algo more efficient, assume that if the trees
+    // are of different types then we just replace the entire thing.
+    if(oldVNode.type !== newVNode.type) {
+        let patch = ($node) => {
+            const $newDomNode = render(newVNode);
+            $node.replaceWith($newDomNode);
+            return $newDomNode;
+        }
+        return patch;
+    }
+
+    // Case 7: If we reach this point, it means that the only differences exist in either the
+    // properties or the child nodes. Handle these cases separately and return a patch that just
+    // updates the node, not neccessarily replaces them.
+    const propsPatch = diffProperties(oldVNode.props, newVNode.props);
+    const childrenPatch = diffChildren(oldVNode.children, newVNode.children);
+    let finalPatch = ($node) => {
+        propsPatch($node);
+        childrenPatch($node);
+        return $node;
+    }
+    return finalPatch;
+}
+
+exports.patch = diff;
+
+
+// const patch = function($dom, vnode, $parent = $dom.parentNode, instance = null) {
+//     const replace = $parent ? ($el => { $parent.replaceChild($el, $dom); return $el }) : ($el => $el);
+//     // console.log($dom, vnode);
+
+//     // 1.) Patch the differences of a Mosaic type.
+//     if(typeof vnode === 'object' && typeof vnode.type === 'object' && vnode.type.__isMosaic === true) {
+//         return Mosaic.patch($dom, vnode, $parent);
+//     }
+//     // 2.) Compare plain text nodes.
+//     else if(typeof vnode !== 'object' && $dom instanceof Text) {
+//         return ($dom.textContent !== vnode) ? replace(render(vnode, $parent, instance)) : $dom;
+//     }
+//     // 3.) If it is an HTML element, just replace the dom element.
+//     else if(isHTMLElement(vnode)) {
+//         let $node = replace(vnode);
+//         instance.element = $node;
+//         return $node;
+//     }
+//     // 4.) If one is an object and one is text, just replace completely.
+//     else if(typeof vnode === 'object' && $dom instanceof Text) {
+//         return replace(render(vnode, $parent, instance));
+//     }
+//     // 5.) One is an object and the tags are different, so replace completely.
+//     else if(typeof vnode === 'object' && (vnode.type && !vnode.type.__isMosaic) && $dom.type !== vnode.type.toUpperCase()) {
+//         let n = replace(render(vnode, $parent, instance));
+//         return n;
+//     }
+//     // 6.) If they are objects and their tags are equal, patch their children recursively.
+//     else if(typeof vnode === 'object' && $dom.type === vnode.type.toUpperCase()) {
+//         const pool = {};
+//         const active = document.activeElement;
+
+//         [].concat(...$dom.childNodes).map((child, index) => {
+//             const key = child.__mosaicKey || `__index_${index}`;
+//             pool[key] = child;
+//         });
+//         [].concat(...vnode.children).map((child, index) => {
+//             const key = child.props && child.props.key || `__index_${index}`;
+//             var $node;
+
+//             if(pool[key]) $node = patch(pool[key], child)
+//             else $node = render(child, $dom, instance);
+
+//             $dom.appendChild($node);
+//             delete pool[key];
+//         });
+
+//         // Unmount the component and call the lifecycle function.
+//         for(const key in pool) {
+//             const instance = pool[key].__mosaicInstance;
+//             if(instance && instance.willDestroy) instance.willDestroy();
+
+//             // Don't forget to remove references to parents!!
+//             if(instance) {
+//                 let parent = instance.parent || null;
+//                 if(parent) {
+//                     for(let i in parent) {
+//                         let property = parent[i];
+//                         if(property === instance) {
+//                             delete parent[i];
+//                         }
+//                     }
+//                 }
+//             }
+//             pool[key].remove();
+//         }
+
+//         // Remove and reset the necessary attributes.
+//         for(var attr in $dom.attributes) $dom.removeAttribute(attr.name);
+//         for(var prop in vnode.props) setAttributes($dom, prop, vnode.props[prop], vnode);
+//         active.focus();
+        
+//         // Return the real dom node.
+//         return $dom;
+//     }
+// }
+
+// exports.patch = patch;

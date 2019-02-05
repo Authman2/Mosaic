@@ -1,5 +1,5 @@
 /** Sets the attributes on the HTML elements that were mounted by the virtual DOM. */
-const setAttributes = function($element, key, value, instance = null) {
+const setAttributes = function($element, key, value) {
     // 1.) Function handler for dom element.
     if(typeof value === 'function' && key.startsWith('on')) {
         const event = key.slice(2).toLowerCase();
