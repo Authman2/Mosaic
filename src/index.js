@@ -58,11 +58,11 @@ const Mosaic = function(options) {
         if(!Array.isArray(_tempData[i])) continue;
         
         _tempData[i] = new Observable(_tempData[i], () => {}, () => {
-            let htree = viewToDOM(this.view, this);
+            // let htree = viewToDOM(this.view, this);
         
-            let patches = patch(this.oldHtree, htree);
-            this.element = patches(this.element);
-            this.oldHtree = htree;
+            // let patches = patch(this.oldHtree, htree);
+            // this.element = patches(this.element);
+            // this.oldHtree = htree;
 
             if(this.updated) this.updated();
         });
@@ -70,12 +70,12 @@ const Mosaic = function(options) {
     // Setup the data observer.
     this.data = new Observable(_tempData || {}, (oldData) => {
         if(this.willUpdate) this.willUpdate(oldData);
-        this.oldHtree = viewToDOM(this.view, this);
+        // this.oldHtree = viewToDOM(this.view, this);
     }, () => {
         let htree = viewToDOM(this.view, this);
         
-        let patches = patch(this.oldHtree, htree);
-        this.element = patches(this.element);
+        let patches = patch(this, htree);
+        this.element = patches;
         this.oldHtree = htree;
 
         if(this.updated) this.updated();
@@ -120,23 +120,23 @@ Mosaic.Router = Router;
 
 
 /** Static function for diffing and patching changes between instances of Mosaics. */
-Mosaic.patch = function($dom, vnode, $parent = $dom.parentNode) {
-    const props = Object.assign({}, vnode.props, { children: vnode.children });
+// Mosaic.patch = function($dom, vnode, $parent = $dom.parentNode) {
+//     const props = Object.assign({}, vnode.props, { children: vnode.children });
     
-    if($dom.__mosaicInstance && $dom.__mosaicInstance.constructor === vnode.type) {
-        $dom.__mosaicInstance.props = props;
-        let htree = viewToDOM($dom.__mosaicInstance.view, $dom.__mosaicInstance);
-        return patch($dom, htree, $parent, $dom.__mosaicInstance);
-    }
-    else if(typeof vnode.type === 'object' && vnode.type.__isMosaic === true) {
-        const $ndom = Mosaic.view(vnode, $parent);
-        return $parent ? ($parent.replaceChild($ndom, $dom) && $ndom) : $ndom;
-    }
-    else if(typeof vnode.type !== 'object' || vnode.type.__isMosaic === false) {
-        let htree = viewToDOM(vnode.type.view.bind(props), vnode.type);
-        return patch($dom, htree, $parent, $dom.__mosaicInstance);
-    }
-}
+//     if($dom.__mosaicInstance && $dom.__mosaicInstance.constructor === vnode.type) {
+//         $dom.__mosaicInstance.props = props;
+//         let htree = viewToDOM($dom.__mosaicInstance.view, $dom.__mosaicInstance);
+//         return patch($dom, htree, $parent, $dom.__mosaicInstance);
+//     }
+//     else if(typeof vnode.type === 'object' && vnode.type.__isMosaic === true) {
+//         const $ndom = Mosaic.view(vnode, $parent);
+//         return $parent ? ($parent.replaceChild($ndom, $dom) && $ndom) : $ndom;
+//     }
+//     else if(typeof vnode.type !== 'object' || vnode.type.__isMosaic === false) {
+//         let htree = viewToDOM(vnode.type.view.bind(props), vnode.type);
+//         return patch($dom, htree, $parent, $dom.__mosaicInstance);
+//     }
+// }
 
 window.h = createElement;
 window.Mosaic = Mosaic;
