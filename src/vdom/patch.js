@@ -84,140 +84,128 @@ const diffChildren = (oldVChildren, newVChildren) => {
 * to patch them together.
 * @param {Object} oldVNode The old virtual dom node.
 * @param {Object} newVNode The new virtual dom node. */
-// const diff = (oldVNode, newVNode) => {
-//     // console.log(oldVNode, newVNode);
+const diff = (oldVNode, newVNode) => {
+    // console.log(oldVNode, newVNode);
 
-//     // Case 1: The old virtual node does not exist.
-//     if(newVNode === undefined) {
-//         let patch = ($node) => {
-//             $node.remove();
-//             return undefined
-//         };
-//         return patch;
-//     }
+    // Case 1: The old virtual node does not exist.
+    if(newVNode === undefined) {
+        let patch = ($node) => {
+            $node.remove();
+            return undefined
+        };
+        return patch;
+    }
 
-//     // Case 2: They are both strings, so compare them.
-//     if(typeof oldVNode === 'string' && typeof newVNode === 'string') {
-//         // Case 2.1: One is a text node and one is an element.
-//         if(oldVNode !== newVNode) {
-//             let patch = ($node) => {
-//                 const $newDomNode = render(newVNode);
-//                 $node.replaceWith($newDomNode);
-//                 return $newDomNode;
-//             }
-//             return patch;
-//         }
-//         // Case 2.2: Both virtual nodes are strings and they match.
-//         else {
-//             let patch = ($node) => { return $node; }
-//             return patch;
-//         }
-//     }
+    // Case 2: They are both strings, so compare them.
+    if(typeof oldVNode === 'string' && typeof newVNode === 'string') {
+        // Case 2.1: One is a text node and one is an element.
+        if(oldVNode !== newVNode) {
+            let patch = ($node) => {
+                const $newDomNode = render(newVNode);
+                $node.replaceWith($newDomNode);
+                return $newDomNode;
+            }
+            return patch;
+        }
+        // Case 2.2: Both virtual nodes are strings and they match.
+        else {
+            let patch = ($node) => { return $node; }
+            return patch;
+        }
+    }
 
-//     // Case 3: They are both numbers, so compare them.
-//     if(typeof oldVNode === 'number' && typeof newVNode === 'number') {
-//         // Case 3.1: One is a text node and one is an element.
-//         if(oldVNode !== newVNode) {
-//             let patch = ($node) => {
-//                 const $newDomNode = render(newVNode);
-//                 $node.replaceWith($newDomNode);
-//                 return $newDomNode;
-//             }
-//             return patch;
-//         }
-//         // Case 3.2: Both virtual nodes are strings and they match.
-//         else {
-//             let patch = ($node) => { return $node; }
-//             return patch;
-//         }
-//     }
+    // Case 3: They are both numbers, so compare them.
+    if(typeof oldVNode === 'number' && typeof newVNode === 'number') {
+        // Case 3.1: One is a text node and one is an element.
+        if(oldVNode !== newVNode) {
+            let patch = ($node) => {
+                const $newDomNode = render(newVNode);
+                $node.replaceWith($newDomNode);
+                return $newDomNode;
+            }
+            return patch;
+        }
+        // Case 3.2: Both virtual nodes are strings and they match.
+        else {
+            let patch = ($node) => { return $node; }
+            return patch;
+        }
+    }
 
-//     // Case 4: They are both Mosaic components, so diff their views.
-//     if(typeof oldVNode === 'object' && typeof newVNode === 'object' && (typeof oldVNode.type === 'object' && typeof newVNode.type === 'object') && oldVNode.type.__isMosaic === true && newVNode.type.__isMosaic === true) {
-//         let oldView = viewToDOM(oldVNode.type.view, oldVNode.type);
-//         let newView = viewToDOM(newVNode.type.view, newVNode.type);
+    // Case 4: They are both Mosaic components, so diff their views.
+    if(typeof oldVNode === 'object' && typeof newVNode === 'object' && (typeof oldVNode.type === 'object' && typeof newVNode.type === 'object') && oldVNode.type.__isMosaic === true && newVNode.type.__isMosaic === true) {
+        let oldView = viewToDOM(oldVNode.type.view, oldVNode.type);
+        let newView = viewToDOM(newVNode.type.view, newVNode.type);
         
-//         let patch = diff(oldView, newView);
-//         return patch;
-//         // let oldInstance = oldVNode.type;
-//         // let newInstance = newVNode.type;
-//         // const props = Object.assign({}, newVNode.props, { children: newVNode.children });
+        let patch = diff(oldView, newView);
+        return patch;
+        // let oldInstance = oldVNode.type;
+        // let newInstance = newVNode.type;
+        // const props = Object.assign({}, newVNode.props, { children: newVNode.children });
     
-//         // if(oldInstance) {
-//         //     oldInstance.props = props;
-//         //     let htree = viewToDOM(oldInstance.view, oldInstance);
-//         //     return diff(htree, newVNode);
-//         // }
-//         // else if(typeof vnode.type === 'object' && vnode.type.__isMosaic === true) {
-//         //     const $ndom = Mosaic.view(vnode, $parent);
-//         //     return $parent ? ($parent.replaceChild($ndom, $dom) && $ndom) : $ndom;
-//         // }
-//         // else if(typeof vnode.type !== 'object' || vnode.type.__isMosaic === false) {
-//         //     let htree = viewToDOM(vnode.type.view.bind(props), vnode.type);
-//         //     return patch($dom, htree, $parent, $dom.__mosaicInstance);
-//         // }
+        // if(oldInstance) {
+        //     oldInstance.props = props;
+        //     let htree = viewToDOM(oldInstance.view, oldInstance);
+        //     return diff(htree, newVNode);
+        // }
+        // else if(typeof vnode.type === 'object' && vnode.type.__isMosaic === true) {
+        //     const $ndom = Mosaic.view(vnode, $parent);
+        //     return $parent ? ($parent.replaceChild($ndom, $dom) && $ndom) : $ndom;
+        // }
+        // else if(typeof vnode.type !== 'object' || vnode.type.__isMosaic === false) {
+        //     let htree = viewToDOM(vnode.type.view.bind(props), vnode.type);
+        //     return patch($dom, htree, $parent, $dom.__mosaicInstance);
+        // }
 
-//         // let patch = ($node) => {
-//         //     const $newDomNode = render(newVNode.view());
-//         //     $node.replaceWith($newDomNode);
-//         //     return $newDomNode;
-//         // }
-//         // return patch;
-//         // let patch = ($node) => { return $node; };
-//     }
+        // let patch = ($node) => {
+        //     const $newDomNode = render(newVNode.view());
+        //     $node.replaceWith($newDomNode);
+        //     return $newDomNode;
+        // }
+        // return patch;
+        // let patch = ($node) => { return $node; };
+    }
 
-//     // // Case 5: They are arrays of elements, so go through each one and diff the objects.
-//     // if(typeof oldVNode === 'object' && typeof newVNode === 'object' && (oldVNode.length || newVNode.length)) {
-//     //     // Create a patch for each child.
-//     //     let allPatches = [];
-//     //     for(var i = 0; i < oldVNode.length; i++) {
-//     //         let patch = diff(oldVNode[i], newVNode[i]);
-//     //         allPatches.push(patch);
-//     //     }
-//     //     // Create a final patch that applies all patch changes in the list.
-//     //     let finalPatch = ($node) => {
-//     //         allPatches.forEach((p, index) => {
-//     //             p($node.childNodes[index]);
-//     //         });
-//     //         return $node;
-//     //     }
-//     //     return finalPatch;
-//     // }
+    // // Case 5: They are arrays of elements, so go through each one and diff the objects.
+    // if(typeof oldVNode === 'object' && typeof newVNode === 'object' && (oldVNode.length || newVNode.length)) {
+    //     // Create a patch for each child.
+    //     let allPatches = [];
+    //     for(var i = 0; i < oldVNode.length; i++) {
+    //         let patch = diff(oldVNode[i], newVNode[i]);
+    //         allPatches.push(patch);
+    //     }
+    //     // Create a final patch that applies all patch changes in the list.
+    //     let finalPatch = ($node) => {
+    //         allPatches.forEach((p, index) => {
+    //             p($node.childNodes[index]);
+    //         });
+    //         return $node;
+    //     }
+    //     return finalPatch;
+    // }
 
-//     // Case 6: In order to make the diff algo more efficient, assume that if the trees
-//     // are of different types then we just replace the entire thing.
-//     if(oldVNode.type !== newVNode.type) {
-//         let patch = ($node) => {
-//             const $newDomNode = render(newVNode);
-//             $node.replaceWith($newDomNode);
-//             return $newDomNode;
-//         }
-//         return patch;
-//     }
+    // Case 6: In order to make the diff algo more efficient, assume that if the trees
+    // are of different types then we just replace the entire thing.
+    if(oldVNode.type !== newVNode.type) {
+        let patch = ($node) => {
+            const $newDomNode = render(newVNode);
+            $node.replaceWith($newDomNode);
+            return $newDomNode;
+        }
+        return patch;
+    }
 
-//     // Case 7: If we reach this point, it means that the only differences exist in either the
-//     // properties or the child nodes. Handle these cases separately and return a patch that just
-//     // updates the node, not neccessarily replaces them.
-//     const propsPatch = diffProperties(oldVNode.props, newVNode.props);
-//     const childrenPatch = diffChildren(oldVNode.children, newVNode.children);
-//     let finalPatch = ($node) => {
-//         propsPatch($node);
-//         childrenPatch($node);
-//         return $node;
-//     }
-//     return finalPatch;
-// }
-
-
-const diff = function($element, newVnode) {
-    console.log($element, newVnode);
-    
-    // When you start to patcha component, you can start by looking directly at its element.
-    // Any changes to this component will start there and go downward through child nodes.
-    // 1.) Traverse the DOM tree until you reach text nodes (i.e. the lowest level).
-    // 2.) 
-    const newDOM = render(newVnode);
-    $element.replaceWith(newDOM);
+    // Case 7: If we reach this point, it means that the only differences exist in either the
+    // properties or the child nodes. Handle these cases separately and return a patch that just
+    // updates the node, not neccessarily replaces them.
+    const propsPatch = diffProperties(oldVNode.props, newVNode.props);
+    const childrenPatch = diffChildren(oldVNode.children, newVNode.children);
+    let finalPatch = ($node) => {
+        propsPatch($node);
+        childrenPatch($node);
+        return $node;
+    }
+    return finalPatch;
 }
 exports.patch = diff;
 
