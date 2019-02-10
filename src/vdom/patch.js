@@ -10,7 +10,7 @@ const zip = (xs, ys) => {
     return zipped;
 }
 
-const diffProperties = (oldProps, newProps) => {
+const diffProperties = (oldProps, newProps, instance) => {
     // The array of patches to perform.
     const patches = [];
     
@@ -18,7 +18,7 @@ const diffProperties = (oldProps, newProps) => {
     for(var prop in newProps) {
         let val = newProps[prop];
         let _patch = ($node) => {
-            setAttributes($node, prop, val);
+            setAttributes($node, prop, val, instance);
             return $node;
         }
         patches.push(_patch);
@@ -44,7 +44,7 @@ const diffProperties = (oldProps, newProps) => {
     return patch;
 }
 
-const diffChildren = (oldVChildren, newVChildren) => {
+const diffChildren = (oldVChildren, newVChildren, instance) => {
     const patches = [];
 
     // Go through the children and add the result of their diffing.
@@ -59,7 +59,7 @@ const diffChildren = (oldVChildren, newVChildren) => {
     for(var i = 0; i < sliced.length; i++) {
         let s = sliced[i];
         let _patch = ($node) => {
-            let res = render(s);
+            let res = render(s, instance);
             $node.appendChild(res);
             return $node;
         }
@@ -84,7 +84,7 @@ const diffChildren = (oldVChildren, newVChildren) => {
 * to patch them together.
 * @param {Object} oldVNode The old virtual dom node.
 * @param {Object} newVNode The new virtual dom node. */
-const diff = (oldVNode, newVNode) => {
+const diff = (oldVNode, newVNode, instance) => {
     // console.log(oldVNode, newVNode);
 
     // Case 1: The old virtual node does not exist.
@@ -101,7 +101,7 @@ const diff = (oldVNode, newVNode) => {
         // Case 2.1: One is a text node and one is an element.
         if(oldVNode !== newVNode) {
             let patch = ($node) => {
-                const $newDomNode = render(newVNode);
+                const $newDomNode = render(newVNode, instance);
                 $node.replaceWith($newDomNode);
                 return $newDomNode;
             }
@@ -119,7 +119,7 @@ const diff = (oldVNode, newVNode) => {
         // Case 3.1: One is a text node and one is an element.
         if(oldVNode !== newVNode) {
             let patch = ($node) => {
-                const $newDomNode = render(newVNode);
+                const $newDomNode = render(newVNode, instance);
                 $node.replaceWith($newDomNode);
                 return $newDomNode;
             }
@@ -137,33 +137,8 @@ const diff = (oldVNode, newVNode) => {
         let oldView = viewToDOM(oldVNode.type.view, oldVNode.type);
         let newView = viewToDOM(newVNode.type.view, newVNode.type);
         
-        let patch = diff(oldView, newView);
+        let patch = diff(oldView, newView, instance);
         return patch;
-        // let oldInstance = oldVNode.type;
-        // let newInstance = newVNode.type;
-        // const props = Object.assign({}, newVNode.props, { children: newVNode.children });
-    
-        // if(oldInstance) {
-        //     oldInstance.props = props;
-        //     let htree = viewToDOM(oldInstance.view, oldInstance);
-        //     return diff(htree, newVNode);
-        // }
-        // else if(typeof vnode.type === 'object' && vnode.type.__isMosaic === true) {
-        //     const $ndom = Mosaic.view(vnode, $parent);
-        //     return $parent ? ($parent.replaceChild($ndom, $dom) && $ndom) : $ndom;
-        // }
-        // else if(typeof vnode.type !== 'object' || vnode.type.__isMosaic === false) {
-        //     let htree = viewToDOM(vnode.type.view.bind(props), vnode.type);
-        //     return patch($dom, htree, $parent, $dom.__mosaicInstance);
-        // }
-
-        // let patch = ($node) => {
-        //     const $newDomNode = render(newVNode.view());
-        //     $node.replaceWith($newDomNode);
-        //     return $newDomNode;
-        // }
-        // return patch;
-        // let patch = ($node) => { return $node; };
     }
 
     // // Case 5: They are arrays of elements, so go through each one and diff the objects.
@@ -188,7 +163,7 @@ const diff = (oldVNode, newVNode) => {
     // are of different types then we just replace the entire thing.
     if(oldVNode.type !== newVNode.type) {
         let patch = ($node) => {
-            const $newDomNode = render(newVNode);
+            const $newDomNode = render(newVNode, instance);
             $node.replaceWith($newDomNode);
             return $newDomNode;
         }
@@ -198,8 +173,8 @@ const diff = (oldVNode, newVNode) => {
     // Case 7: If we reach this point, it means that the only differences exist in either the
     // properties or the child nodes. Handle these cases separately and return a patch that just
     // updates the node, not neccessarily replaces them.
-    const propsPatch = diffProperties(oldVNode.props, newVNode.props);
-    const childrenPatch = diffChildren(oldVNode.children, newVNode.children);
+    const propsPatch = diffProperties(oldVNode.props, newVNode.props, instance);
+    const childrenPatch = diffChildren(oldVNode.children, newVNode.children, instance);
     let finalPatch = ($node) => {
         propsPatch($node);
         childrenPatch($node);

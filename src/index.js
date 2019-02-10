@@ -51,6 +51,7 @@ const Mosaic = function(options) {
     this.willUpdate = options.willUpdate;
     this.updated = options.updated;
     this.willDestroy = options.willDestroy;
+    this.absoluteParent = options.absoluteParent || null;
 
     // Make each array a proxy of its own so that 
     let _tempData = options.data;
@@ -102,7 +103,7 @@ Mosaic.prototype.paint = function() {
 
     // Render an h-tree.
     let htree = createElement(this);
-    let $node = render(htree, this.element);
+    let $node = render(htree, this);
     let $mounted = mount($node, this.element);
     this.element = $mounted;
 

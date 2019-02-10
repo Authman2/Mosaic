@@ -30,7 +30,7 @@ const createNewMosaicInstance = function(vnode) {
             willUpdate: vnode.type.willUpdate,
             updated: vnode.type.updated,
             willDestroy: vnode.type.willDestroy,
-            link: link
+            link: link,
         }
         const instance = new Mosaic(options);
         if(vnode.children && vnode.children.length > 0) instance.children = vnode.children;
@@ -40,10 +40,10 @@ const createNewMosaicInstance = function(vnode) {
         
         // Render the DOM element.
         let htree = viewToDOM(instance.view, instance);
-        instance.element = render(htree);
+        instance.element = render(htree, instance);
         instance.element.__mosaicInstance = instance;
         instance.element.__mosaicKey = vnode.props.key;
-
+        
         if(instance.created) instance.created();
         return instance.element;
     }
@@ -52,7 +52,7 @@ const createNewMosaicInstance = function(vnode) {
 /** Takes a virtual dom node and returns a real dom node. 
 * @param {Object} vNode A virtual dom node.
 * @returns {Element} A real dom node. */
-const render = (vNode) => {
+const render = (vNode, instance) => {
     if(typeof vNode === 'string' || typeof vNode === 'number') {
         return document.createTextNode(vNode);
     }
@@ -64,9 +64,11 @@ const render = (vNode) => {
     }
     else if(typeof vNode.type !== 'object' && typeof vNode !== 'string') {
         const $element = document.createElement(vNode.type);
+        $element.__mosaicInstance = instance || vNode.type;
+        $element.__mosaicKey = vNode.props.key;
 
         for(var prop in vNode.props) setAttributes($element, prop, vNode.props[prop]);
-        for(var child of [].concat(...vNode.children)) $element.appendChild(render(child));
+        for(var child of [].concat(...vNode.children)) $element.appendChild( render(child, instance) );
 
         return $element;
     } else {

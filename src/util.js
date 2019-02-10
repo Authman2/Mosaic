@@ -1,12 +1,13 @@
 /** Sets the attributes on the HTML elements that were mounted by the virtual DOM. */
-const setAttributes = function($element, key, value) {
+const setAttributes = function($element, key, value, instance) {
     // 1.) Function handler for dom element.
     if(typeof value === 'function' && key.startsWith('on')) {
         const event = key.slice(2).toLowerCase();
+        
         $element.__mosaicHandlers = $element.__mosaicHandlers || {};
         $element.removeEventListener(event, $element.__mosaicHandlers[event]);
         
-        $element.__mosaicHandlers[event] = value;
+        $element.__mosaicHandlers[event] = value.bind($element.__mosaicInstance);
         $element.addEventListener(event, $element.__mosaicHandlers[event]);
     }
     // 2.) Particular types of attributes.

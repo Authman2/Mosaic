@@ -12,6 +12,6 @@ export default new Mosaic({
         </div>
     },
     created: function() {
-        console.log(this.element);
+        // console.log(this.element);
     }
 });
