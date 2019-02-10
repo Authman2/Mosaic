@@ -1,7 +1,7 @@
 import { Mosaic } from '../index';
 import { setAttributes, isHTMLElement, viewToDOM } from '../util';
 
-
+/** Renders a new instance of a Mosaic component. */
 const createNewMosaicInstance = function(vnode) {
     let props = Object.assign({}, vnode.props);
     
@@ -49,16 +49,6 @@ const createNewMosaicInstance = function(vnode) {
     }
 }
 
-/** Renders any regular dom element that is not a text node. */
-const renderRegularNode = (vNode) => {
-    const $element = document.createElement(vNode.type);
-
-    for(var prop in vNode.props) setAttributes($element, prop, vNode.props[prop]);
-    for(var child of [].concat(...vNode.children)) $element.appendChild(render(child));
-
-    return $element;
-}
-
 /** Takes a virtual dom node and returns a real dom node. 
 * @param {Object} vNode A virtual dom node.
 * @returns {Element} A real dom node. */
@@ -73,7 +63,12 @@ const render = (vNode) => {
         return vNode;
     }
     else if(typeof vNode.type !== 'object' && typeof vNode !== 'string') {
-        return renderRegularNode(vNode);
+        const $element = document.createElement(vNode.type);
+
+        for(var prop in vNode.props) setAttributes($element, prop, vNode.props[prop]);
+        for(var child of [].concat(...vNode.children)) $element.appendChild(render(child));
+
+        return $element;
     } else {
         throw new Error(`Invalid Virtual DOM Node: ${vNode}.`);
     }

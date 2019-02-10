@@ -70,13 +70,11 @@ const Mosaic = function(options) {
     // Setup the data observer.
     this.data = new Observable(_tempData || {}, (oldData) => {
         if(this.willUpdate) this.willUpdate(oldData);
-        // this.oldHtree = viewToDOM(this.view, this);
+        this.oldHtree = viewToDOM(this.view, this);
     }, () => {
         let htree = viewToDOM(this.view, this);
-        
-        let patches = patch(this, htree);
-        this.element = patches;
-        this.oldHtree = htree;
+        let patches = patch(this.oldHtree, htree);
+        this.element = patches(this.element);
 
         if(this.updated) this.updated();
     });
