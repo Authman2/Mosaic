@@ -62,14 +62,6 @@ const render = (vNode, instance) => {
     else if(isHTMLElement(vNode)) {
         return vNode;
     }
-    else if(Array.isArray(vNode)) {
-        let $holder = document.createElement('div');
-        for(var i = 0; i < vNode.length; i++) {
-            let $node = render(vNode[i]);
-            $holder.appendChild($node);
-        }
-        return $holder;
-    }
     else if(typeof vNode.type !== 'object' && typeof vNode !== 'string') {
         const $element = document.createElement(vNode.type);
         $element.__mosaicInstance = instance || vNode.type;

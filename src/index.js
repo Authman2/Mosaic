@@ -62,12 +62,6 @@ const Mosaic = function(options) {
             if(this.willUpdate) this.willUpdate(oldData);
             this.oldHtree = viewToDOM(this.view, this);
         }, () => {
-            // let htree = viewToDOM(this.view, this);
-        
-            // let patches = patch(this.oldHtree, htree);
-            // this.element = patches(this.element);
-            // this.oldHtree = htree;
-
             let htree = viewToDOM(this.view, this);
             let patches = patch(this.oldHtree, htree);
             this.element = patches(this.element);
