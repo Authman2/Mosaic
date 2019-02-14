@@ -18,7 +18,7 @@ const diffProperties = (oldProps, newProps, instance) => {
     for(var prop in newProps) {
         let val = newProps[prop];
         let _patch = ($node) => {
-            setAttributes($node, prop, val, instance);
+            setAttributes($node, prop, val, instance, true);
             return $node;
         }
         patches.push(_patch);
@@ -85,7 +85,7 @@ const diffChildren = (oldVChildren, newVChildren, instance) => {
 * @param {Object} oldVNode The old virtual dom node.
 * @param {Object} newVNode The new virtual dom node. */
 const diff = (oldVNode, newVNode, instance) => {
-    // console.log(oldVNode, newVNode);
+    console.log(oldVNode, newVNode);
 
     // Case 1: The old virtual node does not exist.
     if(newVNode === undefined) {

@@ -1,7 +1,10 @@
 /** Sets the attributes on the HTML elements that were mounted by the virtual DOM. */
-const setAttributes = function($element, key, value, instance) {
+const setAttributes = function($element, key, value, instance, isPatching = false) {
     // 1.) Function handler for dom element.
     if(typeof value === 'function' && key.startsWith('on')) {
+        // This is not a great fix. It just disables function diffs.
+        if(isPatching === true) return;
+        
         const event = key.slice(2).toLowerCase();
         
         $element.__mosaicHandlers = $element.__mosaicHandlers || {};
@@ -25,6 +28,9 @@ const setAttributes = function($element, key, value, instance) {
     }
     // 6.) Value is a not an object nor a function, so anything else basically.
     else if(typeof value !== 'object' && typeof value !== 'function') {
+        // This is not a great fix. It just disables function diffs.
+        if(key.startsWith('on')) return;
+
         $element.setAttribute(key, value);
     }
 }

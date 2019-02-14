@@ -62,12 +62,20 @@ const render = (vNode, instance) => {
     else if(isHTMLElement(vNode)) {
         return vNode;
     }
+    else if(Array.isArray(vNode)) {
+        let $holder = document.createElement('div');
+        for(var i = 0; i < vNode.length; i++) {
+            let $node = render(vNode[i]);
+            $holder.appendChild($node);
+        }
+        return $holder;
+    }
     else if(typeof vNode.type !== 'object' && typeof vNode !== 'string') {
         const $element = document.createElement(vNode.type);
         $element.__mosaicInstance = instance || vNode.type;
         $element.__mosaicKey = vNode.props.key;
 
-        for(var prop in vNode.props) setAttributes($element, prop, vNode.props[prop]);
+        for(var prop in vNode.props) setAttributes($element, prop, vNode.props[prop], instance);
         for(var child of [].concat(...vNode.children)) $element.appendChild( render(child, instance) );
 
         return $element;
@@ -75,35 +83,4 @@ const render = (vNode, instance) => {
         throw new Error(`Invalid Virtual DOM Node: ${vNode}.`);
     }
 }
-exports.render = render;
-
-// const render = function(vnode, $parent = null, instance = null, replace = false) {
-//     const mount = $parent ? ($el => (replace ? $parent.replaceWith($el) : $parent.appendChild($el))) : ($el => $el);
-
-//     // 1.) Primitive types.
-//     if(typeof vnode === 'string' || typeof vnode === 'number') {
-//         let $e = document.createTextNode(typeof vnode === 'boolean' ? '' : vnode);
-//         return mount($e);
-//     }
-//     // 2.) A Mosaic component.
-//     else if(typeof vnode === 'object' && typeof vnode.type === 'object' && vnode.type.__isMosaic === true) {
-//         return Mosaic.view(vnode, $parent);
-//     }
-//     // 3.) If it is already a dom element, just return it!
-//     else if(isHTMLElement(vnode)) {
-//         return mount(vnode);
-//     }
-//     // 4.) Handle child components and attributes.
-//     else if(typeof vnode === 'object' && typeof vnode.type === 'string') {
-//         const $e = document.createElement(vnode.type);
-//         const $dom = mount($e);
-//         for(var child of [].concat(...vnode.children)) render(child, $dom, instance);
-//         for(var prop in vnode.props) setAttributes($dom, prop, vnode.props[prop], instance);
-//         return $dom;
-//     }
-//     // 5.) Otherwise, throw an error.
-//     else {
-//         throw new Error(`Invalid Virtual DOM Node: ${vnode}.`);
-//     }
-// }
 exports.render = render;
