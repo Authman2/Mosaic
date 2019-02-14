@@ -125,20 +125,29 @@ const diff = (oldVNode, newVNode, instance) => {
     }
 
     // // Case 4: They are arrays of elements, so go through each one and diff the objects.
-    // if(Array.isArray(oldVNode) || Array.isArray(newVNode)) {
-    //     let patches = [];
-    //     for(let i = 0; i < newVNode.length; i++) {
-    //         console.log(oldVNode[i], newVNode[i]);
-    //         patches.push( diff(oldVNode[i], newVNode[i]) );
-    //     }
-    //     let p = ($node) => {
-    //         patches.forEach((ptch, index) => {
-    //             ptch($node.childNodes[index]);
-    //         })
-    //         return $node;
-    //     }
-    //     return p;
-    // }
+    if(Array.isArray(oldVNode) || Array.isArray(newVNode)) {
+        let patches = [];
+        for(let i = 0; i < oldVNode.length; i++) patches.push( diff(oldVNode[i], newVNode[i]) );
+        
+        let finalPatch = ($node) => {
+            patches.forEach(ptc => {
+                ptc($node);
+            });
+            return $node;
+        }
+        return finalPatch;
+        // let patches = [];
+        // for(let i = 0; i < newVNode.length; i++) {
+        //     patches.push( diff(oldVNode[i], newVNode[i]) );
+        // }
+        // let p = ($node) => {
+        //     patches.forEach((ptch, index) => {
+        //         ptch($node.childNodes[index]);
+        //     })
+        //     return $node;
+        // }
+        // return p;
+    }
 
     // Case 5: In order to make the diff algo more efficient, assume that if the trees
     // are of different types then we just replace the entire thing.
