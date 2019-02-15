@@ -22,9 +22,11 @@ const todoApp = new Mosaic({
             document.getElementById('inp').value = '';
 
             this.data.todos.push(value);
+            // this.data.todos = this.data.todos.concat(value);
         },
         deleteTodo: function(todoIndex) {
-            this.data.todos.splice(todoIndex, 1);
+            // this.data.todos.splice(todoIndex, 1);
+            this.data.todos = this.data.todos.filter((_, index) => index !== todoIndex);
         }
     },
     view: function() {

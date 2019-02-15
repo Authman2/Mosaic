@@ -45,6 +45,7 @@ const diffProperties = (oldProps, newProps, instance) => {
 }
 
 const diffChildren = (oldVChildren, newVChildren, instance) => {
+    // console.log(oldVChildren, newVChildren);
     const patches = [];
 
     // Go through the children and add the result of their diffing.
@@ -96,6 +97,14 @@ const diff = (oldVNode, newVNode, instance) => {
         return patch;
     }
 
+    // if(oldVNode === undefined) {
+    //     let patch = $node => {
+    //         $node.appendChild(render(newVNode));
+    //         return $node;
+    //     }
+    //     return patch;
+    // }
+
     // Case 2: They are both strings, so compare them.
     if((typeof oldVNode === 'string' && typeof newVNode === 'string')
         || (typeof oldVNode === 'number' && typeof newVNode === 'number')) {
@@ -124,29 +133,56 @@ const diff = (oldVNode, newVNode, instance) => {
         return patch;
     }
 
-    // // Case 4: They are arrays of elements, so go through each one and diff the objects.
+    // Case 4: They are arrays of elements, so go through each one and diff the objects.
     if(Array.isArray(oldVNode) || Array.isArray(newVNode)) {
+        let pool = {};
         let patches = [];
-        for(let i = 0; i < oldVNode.length; i++) patches.push( diff(oldVNode[i], newVNode[i]) );
-        
-        let finalPatch = ($node) => {
-            patches.forEach(ptc => {
+
+        let oldI = 0;
+        for(let oldNode of [].concat(...oldVNode)) {
+            const key = ((oldNode.props && oldNode.props.key) ? oldNode.props.key : `__index_${oldI}`);
+            pool[key] = oldNode;
+            oldI += 1;
+        }
+
+        let newI = 0;
+        for(let newNode of [].concat(...newVNode)) {
+            const key = ((newNode.props && newNode.props.key) ? newNode.props.key : `__index_${newI}`);
+            let _patch;
+
+            if(pool[key]) {
+                _patch = diff(pool[key], newNode);
+            } else {
+                _patch = diff(undefined, newVNode);
+            }
+
+            patches.push(_patch);
+            // console.log(patches.length);
+            newI += 1;
+        }
+
+        let finalPatch = $node => {
+            patches.forEach((ptc, index) => {
                 ptc($node);
+                console.log($node);
             });
-            return $node;
         }
         return finalPatch;
-        // let patches = [];
-        // for(let i = 0; i < newVNode.length; i++) {
-        //     patches.push( diff(oldVNode[i], newVNode[i]) );
+
+        // Create a patch for each child.
+        // let allPatches = [];
+        // for(var i = 0; i < oldVNode.length; i++) {
+        //     let patch = diff(oldVNode[i], newVNode[i]);
+        //     allPatches.push(patch);
         // }
-        // let p = ($node) => {
-        //     patches.forEach((ptch, index) => {
-        //         ptch($node.childNodes[index]);
-        //     })
+        // // Create a final patch that applies all patch changes in the list.
+        // let finalPatch = ($node) => {
+        //     allPatches.forEach((p, index) => {
+        //         p($node.childNodes[index]);
+        //     });
         //     return $node;
         // }
-        // return p;
+        // return finalPatch;
     }
 
     // Case 5: In order to make the diff algo more efficient, assume that if the trees

@@ -53,7 +53,7 @@ const createNewMosaicInstance = function(vnode) {
 * @param {Object} vNode A virtual dom node.
 * @returns {Element} A real dom node. */
 const render = (vNode, instance) => {
-    // console.log(vNode);
+    // console.log('VNODE: ', vNode);
     if(typeof vNode === 'string' || typeof vNode === 'number') {
         return document.createTextNode(vNode);
     }
@@ -63,12 +63,26 @@ const render = (vNode, instance) => {
     else if(isHTMLElement(vNode)) {
         return vNode;
     }
+    else if(Array.isArray(vNode)) {
+        // let $holder = document.createElement('div');
+        // for(let i = 0; i < vNode.length; i++) {
+        //     let $node = render(vNode[i]);
+        //     $node.__mosaicKey = `__mosaicKey_${i}`;
+        //     $holder.appendChild($node);
+        // }
+        // console.log("HOLDER: ", $holder);
+        // return $holder;
+    }
     else if(typeof vNode.type !== 'object' && typeof vNode !== 'string') {
         const $element = document.createElement(vNode.type);
         $element.__mosaicInstance = instance || vNode.type;
         $element.__mosaicKey = vNode.props.key;
 
         for(var prop in vNode.props) setAttributes($element, prop, vNode.props[prop], instance);
+        // for(var child of vNode.children) {
+        //     let $node = render(child);
+        //     $element.appendChild($node);
+        // }
         for(var child of [].concat(...vNode.children)) {
             let $node = render(child);
             $element.appendChild($node);
