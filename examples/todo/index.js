@@ -4,9 +4,7 @@ import { Mosaic } from '../../src/index';
 
 const TodoItem = new Mosaic({
     view: function() {
-        return <div class='todo-item' onclick={this.data.deleteTodo}>
-            { this.data.title || '' }
-        </div>
+        return <div class='todo-item' onclick={this.data.deleteTodo}>{ this.data.title || '' }</div>
     }
 });
 
@@ -22,11 +20,13 @@ const todoApp = new Mosaic({
             document.getElementById('inp').value = '';
 
             this.data.todos.push(value);
+            console.log(this.data.todos);
             // this.data.todos = this.data.todos.concat(value);
         },
         deleteTodo: function(todoIndex) {
             // this.data.todos.splice(todoIndex, 1);
             this.data.todos = this.data.todos.filter((_, index) => index !== todoIndex);
+            // console.log(this.data.todos);
         }
     },
     view: function() {

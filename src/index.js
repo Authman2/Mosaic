@@ -107,8 +107,6 @@ Mosaic.prototype.paint = function() {
     let $node = render(htree, this);
     let $mounted = mount($node, this.element);
     this.element = $mounted;
-
-    // render(htree, this.element, this);
 }
 
 
