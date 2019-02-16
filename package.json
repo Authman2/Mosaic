@@ -4,7 +4,7 @@
   "description": "A front-end JavaScript library for creating user interfaces",
   "main": "dist/index.js",
   "scripts": {
-    "test": "parcel -p 3000 examples/routing/index.html --out-dir example-dist",
+    "test": "parcel -p 3000 examples/main/index.html --out-dir example-dist",
     "clean": "rm -rf .cache dist example-dist",
     "build": "parcel build src/index.js",
     "deploy": "npm publish --access=public"

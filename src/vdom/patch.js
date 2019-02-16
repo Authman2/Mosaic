@@ -87,7 +87,7 @@ const diffChildren = (oldVChildren, newVChildren, instance) => {
 * @param {Object} oldVNode The old virtual dom node.
 * @param {Object} newVNode The new virtual dom node. */
 const diff = (oldVNode, newVNode, instance) => {
-    console.log(oldVNode, newVNode);
+    // console.log(oldVNode, newVNode);
 
     // Case 1: The old virtual node does not exist.
     if(newVNode === undefined) {
@@ -129,6 +129,14 @@ const diff = (oldVNode, newVNode, instance) => {
     // Case 4: An array of items, so you have to break them apart and find their nodes.
     if(Array.isArray(oldVNode) || Array.isArray(newVNode)) {
         
+    }
+
+    // Case 5: They are HTML based templates, so basically just replace the whole thing (for now).
+    if(isHTMLElement(oldVNode) || isHTMLElement(newVNode)) {
+        return $node => {
+            $node.replaceWith(newVNode);
+            return newVNode;
+        }
     }
 
     // Case 5: In order to make the diff algo more efficient, assume that if the trees
