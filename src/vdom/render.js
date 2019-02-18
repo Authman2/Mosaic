@@ -1,5 +1,5 @@
 import { Mosaic } from '../index';
-import { setAttributes, isHTMLElement, viewToDOM } from '../util';
+import { setAttributes, isHTMLElement, viewToDOM, randomKey } from '../util';
 
 /** Renders a new instance of a Mosaic component. */
 const createNewMosaicInstance = function(vnode) {
@@ -64,29 +64,46 @@ const render = (vNode, instance) => {
     else if(isHTMLElement(vNode)) {
         return vNode;
     }
-    else if(Array.isArray(vNode)) {
-        let $holder = document.createElement('div');
-        for(let i = 0; i < vNode.length; i++) {
-            let $node = render(vNode[i]);
-            $node.__mosaicKey = `__mosaicKey_${i}`;
-            $holder.appendChild($node);
-        }
-        console.log("Using Holder: ", $holder);
-        return $holder;
-    }
+    // Only needed for #1
+    // else if(Array.isArray(vNode)) {
+    //     let $holder = document.createElement('div');
+    //     for(let i = 0; i < vNode.length; i++) {
+    //         let $node = render(vNode[i]);
+    //         $node.__mosaicKey = `__mosaicKey_${i}`;
+    //         $holder.appendChild($node);
+    //     }
+    //     console.log("Using Holder: ", $holder);
+    //     return $holder;
+    // }
     else if(typeof vNode.type !== 'object' && typeof vNode !== 'string') {
         const $element = document.createElement(vNode.type);
         $element.__mosaicInstance = instance || vNode.type;
-        $element.__mosaicKey = vNode.props.key;
+        $element.__mosaicKey = vNode.props && vNode.props.key || '';
 
         for(var prop in vNode.props) setAttributes($element, prop, vNode.props[prop], instance);
-        for(var child of vNode.children) {
+        // 1.)
+        // for(var child of vNode.children) {
+        //     let $node = render(child);
+        //     $element.appendChild($node);
+        // }
+
+        // 2.)
+        for(var child of [].concat(...vNode.children)) {
             let $node = render(child);
             $element.appendChild($node);
         }
-        // for(var child of [].concat(...vNode.children)) {
-        //     let $node = render(child);
-        //     $element.appendChild($node);
+
+        // 3.)
+        // for(var child of [...vNode.children]) {
+        //     if(Array.isArray(child)) {
+        //         for(var item of [...child]) {
+        //             let $node = render(item);
+        //             $element.appendChild($node);
+        //         }
+        //     } else {
+        //         let $node = render(child);
+        //         $element.appendChild($node);
+        //     }
         // }
 
         return $element;

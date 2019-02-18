@@ -1,7 +1,8 @@
 import { Mosaic } from '../index';
 import { render } from './render';
-import { setAttributes, isHTMLElement, viewToDOM } from '../util';
+import { setAttributes, isHTMLElement, viewToDOM, randomKey } from '../util';
 
+/** Helper function. */
 const zip = (xs, ys) => {
     const zipped = [];
     for(let i = 0; i < Math.min(xs.length, ys.length); i++) {
@@ -10,6 +11,7 @@ const zip = (xs, ys) => {
     return zipped;
 }
 
+/** Compute the differences between VNode props. */
 const diffProperties = (oldProps, newProps, instance) => {
     // The array of patches to perform.
     const patches = [];
@@ -44,6 +46,7 @@ const diffProperties = (oldProps, newProps, instance) => {
     return patch;
 }
 
+/** Computes the differences between child nodes of a VNode. */
 const diffChildren = (oldVChildren, newVChildren, instance) => {
     // console.log(oldVChildren, newVChildren);
     const patches = [];
@@ -60,14 +63,13 @@ const diffChildren = (oldVChildren, newVChildren, instance) => {
     for(var i = 0; i < sliced.length; i++) {
         let s = sliced[i];
         let _patch = ($node) => {
+            // console.log($node);
             let res = render(s, instance);
             $node.appendChild(res);
             return $node;
         }
         additionalPatches.push(_patch);
     }
-
-    
 
     let patch = ($parent) => {
         for(const [p, $child] of zip(patches, $parent.childNodes)) {
@@ -81,6 +83,49 @@ const diffChildren = (oldVChildren, newVChildren, instance) => {
     }
     return patch;
 }
+
+/** Computes the differences between arrays of VNodes. */
+const diffArrays = (oldArray, newArray) => {
+    console.log(oldArray, newArray);
+    
+    let patches = [];
+    const sliced = oldArray.length > newArray.length ? oldArray.slice(newArray.length) : newArray.slice(oldArray.length);
+    for(var i = 0; i < sliced.length; i++) {
+        let s = sliced[i];
+        if(oldArray.includes(s)) {
+            patches.push($node => {
+                $node.parentNode.removeChild($node);
+                return undefined;
+            })
+        } else {
+            patches.push($node => {
+                let $n = render(s);
+                $node.parentNode.insertBefore($n, $node.lastSibling);
+                return $node;
+            })
+        }
+    }
+
+    return $node => {
+        // console.log($node.parentNode);
+        var offset = 0;
+        let children = $node.parentNode.childNodes;
+        for(let i = 0; i < children.length; i++) {
+            let childNode = children[i];
+            if(childNode === $node) { offset = i; break; }
+        }
+
+        patches.forEach((ptc) => {
+            let $el = $node.parentNode.childNodes[offset];
+            console.log($el);
+            ptc($el);
+        });
+        return $node;
+    }
+}
+
+
+
 
 /** Calculates the difference between different virtual nodes and returns a function
 * to patch them together.
@@ -97,6 +142,15 @@ const diff = (oldVNode, newVNode, instance) => {
         };
         return patch;
     }
+
+    // if(oldVNode === undefined) {
+    //     let patch = $node => {
+    //         let rend = render(newVNode);
+    //         $node.parentNode.insertBefore(rend, $node.nextSibling);
+    //         return $node;
+    //     }
+    //     return patch;
+    // }
 
     // Case 2: They are both strings, so compare them.
     if((typeof oldVNode === 'string' && typeof newVNode === 'string')
@@ -128,7 +182,7 @@ const diff = (oldVNode, newVNode, instance) => {
 
     // Case 4: An array of items, so you have to break them apart and find their nodes.
     if(Array.isArray(oldVNode) || Array.isArray(newVNode)) {
-        
+        return diffArrays(oldVNode, newVNode);
     }
 
     // Case 5: They are HTML based templates, so basically just replace the whole thing (for now).
@@ -154,8 +208,9 @@ const diff = (oldVNode, newVNode, instance) => {
     // properties or the child nodes. Handle these cases separately and return a patch that just
     // updates the node, not neccessarily replaces them.
     const propsPatch = diffProperties(oldVNode.props, newVNode.props, instance);
-    console.log(oldVNode, newVNode);
-    const childrenPatch = diffChildren(oldVNode.children || oldVNode, newVNode.children || newVNode, instance);
+    const childrenPatch = diffChildren(
+        oldVNode.children ? oldVNode.children : [...oldVNode], 
+        newVNode.children ? newVNode.children : [...newVNode], instance);
     let finalPatch = ($node) => {
         propsPatch($node);
         childrenPatch($node);

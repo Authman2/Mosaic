@@ -8,6 +8,7 @@ const TodoItem = new Mosaic({
     }
 });
 
+
 const todoApp = new Mosaic({
     element: document.getElementById('root'),
     data: {

@@ -5,9 +5,19 @@ import { patch } from './vdom/patch';
 import { Observable } from './observable';
 import { Router } from './router';
 import { isHTMLElement, findInvalidOptions } from './validations';
-import { viewToDOM } from './util';
+import { viewToDOM, randomKey } from './util';
 
-/** The configuration options for a Mosaic component. */
+/** The configuration options for a Mosaic component.
+ * @typedef {MosaicOptions} MosaicOptions Configuration options for a Mosaic component.
+ * @param {HTMLElement} element The DOM element to inject this component into.
+ * @param {Router} router THe router to use for client-side routing on this component.
+ * @param {Object} data The data of this component.
+ * @param {Function | String} view The view to define the appearance of this component.
+ * @param {Function} created Called when this component is created.
+ * @param {Function} willUpdate Called when this component is about to update.
+ * @param {Function} updated Called when this component has been updated.
+ * @param {Function} willDestroy Called when this component is about to be destroyed.
+*/
 const MosaicOptions = {
     /** The HTML element to inject this Mosaic component into. */
     element: HTMLElement,
@@ -44,6 +54,7 @@ const Mosaic = function(options) {
     let invalids = findInvalidOptions(options);
     if(invalids !== undefined) throw new Error(invalids);
 
+    this.id = randomKey();
     this.element = options.element;
     this.router = options.router;
     this.view = options.view;
@@ -115,26 +126,13 @@ Mosaic.prototype.paint = function() {
 Mosaic.Router = Router;
 
 
+/** Checks if two Mosaics are equal to each other. 
+* @param {Mosaic} other Whether or not this Mosaic is equal to another. */
+Mosaic.prototype.equals = function(other) {
+    return this.key === other.key;
+}
 
 
-/** Static function for diffing and patching changes between instances of Mosaics. */
-// Mosaic.patch = function($dom, vnode, $parent = $dom.parentNode) {
-//     const props = Object.assign({}, vnode.props, { children: vnode.children });
-    
-//     if($dom.__mosaicInstance && $dom.__mosaicInstance.constructor === vnode.type) {
-//         $dom.__mosaicInstance.props = props;
-//         let htree = viewToDOM($dom.__mosaicInstance.view, $dom.__mosaicInstance);
-//         return patch($dom, htree, $parent, $dom.__mosaicInstance);
-//     }
-//     else if(typeof vnode.type === 'object' && vnode.type.__isMosaic === true) {
-//         const $ndom = Mosaic.view(vnode, $parent);
-//         return $parent ? ($parent.replaceChild($ndom, $dom) && $ndom) : $ndom;
-//     }
-//     else if(typeof vnode.type !== 'object' || vnode.type.__isMosaic === false) {
-//         let htree = viewToDOM(vnode.type.view.bind(props), vnode.type);
-//         return patch($dom, htree, $parent, $dom.__mosaicInstance);
-//     }
-// }
 
 window.h = createElement;
 window.Mosaic = Mosaic;
