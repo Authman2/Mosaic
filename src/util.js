@@ -120,6 +120,17 @@ const viewToDOM = function(input, caller) {
         let re = new RegExp('{{[ ]*this.data.' + propName + '[ ]*}}', "gim");
         let nstring = input.replace(re, propVal);
         replaced = nstring;
+
+        /* Use "Function" object to construct an expression from the html string that can be run. */
+        // let obj = {
+        //     data: {
+        //         x: 20,
+        //         y: 50,
+        //     }
+        // }
+        // obj.func = new Function('console.log("Object Value: ", this.data.x + this.data.y);').bind(obj);
+        // obj.func();
+        // console.log(obj);
     }
     let parser = new DOMParser();
     let $element = parser.parseFromString(replaced, 'text/html').body.firstChild;
