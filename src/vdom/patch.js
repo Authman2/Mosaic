@@ -48,80 +48,85 @@ const diffProperties = (oldProps, newProps, instance) => {
 
 /** Computes the differences between child nodes of a VNode. */
 const diffChildren = (oldVChildren, newVChildren, instance) => {
-    // // console.log(oldVChildren, newVChildren);
-    // const patches = [];
+    // console.log(oldVChildren, newVChildren);
+    const patches = [];
 
-    // // Go through the children and add the result of their diffing.
+    // Go through the children and add the result of their diffing.
     // oldVChildren.forEach((oldVChild, index) => {
     //     let result = diff(oldVChild, newVChildren[index]);
     //     patches.push(result);
     // });
+    [].concat(...oldVChildren).forEach((oldChild, index) => {
+        let res = diff(oldChild, newVChildren[index]);
+        patches.push(res);
+    })
 
-    // // Make additional patches for unequal children lengths of the old and new vNodes.
-    // const additionalPatches = [];
-    // const sliced = newVChildren.slice(oldVChildren.length);
-    // for(var i = 0; i < sliced.length; i++) {
-    //     let s = sliced[i];
-    //     let _patch = $node => {
-    //         console.log($node);
-    //         let res = render(s, instance);
-    //         $node.appendChild(res);
-    //         return $node;
-    //     }
-    //     additionalPatches.push(_patch);
-    // }
-
-    // return $parent => {
-    //     for(const [p, $child] of zip(patches, $parent.childNodes)) {
-    //         p($child);
-    //     }
-    //     for(var i in additionalPatches) {
-    //         const p = additionalPatches[i];
-    //         p($parent);
-    //     }
-    //     return $parent;
-    // }
-    return $node => {
-        const pool = {};
-        const patches = [];
-
-        [].concat(...oldVChildren).map((child, index) => {
-            const key = (child && child.props && child.props.key) || `__index_${index}`;
-            pool[key] = child;
-        });
-        [].concat(...newVChildren).map((child, index) => {
-            const key = (child && child.props && child.props.key) || `__index_${index}`;
-            
-            if(pool[key]) {
-                patches.push(diff(child, pool[key]));
-            }
-            else {
-                patches.push($el => {
-                    let $eazy = render(child, instance);
-                    $node.appendChild($eazy);
-                    return $el;
-                })
-            }
-
-            // $node.replaceWith($el);
-            delete pool[key];
-        });
-        patches.forEach(ptc => {
-            ptc($node);
-        });
-
-        // Unmount the component and call the lifecycle function.
-        // for(const key in pool) {
-        //     const instance = pool[key];
-        //     if(instance && instance.willDestroy) instance.willDestroy();
-        //     if(pool[key]) pool[key].remove();
-        // }
-
-        // Remove and reset the necessary attributes.
-        // for(var attr in $node.attributes) $node.removeAttribute(attr.name);
-        // for(var prop in newVChildren.props) setAttributes($dom, prop, vnode.props[prop], vnode);
-        return $node;
+    // Make additional patches for unequal children lengths of the old and new vNodes.
+    const additionalPatches = [];
+    const sliced = newVChildren.slice(oldVChildren.length);
+    for(var i = 0; i < sliced.length; i++) {
+        let s = sliced[i];
+        let _patch = $node => {
+            console.log($node);
+            let res = render(s, instance);
+            $node.appendChild(res);
+            return $node;
+        }
+        additionalPatches.push(_patch);
     }
+
+    return $parent => {
+        for(const [p, $child] of zip(patches, $parent.childNodes)) {
+            p($child);
+        }
+        for(var i in additionalPatches) {
+            const p = additionalPatches[i];
+            p($parent);
+        }
+        return $parent;
+    }
+    // return $node => {
+    //     const pool = {};
+    //     const patches = [];
+
+    //     [].concat(...oldVChildren).map((child, index) => {
+    //         const key = (child && child.props && child.props.key) || `__index_${index}`;
+    //         pool[key] = child;
+    //     });
+    //     [].concat(...newVChildren).map((child, index) => {
+    //         const key = (child && child.props && child.props.key) || `__index_${index}`;
+            
+    //         if(pool[key]) {
+    //             patches.push(diff(child, pool[key]));
+    //         }
+    //         else {
+    //             // console.log('Adding a new item');
+    //             patches.push($el => {
+    //                 let $eazy = render(child, instance);
+    //                 $node.appendChild($eazy);
+
+    //                 // Remove and reset the necessary attributes.
+    //                 for(var attr in $node.attributes) $node.removeAttribute(attr.name);
+    //                 for(var prop in child.props) setAttributes($node.parentNode, prop, child.props[prop], child);
+    //                 return $node;
+    //             })
+    //         }
+
+    //         // $node.replaceWith($el);
+    //         delete pool[key];
+    //     });
+    //     patches.forEach((ptc, index) => {
+    //         ptc($node);
+    //     });
+
+    //     // Unmount the component and call the lifecycle function.
+    //     // for(const key in pool) {
+    //     //     const instance = pool[key];
+    //     //     if(instance && instance.willDestroy) instance.willDestroy();
+    //     //     if(pool[key]) pool[key].remove();
+    //     // }
+    //     return $node;
+    // }
 }
 
 /** Computes the differences between arrays of VNodes. */
