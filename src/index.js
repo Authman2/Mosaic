@@ -76,7 +76,7 @@ const Mosaic = function(options) {
             let htree = viewToDOM(this.view, this);
             let patches = patch(this.oldHtree, htree);
             this.element = patches(this.element);
-
+            console.log(htree);
             if(this.updated) this.updated();
         });
     }
@@ -129,7 +129,7 @@ Mosaic.Router = Router;
 /** Checks if two Mosaics are equal to each other. 
 * @param {Mosaic} other Whether or not this Mosaic is equal to another. */
 Mosaic.prototype.equals = function(other) {
-    return this.key === other.key;
+    return this.id === other.id;
 }
 
 

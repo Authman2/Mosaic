@@ -6,7 +6,7 @@ import { setAttributes, isHTMLElement, viewToDOM, randomKey } from '../util';
 const zip = (xs, ys) => {
     const zipped = [];
     for(let i = 0; i < Math.min(xs.length, ys.length); i++) {
-        zipped.push([xs[i], ys[i]]);
+        zipped.push({ patch: xs[i], child: ys[i] });
     }
     return zipped;
 }
@@ -17,6 +17,11 @@ const diffProperties = (oldProps, newProps, instance) => {
     const patches = [];
     
     // Go through the new properties and add on to the list of patch functions that will run later.
+    // [].concat(...Object.keys(newProps)).forEach(prop => {
+    //     patches.push($node => {
+    //         setAttributes($node, prop, newProps[prop], instance, true);
+    //     });
+    // });
     for(var prop in newProps) {
         let val = newProps[prop];
         let _patch = ($node) => {
@@ -27,6 +32,14 @@ const diffProperties = (oldProps, newProps, instance) => {
     }
 
     // Go through the old properties and remove the ones that are no longer in the new properties.
+    // [].concat(...Object.keys(oldProps)).forEach(oldProp => {
+    //     if(!(oldProp in newProps)) {
+    //         patches.push($node => {
+    //             $node.removeAttribute(oldProp);
+    //             return $node;
+    //         });
+    //     }
+    // });
     for(var i in oldProps) {
         if(!(i in newProps)) {
             let _patch = ($node) => {
@@ -48,18 +61,23 @@ const diffProperties = (oldProps, newProps, instance) => {
 
 /** Computes the differences between child nodes of a VNode. */
 const diffChildren = (oldVChildren, newVChildren, instance) => {
-    // console.log(oldVChildren, newVChildren);
     const patches = [];
 
+    /**
+     * 
+     * So I think the issue is not that the wrong element is being removed, but that the properties on
+     * the newly patched elements are not being updated. The H-trees are looking perfect, and are accurately
+     * reflecting the new state. However, the DOM nodes are not changing their properties to match. So you
+     * have to find a way to set the attributes again after each patch?
+     * 
+     */
+
     // Go through the children and add the result of their diffing.
-    // oldVChildren.forEach((oldVChild, index) => {
-    //     let result = diff(oldVChild, newVChildren[index]);
-    //     patches.push(result);
-    // });
     [].concat(...oldVChildren).forEach((oldChild, index) => {
-        let res = diff(oldChild, newVChildren[index]);
+        let ovc = [].concat(...newVChildren);
+        let res = diff(oldChild, ovc[index], instance);
         patches.push(res);
-    })
+    });
 
     // Make additional patches for unequal children lengths of the old and new vNodes.
     const additionalPatches = [];
@@ -67,7 +85,6 @@ const diffChildren = (oldVChildren, newVChildren, instance) => {
     for(var i = 0; i < sliced.length; i++) {
         let s = sliced[i];
         let _patch = $node => {
-            console.log($node);
             let res = render(s, instance);
             $node.appendChild(res);
             return $node;
@@ -76,13 +93,8 @@ const diffChildren = (oldVChildren, newVChildren, instance) => {
     }
 
     return $parent => {
-        for(const [p, $child] of zip(patches, $parent.childNodes)) {
-            p($child);
-        }
-        for(var i in additionalPatches) {
-            const p = additionalPatches[i];
-            p($parent);
-        }
+        [].concat(...zip(patches, $parent.childNodes)).forEach(combo => combo.patch(combo.child));
+        [].concat(...additionalPatches).forEach(ptc => ptc($parent));
         return $parent;
     }
     // return $node => {
@@ -127,46 +139,6 @@ const diffChildren = (oldVChildren, newVChildren, instance) => {
     //     // }
     //     return $node;
     // }
-}
-
-/** Computes the differences between arrays of VNodes. */
-const diffArrays = (oldArray, newArray) => {
-    // console.log(oldArray, newArray);
-    
-    let patches = [];
-    const sliced = oldArray.length > newArray.length ? oldArray.slice(newArray.length) : newArray.slice(oldArray.length);
-    for(var i = 0; i < sliced.length; i++) {
-        let s = sliced[i];
-        console.log(s, oldArray, oldArray.includes(s));
-        if(oldArray.includes(s)) {
-            patches.push($node => {
-                $node.parentNode.removeChild($node);
-                return undefined;
-            })
-        } else {
-            patches.push($node => {
-                var offset = 0;
-                let children = $node.parentNode.childNodes;
-                for(let i = 0; i < children.length; i++) {
-                    let childNode = children[i];
-                    if(childNode === $node) { offset = i; break; }
-                }
-
-                let $el = $node.parentNode.childNodes[offset];
-                let $n = render(s);
-                $el.parentNode.insertBefore($n, $node.lastSibling);
-                return $el;
-            })
-        }
-    }
-
-    return $node => {
-        // console.log($node.parentNode);
-        patches.forEach((ptc) => {
-            ptc($node);
-        });
-        return $node;
-    }
 }
 
 
@@ -251,14 +223,12 @@ const diff = (oldVNode, newVNode, instance) => {
     // Case 6: If we reach this point, it means that the only differences exist in either the
     // properties or the child nodes. Handle these cases separately and return a patch that just
     // updates the node, not neccessarily replaces them.
-    const propsPatch = diffProperties(oldVNode.props, newVNode.props, instance);
-    // const childrenPatch = diffChildren(
-    //     oldVNode.children ? oldVNode.children : [...oldVNode], 
-    //     newVNode.children ? newVNode.children : [...newVNode], instance);
     const oldC = [].concat(...oldVNode.children);
     const newC = [].concat(...newVNode.children);
+
+    const propsPatch = diffProperties(oldVNode.props, newVNode.props, instance);
     const childrenPatch = diffChildren(oldC, newC, instance);
-    let finalPatch = ($node) => {
+    let finalPatch = $node => {
         propsPatch($node);
         childrenPatch($node);
         return $node;
