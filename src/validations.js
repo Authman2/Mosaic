@@ -8,7 +8,7 @@ import { isHTMLElement } from './util';
  */
 const findInvalidOptions = function(options) {
     // Element
-    if(options.element && (!isHTMLElement(options.element))) {
+    if(options.element && (!isHTMLElement(options.element) && typeof options.element !== 'string')) {
         return `The Mosaic could not be created because the "element" property is either not an HTML DOM 
         element or it does not already exist in the DOM. Make sure that the "element" property is an already 
         existing DOM element such as "document.body" or a div with the id of 'root' for example.`;
@@ -59,5 +59,17 @@ const findInvalidOptions = function(options) {
     return undefined;
 }
 
+/** Returns a dom element from a string. */
+const getDOMfromID = function(string) {
+    if(typeof string !== 'string') return null;
+    if(string.startsWith('#')) {
+        let id = string.substring(1);
+        return document.getElementById(id);
+    } else {
+        return document.getElementById(string);
+    }
+}
+
 exports.isHTMLElement = isHTMLElement;
 exports.findInvalidOptions = findInvalidOptions;
+exports.getDOMfromID = getDOMfromID;

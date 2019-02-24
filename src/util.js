@@ -1,3 +1,11 @@
+
+
+
+
+
+
+
+
 /** Sets the attributes on the HTML elements that were mounted by the virtual DOM. */
 const setAttributes = function($element, key, value, instance, isPatching = false) {
     // 1.) Function handler for dom element.
