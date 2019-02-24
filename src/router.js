@@ -1,56 +1,51 @@
-import { Mosaic } from './index';
+import { h, Mosaic } from './index';
+import { render } from './vdom/render';
 
-/** A basic routing solution for Mosaic apps. */
-const Router = function() {
+/** A basic routing solution for Mosaic apps. 
+* @param {HTMLElement} root The element to inject the router into. */
+const Router = function(root) {
     this.currentRoute = '/';
-    this.routes = [];
+    this.routes = {};
     this.__isRouter = true;
 
-    // Setup the 'pop' url state.
+    /** Moves to a different page at the specified url.
+    * @param {String} to The url endpoint to go to. */
+    this.send = (to) => {
+        this.currentRoute = to;        
+        window.history.pushState({}, this.currentRoute, window.location.origin + this.currentRoute);
+        
+        let htree = h(this.routes[this.currentRoute], {});
+        let $node = render(htree);
+        while(root.firstChild) root.removeChild(root.firstChild);
+        root.appendChild($node);
+    }
+
     window.onpopstate = () => {
         let oldURL = window.location.pathname;
-        let oldRouteObj = this.routes.find(r => {
-            if(Array.isArray(r.path)) return r.path.includes(oldURL);
-            else return r.path === oldURL;
-        });
-        if(oldRouteObj) oldRouteObj.mosaic.paint();
+        let oldRouteObj = this.routes[oldURL];
+        if(oldRouteObj) {
+            let htree = h(this.routes[this.currentRoute], {});
+            let $node = render(htree);
+            while(root.firstChild) root.removeChild(root.firstChild);
+            root.appendChild($node);
+        }
     }
 }
 
-/** Adds a new route to the Router.
-* @param {String | Array} path The path, or array of paths, that this route will match.
-* @param {Mosaic} mosaic The mosaic to display at this route. */
-Router.prototype.addRoute = function({ path, mosaic }) {
-    if(typeof path !== 'string' && !Array.isArray(path)) {
-        throw new Error(`Mosaic.Router requires a "path" proeprty and a "mosaic" property for each route. There 
-        must be exactly one default route with the path of \'/\'`);
-    }
-    if(typeof mosaic !== 'object' && !mosaic.__isMosaic) {
-        throw new Error(`Mosaic.Router requires a "path" proeprty and a "mosaic" property for each route. There 
-        must be exactly one default route with the path of \'/\'`);
-    }
-
-    this.routes.push({ path, mosaic });
+/** Adds a new route to the router.
+* @param {String | Array} path The path (or multiple paths) for a particular endpoint.
+* @param {Mosaic} mosaic The Mosaic to display at this route. */
+Router.prototype.addRoute = function(path, mosaic) {
+    if(Array.isArray(path)) [...path].forEach(p => this.routes[p] = mosaic);
+    else this.routes[path] = mosaic;
 }
 
-/** Function to send the app to a different route.
-* @param {String} to The path to point the router to. Must already exist in the router at initialization. */
-Router.prototype.send = function(to) {
-    this.currentRoute = to;
-
-    // Get the route at the path.
-    let routeObj = this.routes.find(r => {
-        if(Array.isArray(r.path)) return r.path.includes(to);
-        else return r.path === to;
-    });
-
-    // Go to that url and paint the mosaic.
-    if(routeObj) {
-        window.history.pushState({}, this.currentRoute, window.location.origin + this.currentRoute);
-        routeObj.mosaic.paint();
-    } else {
-        throw new Error(`There was no route defined for ${this.currentRoute}`);
+/** Paints the router and handles transitions between url endpoints. */
+Router.prototype.paint = function() {
+    if(window.location.origin !== this.currentRoute) {
+        this.currentRoute = window.location.href.substring(window.location.href.lastIndexOf('/'));
     }
+    this.send(this.currentRoute);
 }
 
 /** A function to send this router back one page. */
@@ -62,18 +57,4 @@ Router.prototype.back = function() {
 Router.prototype.back = function() {
     window.history.forward();
 }
-
-/** The paint function for the Mosaic Router. Performs the same function as the paint function for Mosaic
-* components, but handles painting all components labeled as routes. */
-Router.prototype.paint = function() {
-    let path = this.currentRoute;
-
-    // If the current url at run time is different than what it was set to, change it.
-    if(window.location.origin !== path) {
-        this.currentRoute = window.location.href.substring(window.location.href.lastIndexOf('/'));
-    }
-    
-    this.send(this.currentRoute);
-}
-
 exports.Router = Router;

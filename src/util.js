@@ -1,12 +1,16 @@
 /** Sets the attributes on the HTML elements that were mounted by the virtual DOM. */
-const setAttributes = function($element, key, value, instance = null) {
+const setAttributes = function($element, key, value, instance, isPatching = false) {
     // 1.) Function handler for dom element.
     if(typeof value === 'function' && key.startsWith('on')) {
+        // This is not a great fix. It just disables function diffs.
+        if(isPatching === true) return;
+        
         const event = key.slice(2).toLowerCase();
+        
         $element.__mosaicHandlers = $element.__mosaicHandlers || {};
         $element.removeEventListener(event, $element.__mosaicHandlers[event]);
         
-        $element.__mosaicHandlers[event] = value;
+        $element.__mosaicHandlers[event] = value.bind($element.__mosaicInstance);
         $element.addEventListener(event, $element.__mosaicHandlers[event]);
     }
     // 2.) Particular types of attributes.
@@ -24,6 +28,9 @@ const setAttributes = function($element, key, value, instance = null) {
     }
     // 6.) Value is a not an object nor a function, so anything else basically.
     else if(typeof value !== 'object' && typeof value !== 'function') {
+        // This is not a great fix. It just disables function diffs.
+        if(key.startsWith('on')) return;
+
         $element.setAttribute(key, value);
     }
 }
@@ -105,6 +112,7 @@ function isHTMLElement(obj) {
 const viewToDOM = function(input, caller) {
     if(typeof input === 'function') return input.call(caller);
 
+    // Handle template strings.
     var replaced = input;
     for(var dataProp in caller.data) {
         let propName = dataProp;
@@ -112,10 +120,27 @@ const viewToDOM = function(input, caller) {
         let re = new RegExp('{{[ ]*this.data.' + propName + '[ ]*}}', "gim");
         let nstring = input.replace(re, propVal);
         replaced = nstring;
+
+        /* Use "Function" object to construct an expression from the html string that can be run. */
+        // let obj = {
+        //     data: {
+        //         x: 20,
+        //         y: 50,
+        //     }
+        // }
+        // obj.func = new Function('console.log("Object Value: ", this.data.x + this.data.y);').bind(obj);
+        // obj.func();
+        // console.log(obj);
     }
     let parser = new DOMParser();
     let $element = parser.parseFromString(replaced, 'text/html').body.firstChild;
     return $element;
+}
+
+
+/** Produces a random key. */
+const randomKey = function() {
+    return Math.random().toString(36).substring(7);
 }
 
 exports.setAttributes = setAttributes;
@@ -123,3 +148,4 @@ exports.traverseVDomTree = traverseVDomTree;
 exports.deepClone = deepClone;
 exports.isHTMLElement = isHTMLElement;
 exports.viewToDOM = viewToDOM;
+exports.randomKey = randomKey;

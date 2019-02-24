@@ -8,7 +8,7 @@ import { isHTMLElement } from './util';
  */
 const findInvalidOptions = function(options) {
     // Element
-    if(options.element && (!isHTMLElement(options.element) || !document.contains(options.element))) {
+    if(options.element && (!isHTMLElement(options.element))) {
         return `The Mosaic could not be created because the "element" property is either not an HTML DOM 
         element or it does not already exist in the DOM. Make sure that the "element" property is an already 
         existing DOM element such as "document.body" or a div with the id of 'root' for example.`;
