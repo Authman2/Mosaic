@@ -198,7 +198,14 @@ const diff = (oldVNode, newVNode, instance) => {
 
     // Case 4: An array of items, so you have to break them apart and find their nodes.
     // if(Array.isArray(oldVNode) || Array.isArray(newVNode)) {
-    //     return diffArrays(oldVNode, newVNode);
+    //     let patches = [];
+    //     for(let i = 0; i < oldVNode.length || i < newVNode.length; i++) {
+    //         patches.push( diff(oldVNode[i], newVNode[i]) );
+    //     }
+    //     return $node => {
+    //         patches.forEach(p => p($node));
+    //         return $node;
+    //     }
     // }
 
     // Case 5: They are HTML based templates, so basically just replace the whole thing (for now).
@@ -316,3 +323,16 @@ exports.patch = diff;
 //     }
 // }
 // exports.patch = patch;
+
+/** Performs diff operations on a DOM element so that it reflects the newest changes. It will take the input DOM
+ * element and perform the necessary operations on it, instead of returning a patch function. There are a few cases
+ * that need to be accounted for in the diff algorithm:
+ * 1.) There is no new node, so just remove the old one.
+ * 2.) The DOM node you are trying to diff is either a string or a number, which is basically the base case. Here,
+ *     you want to perform a "replace" operation to just switch out the nodes.
+ * 3.) You are trying to diff Mosaics, so you have to run the diff algorithm again, but this time on the 
+ *     "this.element" property of the Mosaic and its h-tree representation using its view function.
+ * 4.) The old DOM node and the new VNode don't even have the same type, so just replace them completely.
+ * 5.) Go through the child nodes and run the diff algorithm again on the old nodes that are still there, or render
+ *     new nodes if they are not there yet.
+ */

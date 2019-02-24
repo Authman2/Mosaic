@@ -76,7 +76,7 @@ const Mosaic = function(options) {
             let htree = viewToDOM(this.view, this);
             let patches = patch(this.oldHtree, htree);
             this.element = patches(this.element);
-            console.log(htree);
+            
             if(this.updated) this.updated();
         });
     }
@@ -89,6 +89,7 @@ const Mosaic = function(options) {
         let patches = patch(this.oldHtree, htree);
         this.element = patches(this.element);
 
+        console.log(htree);
         if(this.updated) this.updated();
     });
 

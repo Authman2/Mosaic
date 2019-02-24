@@ -24,8 +24,8 @@ const todoApp = new Mosaic({
             // this.data.todos = this.data.todos.concat(value);
         },
         deleteTodo: function(todoIndex) {
-            this.data.todos.splice(todoIndex, 1);
-            // this.data.todos = this.data.todos.filter((_, index) => index !== todoIndex);
+            // this.data.todos.splice(todoIndex, 1);
+            this.data.todos = this.data.todos.filter((_, index) => index !== todoIndex);
             // console.log(this.data.todos);
         }
     },
