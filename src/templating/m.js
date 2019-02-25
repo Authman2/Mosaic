@@ -1,5 +1,24 @@
 import { marker, nodeMarker, boundAttributeSuffix, lastAttributeNameRegex } from './utilities';
 
+/**
+* ------------- TABLES -------------
+*/
+
+/** The template table. */
+export const TemplateTable = {};
+
+/** The instance table. */
+export const InstanceTable = {};
+
+/** The change table. */
+export const ChangeTable = {};
+
+
+
+/**
+* ------------- TEMPLATES -------------
+*/
+
 /** Used to build templates (basically Mosaics) that will be reused for each instance of a Mosaic. */
 const Template = function(strings, ...values) {
     this.strings = strings;
@@ -25,10 +44,6 @@ Template.prototype.getTemplate = function() {
     template.innerHTML = this.getHTML();
     return template;
 }
-
-
-
-
 
 /** The equivalent of the 'html' tagged function. */
 export const m = (strings, ...values) => new Template(strings, values);

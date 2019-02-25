@@ -1,13 +1,11 @@
-import { m } from "./templating/m";
+import { m, TemplateTable, InstanceTable, ChangeTable } from "./templating/m";
 import { Observable } from './observable';
-// import { Router } from './router';
 import { isHTMLElement, findInvalidOptions, getDOMfromID } from './validations';
 import { viewToDOM, randomKey } from './util';
 
 /** The configuration options for a Mosaic component.
  * @typedef {MosaicOptions} MosaicOptions Configuration options for a Mosaic component.
  * @param {HTMLElement} element The DOM element to inject this component into.
- * @param {Router} router THe router to use for client-side routing on this component.
  * @param {Object} data The data of this component.
  * @param {Function | String} view The view to define the appearance of this component.
  * @param {Function} created Called when this component is created.
@@ -18,9 +16,6 @@ import { viewToDOM, randomKey } from './util';
 const MosaicOptions = {
     /** The HTML element to inject this Mosaic component into. */
     element: HTMLElement,
-
-    /** The optional router to use for this Mosaic app. */
-    // router: Router,
 
     /** The state of this component. */
     data: Object,
@@ -51,7 +46,7 @@ const Mosaic = function(options) {
     let invalids = findInvalidOptions(options);
     if(invalids !== undefined) throw new Error(invalids);
 
-    this.id = randomKey();
+    this.templateID = options.templateID || randomKey();
     this.element = typeof options.element === 'string' ? getDOMfromID(options.element) : options.element;
     this.router = options.router;
     this.view = options.view;
@@ -70,7 +65,19 @@ const Mosaic = function(options) {
     });
 
     this.actions = options.actions;
+    this.options = Object.assign({}, options);
     this.__isMosaic = true;
+
+    
+    // Check if this Mosaic's view is already an existing template
+    // in the TemplateTable. If not, make a new entry with a random
+    // ID. Otherwise, don't do anything since there's already a
+    // version of this Mosaic in the template table.
+    if(TemplateTable.hasOwnProperty(this.templateID) === false) {
+        const view = this.view(this.data, this.actions);
+        const template = view.getTemplate();
+        TemplateTable[this.templateID] = template;
+    }
 
     return this;
 }
@@ -90,19 +97,45 @@ Mosaic.prototype.paint = function() {
     // a particular "value-node" to its template instance of a Mosaic type.
     const view = this.view(this.data, this.actions);
     const template = view.getTemplate();
-    console.log(template);
+
+    // Update the Instance Table with this instance.
+    this.instanceID  = randomKey();
+    InstanceTable[this.instanceID] = {
+        instance: this,
+        template: TemplateTable[this.templateID]
+    };
+    console.log(TemplateTable);
+    console.log(InstanceTable);
 }
 
+/** Places a new instance of a Mosaic onto the page, giving it an instance ID. */
+Mosaic.prototype.place = function(data) {
+    // Add any new data.
+    const cpy = Object.assign({}, this.options);
+    cpy['data'] = data;
+    cpy['templateID'] = this.templateID;
 
-/** A basic routing solution for Mosaic apps.
-* @param {Array} routes A list of routes of the form { path: String | Array of Strings, mosaic: Mosaic }. */
-// Mosaic.Router = Router;
+    // Create a new Mosaic with the same options.
+    const newInstance = new Mosaic(cpy);
+    newInstance.instanceID  = randomKey();
+
+    // Make sure this new instance is included in the Instance Table.
+    InstanceTable[newInstance.instanceID] = {
+        instance: newInstance,
+        template: TemplateTable[newInstance.templateID]
+    };
+
+    // Return the view for this new instance.
+    const view = newInstance.view(newInstance.data, newInstance.actions);
+    const template = view.getTemplate();
+    return template.content;
+}
 
 
 /** Checks if two Mosaics are equal to each other. 
 * @param {Mosaic} other Whether or not this Mosaic is equal to another. */
 Mosaic.prototype.equals = function(other) {
-    return this.id === other.id;
+    return (this.templateID === other.templateID) && (this.instanceID === other.instanceID);
 }
 
 

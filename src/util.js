@@ -148,7 +148,7 @@ const viewToDOM = function(input, caller) {
 
 /** Produces a random key. */
 const randomKey = function() {
-    return Math.random().toString(36).substring(7);
+    return Math.random().toString(36).slice(2);
 }
 
 exports.setAttributes = setAttributes;
