@@ -1,7 +1,7 @@
-import { m, TemplateTable, InstanceTable, ChangeTable } from "./templating/m";
+import { m, TemplateTable, InstanceTable, ChangeTable, Part } from "./templating/m";
 import { Observable } from './observable';
 import { isHTMLElement, findInvalidOptions, getDOMfromID } from './validations';
-import { viewToDOM, randomKey } from './util';
+import { viewToDOM, randomKey, traverse } from './util';
 
 /** The configuration options for a Mosaic component.
  * @typedef {MosaicOptions} MosaicOptions Configuration options for a Mosaic component.
@@ -60,7 +60,7 @@ const Mosaic = function(options) {
     this.data = new Observable(_tempData || {}, (oldData) => {
         if(this.willUpdate) this.willUpdate(oldData);
     }, () => {
-        // update
+        
         if(this.updated) this.updated();
     });
 
@@ -97,22 +97,54 @@ Mosaic.prototype.paint = function() {
     // a particular "value-node" to its template instance of a Mosaic type.
     const view = this.view(this.data, this.actions);
     const template = view.getTemplate();
+    this.element.appendChild(template.content.childNodes[0].cloneNode(true));
 
     // Update the Instance Table with this instance.
     this.instanceID  = randomKey();
     InstanceTable[this.instanceID] = {
         instance: this,
-        template: TemplateTable[this.templateID]
+        template: TemplateTable[this.templateID],
     };
-    console.log(TemplateTable);
-    console.log(InstanceTable);
+    // console.log(TemplateTable);
+    // console.log(InstanceTable);
+
+    // Traverse the tree and keep track of the nodes that are going
+    // to change later on.
+    let root = template.content.childNodes[0];
+    let parts = [];
+    traverse(root, node => {
+        let regex = new RegExp(/<!--{{m-[a-z|0-9]*}}-->/, 'gim');
+        let matches = node.innerHTML.match(regex);
+        
+        // What you're doing here:
+        // 1.) Save a clone of the template element for this instance
+        //     of the Mosaic into the IT. This is where real changes
+        //     will be made later on.
+        // 2.) Run through all the placeholders and keep track of the
+        //     indices (in this case, "i"), where you need to replace
+        //     something. Once you have this you can create a "Part."
+        // 3.) A Part will use the real node
+        let i = 0;
+        while(matches) {
+            console.log(matches[i], node);
+            node.innerHTML = node.innerHTML.replace(`${matches[i++]}`, '5');
+            matches = node.innerHTML.match(regex);
+        }
+    });
+
+    // Do an initial setup to create all the DOM nodes by kinda faking
+    // it. Just run the observer change function.
+    
+
+    // Call the created lifecycle function.
+    if(this.created) this.created(this.data, this.actions);
 }
 
 /** Places a new instance of a Mosaic onto the page, giving it an instance ID. */
 Mosaic.prototype.place = function(data) {
     // Add any new data.
     const cpy = Object.assign({}, this.options);
-    cpy['data'] = data;
+    cpy['data'] = Object.assign({}, data, this.data);
     cpy['templateID'] = this.templateID;
 
     // Create a new Mosaic with the same options.
@@ -127,8 +159,7 @@ Mosaic.prototype.place = function(data) {
 
     // Return the view for this new instance.
     const view = newInstance.view(newInstance.data, newInstance.actions);
-    const template = view.getTemplate();
-    return template.content;
+    return view;
 }
 
 

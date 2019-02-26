@@ -1,4 +1,12 @@
-
+/** Traverses a DOM tree and performs a certain action on each node. */
+export const traverse = function($node, action) {
+    let children = $node.childNodes;
+    for(var i in children) {
+        if(!isHTMLElement(children[i])) continue;
+        traverse(children[i], action);
+    }
+    if(action) action($node);
+}
 
 
 

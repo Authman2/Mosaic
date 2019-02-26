@@ -14,6 +14,18 @@ export const InstanceTable = {};
 export const ChangeTable = {};
 
 
+/**
+* ------------- PARTS -------------
+*/
+
+/** A "Part" represents a place in the DOM that is likely to change (i.e. a dynamic node).
+* It keeps track of the DOM node that holds the dynamic part, a template for what that node
+* should look like, and the actual representation of that node at any given time. */
+export const Part = function(templateNode, dynamicPartIndex) {
+    this.templateNode = templateNode;
+    this.dynamicPartIndex = dynamicPartIndex;
+}
+
 
 /**
 * ------------- TEMPLATES -------------
@@ -27,14 +39,16 @@ const Template = function(strings, ...values) {
 Template.prototype.getHTML = function() {
     const endIndex = this.strings.length - 1;
     let html = '';
-    for (let i = 0; i < endIndex; i++) {
+    for(let i = 0; i < endIndex; i++) {
         const s = this.strings[i];
         const match = lastAttributeNameRegex.exec(s);
+        
         if(match) {
-            let placeholder = s.substr(0, match.index) + match[1] + match[2] + boundAttributeSuffix + match[3] + marker;
+            let placeholder = s.substring(0, match.index) + match[1] + match[2] + match[3] + boundAttributeSuffix + marker.substring(2) + '-->';
             html += placeholder;
         } else {
-            html += s + nodeMarker();
+            let piece = s + nodeMarker;
+            html += piece;
         }
     }
     return html + this.strings[endIndex];
