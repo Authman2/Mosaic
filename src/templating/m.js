@@ -21,9 +21,10 @@ export const ChangeTable = {};
 /** A "Part" represents a place in the DOM that is likely to change (i.e. a dynamic node).
 * It keeps track of the DOM node that holds the dynamic part, a template for what that node
 * should look like, and the actual representation of that node at any given time. */
-export const Part = function(templateNode, dynamicPartIndex) {
+export const Part = function(templateNode, realNode, variableName) {
     this.templateNode = templateNode;
-    this.dynamicPartIndex = dynamicPartIndex;
+    this.realNode = realNode;
+    this.variableName = variableName;
 }
 
 

@@ -1,7 +1,7 @@
 import { m, TemplateTable, InstanceTable, ChangeTable, Part } from "./templating/m";
 import { Observable } from './observable';
 import { isHTMLElement, findInvalidOptions, getDOMfromID } from './validations';
-import { viewToDOM, randomKey, traverse } from './util';
+import { viewToDOM, randomKey, traverse, traverseTwo } from './util';
 
 /** The configuration options for a Mosaic component.
  * @typedef {MosaicOptions} MosaicOptions Configuration options for a Mosaic component.
@@ -60,8 +60,31 @@ const Mosaic = function(options) {
     this.data = new Observable(_tempData || {}, (oldData) => {
         if(this.willUpdate) this.willUpdate(oldData);
     }, () => {
-        
-        if(this.updated) this.updated();
+        let newView = this.view(this.data, this.actions);
+        let newValues = newView.values[0];
+        let parts = ChangeTable[this.instanceID].parts;
+        let valueIndex = 0;
+        parts.forEach(part => {
+            let realNode = part.realNode;
+            let templateNode = part.templateNode;
+            
+            // Create a new string that replaces the inner html of the part.
+            let str = `<!--{{m-placeholder}}-->`;
+            let regex = new RegExp(str, 'gim');
+            let newOuter = templateNode.innerHTML.replace(regex, newValues[valueIndex]);
+
+            // Set the html of the real node to match the changed template.
+            realNode.innerHTML = newOuter;
+
+            // Make sure to reset the value index.
+            if(regex.test(realNode.innerHTML) === false) {
+                valueIndex = 0;
+            } else {
+                valueIndex += 1;
+            }
+        });
+
+        if(this.updated) this.updated(this.data, this.actions);
     });
 
     this.actions = options.actions;
@@ -97,7 +120,6 @@ Mosaic.prototype.paint = function() {
     // a particular "value-node" to its template instance of a Mosaic type.
     const view = this.view(this.data, this.actions);
     const template = view.getTemplate();
-    this.element.appendChild(template.content.childNodes[0].cloneNode(true));
 
     // Update the Instance Table with this instance.
     this.instanceID  = randomKey();
@@ -110,12 +132,17 @@ Mosaic.prototype.paint = function() {
 
     // Traverse the tree and keep track of the nodes that are going
     // to change later on.
-    let root = template.content.childNodes[0];
+    const realRoot = template.content.childNodes[0].cloneNode(true);
+    const templateRoot = template.content.childNodes[0];
     let parts = [];
-    traverse(root, node => {
-        let regex = new RegExp(/<!--{{m-[a-z|0-9]*}}-->/, 'gim');
-        let matches = node.innerHTML.match(regex);
-        
+    traverseTwo(templateRoot, realRoot, (tNode, rNode) => {
+        // Don't include the base element.
+        if(tNode === templateRoot) return;
+
+        // Find the dynamic parts.
+        let regex = new RegExp(/<!--{{m-placeholder}}-->/, 'gim');
+        let matches = tNode.innerHTML.match(regex);
+
         // What you're doing here:
         // 1.) Save a clone of the template element for this instance
         //     of the Mosaic into the IT. This is where real changes
@@ -123,18 +150,38 @@ Mosaic.prototype.paint = function() {
         // 2.) Run through all the placeholders and keep track of the
         //     indices (in this case, "i"), where you need to replace
         //     something. Once you have this you can create a "Part."
-        // 3.) A Part will use the real node
-        let i = 0;
-        while(matches) {
-            console.log(matches[i], node);
-            node.innerHTML = node.innerHTML.replace(`${matches[i++]}`, '5');
-            matches = node.innerHTML.match(regex);
+        // 3.) A Part will use the template node and the real node to
+        //     figure out where to replace things in the new node.
+        if(matches) {
+            for(let i = 0; i < matches.length; i++) {
+                let part = new Part(tNode, rNode);
+                parts.push(part);
+            }
+            // console.log('Template --> Real: ', tNode, rNode);
         }
     });
+    ChangeTable[this.instanceID] = {
+        parts: parts
+    };
+    this.element.replaceWith(realRoot);
 
     // Do an initial setup to create all the DOM nodes by kinda faking
     // it. Just run the observer change function.
-    
+    let newView = this.view(this.data, this.actions);
+    let newValues = newView.values[0];
+    let _parts = ChangeTable[this.instanceID].parts;
+    _parts.forEach((part, index) => {
+        let realNode = part.realNode;
+        let templateNode = part.templateNode;
+        
+        // Create a new string that replaces the inner html of the part.
+        let str = `<!--{{m-placeholder}}-->`;
+        let regex = new RegExp(str, 'gim');
+        let newOuter = templateNode.innerHTML.replace(regex, newValues[index]);
+
+        // Set the html of the real node to match the changed template.
+        realNode.innerHTML = newOuter;
+    });
 
     // Call the created lifecycle function.
     if(this.created) this.created(this.data, this.actions);

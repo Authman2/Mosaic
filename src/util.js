@@ -8,6 +8,19 @@ export const traverse = function($node, action) {
     if(action) action($node);
 }
 
+/** Traverses two DOM trees at the same time. The trees must be identicial. */
+export const traverseTwo = function($node1, $node2, action) {
+    let children1 = $node1.childNodes;
+    let children2 = $node2.childNodes;
+    for(var i = 0; i < children1.length; i++) {
+        if(!isHTMLElement(children1[i]) || !isHTMLElement(children2[i])) continue;
+        traverseTwo(children1[i], children2[i], action);
+    }
+    if(action && ($node1.parentNode || $node2.parentNode)) {
+        action($node1, $node2);
+    }
+}
+
 
 
 

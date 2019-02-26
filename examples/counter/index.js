@@ -13,17 +13,26 @@ import { Mosaic } from '../../src/index';
 
 new Mosaic({
     element: '#root',
-    data: { count: 5 },
+    data: { count: 5, name: 'header' },
     created: (data, actions) => {
-        setTimeout(() => data.count += 5, 3000);
-        setTimeout(() => data.count = 15, 5000);
+        setTimeout(() => {
+            data.count += 5;
+            data.name = "my-header";
+        }, 3000);
+        // setTimeout(() => {
+        //     data.count += 5;
+        //     data.name = "navigation";
+        // }, 5000);
+    },
+    updated: (data, actions) => {
+        // console.log(data);
     },
     view: (data, actions) => html`<div>
         <h1>Current Count:</h1>
         <h2>${data.count}</h2>
         <br>
         <div>
-            <p class="${data.count}">${data.count}</p>
+            <p class="${data.name}">${data.count}</p>
         </div>
     </div>`
 }).paint();
