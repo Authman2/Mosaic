@@ -1,3 +1,6 @@
+import { nodeMarker, lastAttributeNameRegex, marker, markerRegex, createMarker } from "./templating/utilities";
+import { Part } from "./templating/m";
+
 /** Traverses a DOM tree and performs a certain action on each node. */
 export const traverse = function($node, action) {
     let children = $node.childNodes;
@@ -18,6 +21,112 @@ export const traverseTwo = function($node1, $node2, action) {
     }
     if(action && ($node1.parentNode || $node2.parentNode)) {
         action($node1, $node2);
+    }
+}
+
+/** Walks through the DOM tree. REMEMBER: This gets called from a Template object, so it has "this."
+* @param {HTMLElement} dom The root DOM node to start looking through. */
+export const walk = function(dom) {
+    const walker = document.createTreeWalker(dom, 133, null, false);
+    let __failure = 0;
+
+    let index = -1;
+    let partIndex = 0;
+    let nodeIndex = 0;
+    let lastPartIndex = 0;
+    let nodesToRemove = [];
+    while(walker.nextNode()) {
+        index++;
+
+        // Get the current node.
+        let node = walker.currentNode;
+        
+        switch(node.nodeType) {
+            // ELEMENT
+            case 1:
+                if(!(node instanceof Element)) break;
+                if(node.hasAttributes()) {
+                    const attrs = node.attributes;
+
+                    let count = 0;
+                    for(let i = 0; i < attrs.length; i++) {
+                        if(attrs[i].value.indexOf(marker) >= 0) count += 1;
+                    }
+
+                    while(count-- > 0) {
+                        // Get the template portion before the first expression.
+                        let attributeName = attrs[count].name;
+                        let attributeVal = attrs[count].value;
+                        this.parts.push(new Part('attribute', index, attributeName, attributeVal));
+                        node.removeAttribute(attributeName);
+                        partIndex += attributeVal.split(markerRegex).length - 1;
+                    }
+                }
+                break;
+            // TEXT
+            case 3:
+                if(!(node instanceof Text)) break;
+                const data = node.data;
+                if(data.indexOf(marker) >= 0) {
+                    // Create a new text node.
+                    const parent = node.parentNode;
+                    const strings = data.split(markerRegex);
+                    const lastIndex = strings.length - 1;
+                    
+                    for(let i = 0; i < lastIndex; i++) {
+                        parent.insertBefore((strings[i] === '') ? createMarker() : document.createTextNode(strings[i]), node);
+                        this.parts.push(new Part('node', ++index));
+                    }
+
+                    // Make sure to add a placeholder for this text node.
+                    if(strings[lastIndex] === '') {
+                        parent.insertBefore(createMarker(), node);
+                        nodesToRemove.push(node);
+                    } else {
+                        node.data = strings[lastIndex];
+                    }
+
+                    // Move to the next part.
+                    partIndex += 1;
+                }
+                break;
+            // COMMENT
+            case 8:
+                if(!(node instanceof Comment)) break;
+                if(node.data === marker) {
+                    const parent = node.parentNode;
+                    
+                    // If there's no previousSibling or the previousSibling is the start of the last part,
+                    // then add a new marker node to this Part's start node.
+                    if(!node.previousSibling || index === lastPartIndex) {
+                        index++;
+                        parent.insertBefore(createMarker(), node);
+                    }
+                    lastPartIndex = index;
+                    this.parts.push(new Part('node', index));
+
+                    // If there is no nextSibling, then you know you are at the end.
+                    if(!node.nextSibling) {
+                        node.data = '';
+                    } else {
+                        nodesToRemove.push(node);
+                        index--;
+                    }
+                    partIndex++;
+                } else {
+                    let i = -1;
+                    while((i = node.data.indexOf(marker, i + 1)) !== -1) {
+                        this.parts.push(new Part('node', -1));
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+
+        // Fail-safe.
+        __failure += 1;
+        if(__failure >= 2000) { console.error('Too long.'); break; }
     }
 }
 

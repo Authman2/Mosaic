@@ -1,4 +1,5 @@
 import { marker, nodeMarker, boundAttributeSuffix, lastAttributeNameRegex } from './utilities';
+import { walk } from '../util';
 
 /**
 * ------------- TABLES -------------
@@ -21,10 +22,15 @@ export const ChangeTable = {};
 /** A "Part" represents a place in the DOM that is likely to change (i.e. a dynamic node).
 * It keeps track of the DOM node that holds the dynamic part, a template for what that node
 * should look like, and the actual representation of that node at any given time. */
-export const Part = function(templateNode, realNode, variableName) {
-    this.templateNode = templateNode;
-    this.realNode = realNode;
-    this.variableName = variableName;
+export const Part = function(type, index, name, value) {
+    this.type = type;
+    this.index = index;
+    this.name = name;
+    this.value = value;
+}
+/** Commits the changes to the real DOM. */
+Part.prototype.commit = function() {
+
 }
 
 
@@ -36,6 +42,7 @@ export const Part = function(templateNode, realNode, variableName) {
 const Template = function(strings, ...values) {
     this.strings = strings;
     this.values = values;
+    this.parts = [];
 }
 Template.prototype.getHTML = function() {
     const endIndex = this.strings.length - 1;
@@ -45,7 +52,7 @@ Template.prototype.getHTML = function() {
         const match = lastAttributeNameRegex.exec(s);
         
         if(match) {
-            let placeholder = s.substring(0, match.index) + match[1] + match[2] + match[3] + boundAttributeSuffix + marker.substring(2) + '-->';
+            let placeholder = s.substring(0, match.index) + match[1] + match[2] + boundAttributeSuffix + match[3] + marker;
             html += placeholder;
         } else {
             let piece = s + nodeMarker;
@@ -58,6 +65,9 @@ Template.prototype.getTemplate = function() {
     const template = document.createElement('template');
     template.innerHTML = this.getHTML();
     return template;
+}
+Template.prototype.constructParts = function(root) {
+    walk.call(this, root);
 }
 
 /** The equivalent of the 'html' tagged function. */
