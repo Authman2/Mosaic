@@ -77,7 +77,7 @@ const Mosaic = function(options) {
     if(TemplateTable.hasOwnProperty(this.templateID) === false) {
         const view = this.view(this.data, this.actions);
         const template = view.getTemplate();
-        view.constructParts(template.content);  // Always create the parts object first.
+        view.createParts(template.content);  // Always create the parts object first.
         console.log(view);
         TemplateTable[this.templateID] = template;
     }
