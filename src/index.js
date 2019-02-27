@@ -2,6 +2,7 @@ import { m, TemplateTable, InstanceTable, ChangeTable, Part } from "./templating
 import { Observable } from './observable';
 import { isHTMLElement, findInvalidOptions, getDOMfromID } from './validations';
 import { viewToDOM, randomKey, traverse, traverseTwo } from './util';
+import { nodeMarker } from "./templating/utilities";
 
 /** The configuration options for a Mosaic component.
  * @typedef {MosaicOptions} MosaicOptions Configuration options for a Mosaic component.
@@ -60,30 +61,7 @@ const Mosaic = function(options) {
     this.data = new Observable(_tempData || {}, (oldData) => {
         if(this.willUpdate) this.willUpdate(oldData);
     }, () => {
-        let newView = this.view(this.data, this.actions);
-        let newValues = newView.values[0];
-        let parts = ChangeTable[this.instanceID].parts;
-        let valueIndex = 0;
-        parts.forEach(part => {
-            let realNode = part.realNode;
-            let templateNode = part.templateNode;
-            
-            // Create a new string that replaces the inner html of the part.
-            let str = `<!--{{m-placeholder}}-->`;
-            let regex = new RegExp(str, 'gim');
-            let newOuter = templateNode.innerHTML.replace(regex, newValues[valueIndex]);
-
-            // Set the html of the real node to match the changed template.
-            realNode.innerHTML = newOuter;
-
-            // Make sure to reset the value index.
-            if(regex.test(realNode.innerHTML) === false) {
-                valueIndex = 0;
-            } else {
-                valueIndex += 1;
-            }
-        });
-
+        updateMosaic.call(this);
         if(this.updated) this.updated(this.data, this.actions);
     });
 
@@ -140,7 +118,7 @@ Mosaic.prototype.paint = function() {
         if(tNode === templateRoot) return;
 
         // Find the dynamic parts.
-        let regex = new RegExp(/<!--{{m-placeholder}}-->/, 'gim');
+        let regex = new RegExp(nodeMarker, 'gim');
         let matches = tNode.innerHTML.match(regex);
 
         // What you're doing here:
@@ -153,10 +131,10 @@ Mosaic.prototype.paint = function() {
         // 3.) A Part will use the template node and the real node to
         //     figure out where to replace things in the new node.
         if(matches) {
-            for(let i = 0; i < matches.length; i++) {
+            // for(let i = 0; i < matches.length; i++) {
                 let part = new Part(tNode, rNode);
                 parts.push(part);
-            }
+            // }
             // console.log('Template --> Real: ', tNode, rNode);
         }
     });
@@ -167,21 +145,7 @@ Mosaic.prototype.paint = function() {
 
     // Do an initial setup to create all the DOM nodes by kinda faking
     // it. Just run the observer change function.
-    let newView = this.view(this.data, this.actions);
-    let newValues = newView.values[0];
-    let _parts = ChangeTable[this.instanceID].parts;
-    _parts.forEach((part, index) => {
-        let realNode = part.realNode;
-        let templateNode = part.templateNode;
-        
-        // Create a new string that replaces the inner html of the part.
-        let str = `<!--{{m-placeholder}}-->`;
-        let regex = new RegExp(str, 'gim');
-        let newOuter = templateNode.innerHTML.replace(regex, newValues[index]);
-
-        // Set the html of the real node to match the changed template.
-        realNode.innerHTML = newOuter;
-    });
+    updateMosaic.call(this);
 
     // Call the created lifecycle function.
     if(this.created) this.created(this.data, this.actions);
@@ -228,14 +192,42 @@ const makeArraysObservable = (data) => {
         
         _tempData[i] = new Observable(_tempData[i], () => {
             if(this.willUpdate) this.willUpdate(oldData);
-            
         }, () => {
-            // update
-            
+            updateMosaic.call(this);
             if(this.updated) this.updated();
         });
     }
     return _tempData;
+}
+
+/** Handles the updating/diffing part of the render. */
+const updateMosaic = function() {
+    let newView = this.view(this.data, this.actions);
+    let newValues = newView.values[0];
+    let valueIndex = 0;
+
+    ChangeTable[this.instanceID].parts.forEach(part => {
+        let realNode = part.realNode;
+        let templateNode = part.templateNode;
+        
+        // Create a new string that replaces the inner html of the part.
+        let str = `${nodeMarker}`;
+        let regex = new RegExp(str, 'gim');
+        let newOuter = templateNode.innerHTML;
+        while(newOuter.match(regex)) {
+            newOuter = newOuter.replace(str, newValues[valueIndex]);
+            valueIndex += 1;
+
+            if(valueIndex >= 100) {
+                console.error('Logged too much');
+                break;
+            }
+        }
+
+        // Set the html of the real node to match the changed template.
+        realNode.innerHTML = newOuter;
+        valueIndex = 0;
+    });
 }
 
 
