@@ -77,6 +77,7 @@ const Mosaic = function(options) {
         template: view.element,
         values: view.values[0]
     }
+    console.log(TemplateTable[this.tid]);
 
     return this;
 }
@@ -96,7 +97,7 @@ Mosaic.prototype.paint = function() {
     this.iid = randomKey();
     let templateResult = TemplateTable[this.tid];
     let clonedElement = document.importNode(templateResult.template.content.childNodes[0], true);
-    traverseParts(templateResult, clonedElement);
+    updateParts(templateResult, clonedElement);
     
     // Now take that cloned element that has all of its nodes and attributes
     // set and inject it into the DOM. When you "paint" it's ok to just replace
@@ -138,9 +139,8 @@ const makeArraysObservable = (data) => {
 
 /** Helper method to go through a list of parts and make updates to the DOM element.
 * @param {Object} templateResult The templateResult object that exists in the Template Table.
-* @param {HTMLElement} element The DOM element to look through.
-*/
-const traverseParts = function(templateResult, element) {
+* @param {HTMLElement} element The DOM element to look through. */
+const updateParts = function(templateResult, element) {
     let partIndex = 0;
     for(let part of templateResult.parts) {
         switch(part.type) {
@@ -181,7 +181,7 @@ const repaint = function() {
     // changed. The only difference is that instead of looking at a cloned
     // element, you are looking directly at this Mosaic's element, since it
     // should already be in the DOM at this point.
-    traverseParts(templateResult, this.element);
+    updateParts(templateResult, this.element);
 }
 
 

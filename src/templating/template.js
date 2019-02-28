@@ -66,10 +66,11 @@ export class Template {
                             if(attrs[i].value.indexOf(marker) >= 0) count += 1;
                         }
 
-                        while(count-- > 0) {
+                        let i = 0;
+                        while(i < count) {
                             // Get the template portion before the first expression.
-                            let attributeName = attrs[count].name;
-                            let attributeVal = attrs[count].value;
+                            let attributeName = attrs[i].name;
+                            let attributeVal = attrs[i].value;
                             // this.parts.push(new Part('attribute', index, attributeName, attributeVal));
 
                             // Add a new part and set the mosaic key.
@@ -80,6 +81,7 @@ export class Template {
                             // Remove the placeholder.
                             // node.removeAttribute(attributeName);
                             partIndex += attributeVal.split(markerRegex).length - 1;
+                            i += 1;
                         }
                     }
                     break;

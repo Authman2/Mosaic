@@ -39,7 +39,7 @@ import Mosaic from '../../src/index';
 
 new Mosaic({
     element: '#root',
-    data: { count: 5, name: 'header' },
+    data: { count: 5, name: 'header', myID: 'something' },
     created: function() {
         setTimeout(() => {
             this.data.count += 5;
@@ -48,6 +48,7 @@ new Mosaic({
         setTimeout(() => {
             this.data.count += 5;
             this.data.name = "navigation-bar";
+            this.data.myID = 'some-other-ID-now';
         }, 10000);
     },
     view: function() {
@@ -56,7 +57,7 @@ new Mosaic({
             <h2>${this.data.count}</h2>
             <br>
             <div>
-                <p class="${this.data.name}">${this.data.count + 5}</p>
+                <p class="${this.data.name}" id="${this.data.myID}">${this.data.count + 5}</p>
             </div>
         </div>`
     }
