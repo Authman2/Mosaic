@@ -23,7 +23,7 @@ export class Template {
             const match = lastAttributeNameRegex.exec(s);
             
             if(match) {
-                let placeholder = s.substring(0, match.index) + match[1] + match[2] + boundAttributeSuffix + match[3] + marker;
+                let placeholder = s.substring(0, match.index) + match[1] + match[2] + match[3] + marker;
                 html += placeholder;
             } else {
                 let piece = s + nodeMarker;
@@ -70,8 +70,15 @@ export class Template {
                             // Get the template portion before the first expression.
                             let attributeName = attrs[count].name;
                             let attributeVal = attrs[count].value;
-                            this.parts.push(new Part('attribute', index, attributeName, attributeVal));
-                            node.removeAttribute(attributeName);
+                            // this.parts.push(new Part('attribute', index, attributeName, attributeVal));
+
+                            // Add a new part and set the mosaic key.
+                            let key = String(Math.random()).slice(2);
+                            node.setAttribute('__mosaicKey__', key);
+                            this.parts.push({ type: 'attribute', attributeName, attributeValue: attributeVal, __mosaicKey__: key, node: node });
+
+                            // Remove the placeholder.
+                            // node.removeAttribute(attributeName);
                             partIndex += attributeVal.split(markerRegex).length - 1;
                         }
                     }
@@ -87,13 +94,19 @@ export class Template {
                         const lastIndex = strings.length - 1;
                         
                         for(let i = 0; i < lastIndex; i++) {
-                            parent.insertBefore((strings[i] === '') ? createMarker() : document.createTextNode(strings[i]), node);
-                            this.parts.push(new Part('node', ++index));
+                            let newNode = (strings[i] === '' ? createMarker() : document.createTextNode(strings[i]));
+                            let key = String(Math.random()).slice(2);
+
+                            newNode.setAttribute('__mosaicKey__', key);
+                            parent.insertBefore(newNode, node);
+
+                            // this.parts.push(new Part('node', ++index));
+                            this.parts.push({ type: 'node', __mosaicKey__: key, node: newNode });
                         }
 
                         // Make sure to add a placeholder for this text node.
                         if(strings[lastIndex] === '') {
-                            parent.insertBefore(createMarker(), node);
+                            // parent.insertBefore(createMarker(), node);
                             nodesToRemove.push(node);
                         } else {
                             node.data = strings[lastIndex];
@@ -111,12 +124,15 @@ export class Template {
                         
                         // If there's no previousSibling or the previousSibling is the start of the last part,
                         // then add a new marker node to this Part's start node.
+                        let key = String(Math.random()).slice(2);
                         if(!node.previousSibling || index === lastPartIndex) {
                             index++;
-                            parent.insertBefore(createMarker(), node);
+                            parent.setAttribute('__mosaicKey__', key);
+                            // parent.insertBefore(createMarker(), node);
                         }
                         lastPartIndex = index;
-                        this.parts.push(new Part('node', index));
+                        // this.parts.push(new Part('node', index));
+                        this.parts.push({ type: 'node', __mosaicKey__: key, node: parent });
 
                         // If there is no nextSibling, then you know you are at the end.
                         if(!node.nextSibling) {
@@ -129,7 +145,10 @@ export class Template {
                     } else {
                         let i = -1;
                         while((i = node.data.indexOf(marker, i + 1)) !== -1) {
-                            this.parts.push(new Part('node', -1));
+                            // this.parts.push(new Part('node', -1));
+                            let key = String(Math.random()).slice(2);;
+                            node.setAttribute('__mosaicKey__', key);
+                            this.parts.push({ type: 'node', __mosaicKey__: key, node: node });
                         }
                     }
                     break;

@@ -48,7 +48,7 @@ const Mosaic = function(options) {
     let invalids = findInvalidOptions(options);
     if(invalids !== undefined) throw new Error(invalids);
 
-    this.templateID = options.templateID || randomKey();
+    this.tid = options.tid || randomKey();
     this.element = typeof options.element === 'string' ? getDOMfromID(options.element) : options.element;
     this.router = options.router;
     this.view = options.view;
@@ -70,6 +70,16 @@ const Mosaic = function(options) {
     this.options = Object.assign({}, options);
     this.__isMosaic = true;
 
+    // Create the template for this component and find the dynamic "parts."
+    const view = this.view(this.data, this.actions);
+    TemplateTable[this.tid] = {
+        parts: view.parts,
+        template: view.element,
+        values: view.values[0]
+    }
+    console.log(TemplateTable);
+
+
     return this;
 }
 
@@ -83,29 +93,34 @@ Mosaic.prototype.paint = function() {
     // Clear anything that is there.
     while(this.element.firstChild) this.element.removeChild(this.element.firstChild);
 
-    // Create the template for this component and find the dynamic "parts."
-    const view = this.view(this.data, this.actions);
-    console.log(view);
-    // this.element.replaceWith(document.importNode(view.element.content, true));
+    // Create a brand new DOM element from the template. This will basically be
+    // a new instance of this Mosaic.
+    let templateResult = TemplateTable[this.tid];
+    let clonedElement = document.importNode(templateResult.template.content.childNodes[0], true);
+    let partIndex = 0;
+    for(let part of templateResult.parts) {
+        if(part.type === 'node') {
+            let dynamicNodes = clonedElement.querySelectorAll(`[__mosaicKey__='${part.__mosaicKey__}']`);
+            dynamicNodes.forEach(node => {
+                let value = templateResult.values[partIndex++];
+                node.childNodes[0].replaceWith(value);
+            });
+        }
+        else if(part.type === 'attribute') {
+            let attrName = part.attributeName;
+            let dynamicAttributeNodes = clonedElement.querySelectorAll(`*[${attrName}]`);
+            dynamicAttributeNodes.forEach(node => {
+                node.setAttribute(attrName, templateResult.values[partIndex++]);
+            });
+        }
+    }
     
-    // const template = view.element;
-    // const copy = document.importNode(template, true);
-    // copy.content.childNodes[0].childNodes[3].innerHTML = 'Something Else';
-    // console.log(template.content.childNodes[0].childNodes[3], copy.content.childNodes[0].childNodes[3]);
-
-    // Update the Instance Table with this instance.
-    this.instanceID = randomKey();
-
-    // Traverse the tree and keep track of the nodes that are going
-    // to change later on.
-    // let templateRoot = template.content.childNodes[0];
-    // traverse(templateRoot, node => {
-        
-    // });
-
-    // Do an initial setup to create all the DOM nodes by kinda faking
-    // it. Just run the observer change function.
-    updateMosaic.call(this);
+    // Now take that cloned element that has all of its nodes and attributes
+    // set and inject it into the DOM. When you "paint" it's ok to just replace
+    // because you know that this is the first and only time you are using this
+    // component, and that if you are painting it you can be sure that it will
+    // have the "element" property set to an existing DOM node.
+    this.element.replaceWith(clonedElement);
 
     // Call the created lifecycle function.
     if(this.created) this.created(this.data, this.actions);
