@@ -40,18 +40,24 @@ import Mosaic from '../../src/index';
 new Mosaic({
     element: '#root',
     data: { count: 5, name: 'header' },
-    created: (data, actions) => {
-        // setTimeout(() => {
-        //     data.count += 5;
-        //     data.name = "my-header";
-        // }, 3000);
+    created: function() {
+        setTimeout(() => {
+            this.data.count += 5;
+            this.data.name = "my-header";
+        }, 5000);
+        setTimeout(() => {
+            this.data.count += 5;
+            this.data.name = "navigation-bar";
+        }, 10000);
     },
-    view: (data, actions) => html`<div>
-        <h1>Current Count:</h1>
-        <h2>${data.count}</h2>
-        <br>
-        <div>
-            <p class="${data.name}">${data.count}</p>
-        </div>
-    </div>`
+    view: function() {
+        return html`<div>
+            <h1>Current Count:</h1>
+            <h2>${this.data.count}</h2>
+            <br>
+            <div>
+                <p class="${this.data.name}">${this.data.count + 5}</p>
+            </div>
+        </div>`
+    }
 }).paint();

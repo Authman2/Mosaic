@@ -75,7 +75,7 @@ export class Template {
                             // Add a new part and set the mosaic key.
                             let key = String(Math.random()).slice(2);
                             node.setAttribute('__mosaicKey__', key);
-                            this.parts.push({ type: 'attribute', attributeName, attributeValue: attributeVal, __mosaicKey__: key, node: node });
+                            this.parts.push({ type: 'attribute', attributeName, __mosaicKey__: key });
 
                             // Remove the placeholder.
                             // node.removeAttribute(attributeName);
@@ -101,7 +101,7 @@ export class Template {
                             parent.insertBefore(newNode, node);
 
                             // this.parts.push(new Part('node', ++index));
-                            this.parts.push({ type: 'node', __mosaicKey__: key, node: newNode });
+                            this.parts.push({ type: 'node', __mosaicKey__: key });
                         }
 
                         // Make sure to add a placeholder for this text node.
@@ -128,11 +128,11 @@ export class Template {
                         if(!node.previousSibling || index === lastPartIndex) {
                             index++;
                             parent.setAttribute('__mosaicKey__', key);
-                            // parent.insertBefore(createMarker(), node);
+                            // parent.insertBefore(newTempTextNode, node);
                         }
                         lastPartIndex = index;
                         // this.parts.push(new Part('node', index));
-                        this.parts.push({ type: 'node', __mosaicKey__: key, node: parent });
+                        this.parts.push({ type: 'node', __mosaicKey__: key });
 
                         // If there is no nextSibling, then you know you are at the end.
                         if(!node.nextSibling) {
@@ -148,7 +148,7 @@ export class Template {
                             // this.parts.push(new Part('node', -1));
                             let key = String(Math.random()).slice(2);;
                             node.setAttribute('__mosaicKey__', key);
-                            this.parts.push({ type: 'node', __mosaicKey__: key, node: node });
+                            this.parts.push({ type: 'node', __mosaicKey__: key });
                         }
                     }
                     break;
@@ -158,7 +158,7 @@ export class Template {
 
             // Fail-safe.
             __failure += 1;
-            if(__failure >= 2000) { console.error('Too long.'); break; }
+            if(__failure >= 4000) { console.error('Too long.'); break; }
         }
 
         // Removed old nodes.

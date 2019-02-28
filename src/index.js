@@ -62,7 +62,7 @@ const Mosaic = function(options) {
     this.data = new Observable(_tempData || {}, (oldData) => {
         if(this.willUpdate) this.willUpdate(oldData);
     }, () => {
-        updateMosaic.call(this);
+        repaint.call(this);
         if(this.updated) this.updated(this.data, this.actions);
     });
 
@@ -77,8 +77,6 @@ const Mosaic = function(options) {
         template: view.element,
         values: view.values[0]
     }
-    console.log(TemplateTable);
-
 
     return this;
 }
@@ -94,26 +92,11 @@ Mosaic.prototype.paint = function() {
     while(this.element.firstChild) this.element.removeChild(this.element.firstChild);
 
     // Create a brand new DOM element from the template. This will basically be
-    // a new instance of this Mosaic.
+    // a new instance of this Mosaic. Make sure to set the instance ID.
+    this.iid = randomKey();
     let templateResult = TemplateTable[this.tid];
     let clonedElement = document.importNode(templateResult.template.content.childNodes[0], true);
-    let partIndex = 0;
-    for(let part of templateResult.parts) {
-        if(part.type === 'node') {
-            let dynamicNodes = clonedElement.querySelectorAll(`[__mosaicKey__='${part.__mosaicKey__}']`);
-            dynamicNodes.forEach(node => {
-                let value = templateResult.values[partIndex++];
-                node.childNodes[0].replaceWith(value);
-            });
-        }
-        else if(part.type === 'attribute') {
-            let attrName = part.attributeName;
-            let dynamicAttributeNodes = clonedElement.querySelectorAll(`*[${attrName}]`);
-            dynamicAttributeNodes.forEach(node => {
-                node.setAttribute(attrName, templateResult.values[partIndex++]);
-            });
-        }
-    }
+    traverseParts(templateResult, clonedElement);
     
     // Now take that cloned element that has all of its nodes and attributes
     // set and inject it into the DOM. When you "paint" it's ok to just replace
@@ -121,6 +104,7 @@ Mosaic.prototype.paint = function() {
     // component, and that if you are painting it you can be sure that it will
     // have the "element" property set to an existing DOM node.
     this.element.replaceWith(clonedElement);
+    this.element = clonedElement;
 
     // Call the created lifecycle function.
     if(this.created) this.created(this.data, this.actions);
@@ -145,16 +129,59 @@ const makeArraysObservable = (data) => {
         _tempData[i] = new Observable(_tempData[i], () => {
             if(this.willUpdate) this.willUpdate(oldData);
         }, () => {
-            updateMosaic.call(this);
+            repaint.call(this);
             if(this.updated) this.updated();
         });
     }
     return _tempData;
 }
 
+/** Helper method to go through a list of parts and make updates to the DOM element.
+* @param {Object} templateResult The templateResult object that exists in the Template Table.
+* @param {HTMLElement} element The DOM element to look through.
+*/
+const traverseParts = function(templateResult, element) {
+    let partIndex = 0;
+    for(let part of templateResult.parts) {
+        switch(part.type) {
+            case 'node':
+                let dynamicNodes = element.querySelectorAll(`[__mosaicKey__='${part.__mosaicKey__}']`);
+                dynamicNodes.forEach(node => {
+                    let value = templateResult.values[partIndex++];
+                    node.childNodes[0].replaceWith(value);
+                });
+                break;
+            case 'attribute':
+                let attrName = part.attributeName;
+                let dynamicAttributeNodes = element.querySelectorAll(`*[${attrName}]`);
+                dynamicAttributeNodes.forEach(node => {
+                    node.setAttribute(attrName, templateResult.values[partIndex++]);
+                });
+                break;
+            default:
+                break;
+        }
+    }
+}
+
 /** Handles the updating/diffing part of the render. */
-const updateMosaic = function() {
-    
+const repaint = function() {
+    // You still need to look at the template result to find out which parts to
+    // change. But make sure you update the dynamic values though, so you have
+    // to call the "view" function again and change the template, but only
+    // change the "values" property. Leave the template the same since it 
+    // should persist between components.
+    // * For right now, also leave the parts alone. Later on parts might be
+    // removed if a node is removed, but for now do not worry about that.
+    let newView = this.view(this.data, this.actions);
+    let templateResult = TemplateTable[this.tid];
+    templateResult.values = newView.values[0];
+
+    // Now go through the parts and change all the dynamic parts that need to be
+    // changed. The only difference is that instead of looking at a cloned
+    // element, you are looking directly at this Mosaic's element, since it
+    // should already be in the DOM at this point.
+    traverseParts(templateResult, this.element);
 }
 
 
