@@ -1,8 +1,9 @@
-import { m, TemplateTable, InstanceTable, ChangeTable, Part } from "./templating/m";
+import { m, TemplateTable } from "./templating/m";
 import { Observable } from './observable';
 import { isHTMLElement, findInvalidOptions, getDOMfromID } from './validations';
 import { viewToDOM, randomKey, traverse, traverseTwo, walk } from './util';
 import { nodeMarker } from "./templating/utilities";
+import { TemplateInstance } from "./templating/templateInstance";
 
 /** The configuration options for a Mosaic component.
  * @typedef {MosaicOptions} MosaicOptions Configuration options for a Mosaic component.
@@ -69,19 +70,6 @@ const Mosaic = function(options) {
     this.options = Object.assign({}, options);
     this.__isMosaic = true;
 
-    
-    // Check if this Mosaic's view is already an existing template
-    // in the TemplateTable. If not, make a new entry with a random
-    // ID. Otherwise, don't do anything since there's already a
-    // version of this Mosaic in the template table.
-    if(TemplateTable.hasOwnProperty(this.templateID) === false) {
-        const view = this.view(this.data, this.actions);
-        const template = view.getTemplate();
-        view.createParts(template.content);  // Always create the parts object first.
-        console.log(view);
-        TemplateTable[this.templateID] = template;
-    }
-
     return this;
 }
 
@@ -95,18 +83,18 @@ Mosaic.prototype.paint = function() {
     // Clear anything that is there.
     while(this.element.firstChild) this.element.removeChild(this.element.firstChild);
 
-    // Construct a dictionary that maps each Mosaic to a template type, and then each
-    // instance of that Mosaic to a particular ID that needs to be updated. And lastly,
-    // a particular "value-node" to its template instance of a Mosaic type.
+    // Create the template for this component and find the dynamic "parts."
     const view = this.view(this.data, this.actions);
-    const template = view.getTemplate();
+    console.log(view);
+    // this.element.replaceWith(document.importNode(view.element.content, true));
+    
+    // const template = view.element;
+    // const copy = document.importNode(template, true);
+    // copy.content.childNodes[0].childNodes[3].innerHTML = 'Something Else';
+    // console.log(template.content.childNodes[0].childNodes[3], copy.content.childNodes[0].childNodes[3]);
 
     // Update the Instance Table with this instance.
-    this.instanceID  = randomKey();
-    InstanceTable[this.instanceID] = {
-        instance: this,
-        template: TemplateTable[this.templateID],
-    };
+    this.instanceID = randomKey();
 
     // Traverse the tree and keep track of the nodes that are going
     // to change later on.
@@ -122,29 +110,6 @@ Mosaic.prototype.paint = function() {
     // Call the created lifecycle function.
     if(this.created) this.created(this.data, this.actions);
 }
-
-/** Places a new instance of a Mosaic onto the page, giving it an instance ID. */
-Mosaic.prototype.place = function(data) {
-    // Add any new data.
-    const cpy = Object.assign({}, this.options);
-    cpy['data'] = Object.assign({}, data, this.data);
-    cpy['templateID'] = this.templateID;
-
-    // Create a new Mosaic with the same options.
-    const newInstance = new Mosaic(cpy);
-    newInstance.instanceID  = randomKey();
-
-    // Make sure this new instance is included in the Instance Table.
-    InstanceTable[newInstance.instanceID] = {
-        instance: newInstance,
-        template: TemplateTable[newInstance.templateID]
-    };
-
-    // Return the view for this new instance.
-    const view = newInstance.view(newInstance.data, newInstance.actions);
-    return view;
-}
-
 
 /** Checks if two Mosaics are equal to each other. 
 * @param {Mosaic} other Whether or not this Mosaic is equal to another. */
@@ -180,4 +145,4 @@ const updateMosaic = function() {
 
 window.html = m;
 window.Mosaic = Mosaic;
-exports.Mosaic = Mosaic;
+export default Mosaic;
