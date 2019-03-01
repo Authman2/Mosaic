@@ -178,3 +178,4 @@ exports.deepClone = deepClone;
 exports.isHTMLElement = isHTMLElement;
 exports.viewToDOM = viewToDOM;
 exports.randomKey = randomKey;
+exports.cloneFunction = cloneFunction;

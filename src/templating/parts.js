@@ -98,18 +98,31 @@ export class Part {
         });
     }
 
-    /** Commits the changes for "event" types. */
+    /** Commits the changes for "event" types. Currently does not support
+     * dynamically changing function attributes. */
     commitEvent(element, mosaic) {
-        let eventName = this.eventName;
-        let eventVal = this.value.bind(mosaic); // binding causes it to fail.
-        console.log(eventName, eventVal);
+        // Get the name and function value of the event.
+        let name = this.eventName;
+        let val = this.value;
 
-        let dynamicEventNodes = element.querySelectorAll(`*[${eventName}]`);
-        dynamicEventNodes.forEach(node => {
-            if(node[eventName]) node.removeEventListener(eventName.slice(2), eventVal);
-            node.removeAttribute(eventName);
-            node.addEventListener(eventName.slice(2), eventVal);
-        });
+        // Get the first (which really means next) dynamic node that hasn't
+        // had its event set yet.
+        let dynamicEventNodes = element.querySelectorAll(`*[${name}]`);
+        let node = dynamicEventNodes[0];
+        if(!node) return;
+
+        // Remove the placeholder event attribute. Once it doesn't have the
+        // placeholder it will not be included in the search for next nodes
+        // the next time this function gets called for a different part.
+        node.removeAttribute(name);
+
+        // Add the event listener to the node.
+        node.eventHandlers = node.eventHandlers || {};
+        if(node.eventHandlers[name]) node.removeEventListener(name.substring(2), node.eventHandlers[name]);
+        node.eventHandlers[name] = (e) => {
+            val.call(mosaic, e);
+        };
+        node.addEventListener(name.substring(2), node.eventHandlers[name]);
     }
 }
 Part.NODE_TYPE = 'node';
