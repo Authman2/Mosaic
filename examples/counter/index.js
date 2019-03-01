@@ -39,26 +39,21 @@ import Mosaic from '../../src/index';
 
 new Mosaic({
     element: '#root',
-    data: { count: 5, name: 'header', myID: 'something' },
-    created: function() {
-        setTimeout(() => {
-            this.data.count += 5;
-            this.data.name = "my-header";
-        }, 5000);
-        setTimeout(() => {
-            this.data.count += 5;
-            this.data.name = "navigation-bar";
-            this.data.myID = 'some-other-ID-now';
-        }, 10000);
+    data: { count: 0 },
+    actions: {
+        countUp: function() {
+            this.data.count += 1;
+        },
+        countDown: function() {
+            this.data.count -= 1;
+        }
     },
     view: function() {
-        return html`<div>
-            <h1>Current Count:</h1>
-            <h2>${this.data.count}</h2>
-            <br>
-            <div>
-                <p class="${this.data.name}" id="${this.data.myID}">${this.data.count + 5}</p>
-            </div>
+        return html`<div style='text-align: center; font-family: Avenir;'>
+            <h1>Count:</h1>
+            <h1>${this.data.count}</h1>
+            <button onclick=${this.actions.countUp} style="font-size: 24px;">+</button>
+            <button onclick=${this.actions.countDown} style="font-size: 24px;">-</button>
         </div>`
     }
 }).paint();

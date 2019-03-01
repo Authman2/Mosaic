@@ -97,7 +97,7 @@ Mosaic.prototype.paint = function() {
     this.iid = randomKey();
     let templateResult = TemplateTable[this.tid];
     let clonedElement = document.importNode(templateResult.template.content.childNodes[0], true);
-    updateParts(templateResult, clonedElement);
+    updateParts.call(this, templateResult, clonedElement);
     
     // Now take that cloned element that has all of its nodes and attributes
     // set and inject it into the DOM. When you "paint" it's ok to just replace
@@ -158,6 +158,17 @@ const updateParts = function(templateResult, element) {
                     node.setAttribute(attrName, templateResult.values[partIndex++]);
                 });
                 break;
+            case 'event':
+                let eventName = part.eventName;
+                let dynamicEventNodes = element.querySelectorAll(`*[${eventName}]`);
+                dynamicEventNodes.forEach(node => {
+                    node.removeAttribute(eventName);
+
+                    // Bind the action to the current Mosaic.
+                    let eventValue = templateResult.values[partIndex++].bind(this);
+                    node[eventName] = eventValue;
+                });
+                break;
             default:
                 break;
         }
@@ -181,7 +192,7 @@ const repaint = function() {
     // changed. The only difference is that instead of looking at a cloned
     // element, you are looking directly at this Mosaic's element, since it
     // should already be in the DOM at this point.
-    updateParts(templateResult, this.element);
+    updateParts.call(this, templateResult, this.element);
 }
 
 

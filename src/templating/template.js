@@ -44,14 +44,11 @@ export class Template {
         let __failure = 0;
 
         let index = -1;
-        let partIndex = 0;
-        let nodeIndex = 0;
         let lastPartIndex = 0;
         let nodesToRemove = [];
         while(walker.nextNode()) {
-            index++;
-
             // Get the current node.
+            index += 1;
             let node = walker.currentNode;
             
             switch(node.nodeType) {
@@ -61,27 +58,27 @@ export class Template {
                     if(node.hasAttributes()) {
                         const attrs = node.attributes;
 
+                        // Find all of the attributes.
                         let count = 0;
                         for(let i = 0; i < attrs.length; i++) {
                             if(attrs[i].value.indexOf(marker) >= 0) count += 1;
                         }
 
-                        let i = 0;
-                        while(i < count) {
+                        // Go through each attribute and create a new Part for it.
+                        for(let i = 0; i < count; i++) {
                             // Get the template portion before the first expression.
                             let attributeName = attrs[i].name;
-                            let attributeVal = attrs[i].value;
-                            // this.parts.push(new Part('attribute', index, attributeName, attributeVal));
 
                             // Add a new part and set the mosaic key.
                             let key = String(Math.random()).slice(2);
                             node.setAttribute('__mosaicKey__', key);
-                            this.parts.push({ type: 'attribute', attributeName, __mosaicKey__: key });
-
-                            // Remove the placeholder.
-                            // node.removeAttribute(attributeName);
-                            partIndex += attributeVal.split(markerRegex).length - 1;
-                            i += 1;
+                            
+                            // Make sure the new part fits the type of attribute, for simplicity later.
+                            if(attributeName.startsWith('on')) {
+                                this.parts.push({ type: 'event', eventName: attributeName, __mosaicKey__: key });
+                            } else {
+                                this.parts.push({ type: 'attribute', attributeName, __mosaicKey__: key });
+                            }
                         }
                     }
                     break;
@@ -93,29 +90,21 @@ export class Template {
                         // Create a new text node.
                         const parent = node.parentNode;
                         const strings = data.split(markerRegex);
-                        const lastIndex = strings.length - 1;
                         
-                        for(let i = 0; i < lastIndex; i++) {
+                        // Go through each text and create a new text node.
+                        for(let i = 0; i < strings.length - 1; i++) {
+                            // Create an identifying key for the text node, set the key, and insert it into the DOM.
                             let newNode = (strings[i] === '' ? createMarker() : document.createTextNode(strings[i]));
                             let key = String(Math.random()).slice(2);
-
                             newNode.setAttribute('__mosaicKey__', key);
                             parent.insertBefore(newNode, node);
 
-                            // this.parts.push(new Part('node', ++index));
                             this.parts.push({ type: 'node', __mosaicKey__: key });
                         }
 
                         // Make sure to add a placeholder for this text node.
-                        if(strings[lastIndex] === '') {
-                            // parent.insertBefore(createMarker(), node);
-                            nodesToRemove.push(node);
-                        } else {
-                            node.data = strings[lastIndex];
-                        }
-
-                        // Move to the next part.
-                        partIndex += 1;
+                        if(strings[lastIndex] === '') { nodesToRemove.push(node); }
+                        else { node.data = strings[lastIndex]; }
                     }
                     break;
                 // COMMENT
@@ -130,24 +119,19 @@ export class Template {
                         if(!node.previousSibling || index === lastPartIndex) {
                             index++;
                             parent.setAttribute('__mosaicKey__', key);
-                            // parent.insertBefore(newTempTextNode, node);
                         }
                         lastPartIndex = index;
-                        // this.parts.push(new Part('node', index));
                         this.parts.push({ type: 'node', __mosaicKey__: key });
 
                         // If there is no nextSibling, then you know you are at the end.
-                        if(!node.nextSibling) {
-                            node.data = '';
-                        } else {
+                        if(!node.nextSibling) { node.data = ''; }
+                        else {
                             nodesToRemove.push(node);
                             index--;
                         }
-                        partIndex++;
                     } else {
                         let i = -1;
                         while((i = node.data.indexOf(marker, i + 1)) !== -1) {
-                            // this.parts.push(new Part('node', -1));
                             let key = String(Math.random()).slice(2);;
                             node.setAttribute('__mosaicKey__', key);
                             this.parts.push({ type: 'node', __mosaicKey__: key });
@@ -158,7 +142,7 @@ export class Template {
                     break;
             }
 
-            // Fail-safe.
+            // Fail-safe, in case you mess up and have a forever while loop.
             __failure += 1;
             if(__failure >= 4000) { console.error('Too long.'); break; }
         }
