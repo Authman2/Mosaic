@@ -4,6 +4,7 @@ import { isHTMLElement, findInvalidOptions, getDOMfromID } from './validations';
 import { viewToDOM, randomKey, traverse, traverseTwo, walk } from './util';
 import { nodeMarker } from "./templating/utilities";
 import { TemplateInstance } from "./templating/templateInstance";
+import { Part } from "./templating/parts";
 
 /** The configuration options for a Mosaic component.
  * @typedef {MosaicOptions} MosaicOptions Configuration options for a Mosaic component.
@@ -141,37 +142,16 @@ const makeArraysObservable = (data) => {
 * @param {Object} templateResult The templateResult object that exists in the Template Table.
 * @param {HTMLElement} element The DOM element to look through. */
 const updateParts = function(templateResult, element) {
-    let partIndex = 0;
-    for(let part of templateResult.parts) {
-        switch(part.type) {
-            case 'node':
-                let dynamicNodes = element.querySelectorAll(`[__mosaicKey__='${part.__mosaicKey__}']`);
-                dynamicNodes.forEach(node => {
-                    let value = templateResult.values[partIndex++];
-                    node.childNodes[0].replaceWith(value);
-                });
-                break;
-            case 'attribute':
-                let attrName = part.attributeName;
-                let dynamicAttributeNodes = element.querySelectorAll(`*[${attrName}]`);
-                dynamicAttributeNodes.forEach(node => {
-                    node.setAttribute(attrName, templateResult.values[partIndex++]);
-                });
-                break;
-            case 'event':
-                let eventName = part.eventName;
-                let dynamicEventNodes = element.querySelectorAll(`*[${eventName}]`);
-                dynamicEventNodes.forEach(node => {
-                    node.removeAttribute(eventName);
+    // Go through each Part and decide what to do with its DOM node.
+    for(let i = 0; i < templateResult.parts.length; i++) {
+        let part = templateResult.parts[i];
 
-                    // Bind the action to the current Mosaic.
-                    let eventValue = templateResult.values[partIndex++].bind(this);
-                    node[eventName] = eventValue;
-                });
-                break;
-            default:
-                break;
-        }
+        // Label the part as either dirty or clean.
+        // Check whether or not the part is dirty.
+        // If dirty, commit new changes to the DOM.
+        part.checkWasChanged(templateResult, i);
+        if(part.dirty === false) continue;
+        part.commit(this, templateResult, element, i);
     }
 }
 

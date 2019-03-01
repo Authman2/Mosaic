@@ -8,7 +8,7 @@ import { Part } from './parts';
 /** Used to build templates (basically Mosaics) that will be reused for each instance of a Mosaic. */
 export class Template {
     constructor(strings, ...values) {
-        this.strings = strings;
+        this.strings = strings.map(str => str.trim());
         this.values = values;
         this.parts = [];
         this.element = this.getTemplate();
@@ -16,9 +16,8 @@ export class Template {
     }
 
     getHTML() {
-        const endIndex = this.strings.length - 1;
         let html = '';
-        for(let i = 0; i < endIndex; i++) {
+        for(let i = 0; i < this.strings.length - 1; i++) {
             const s = this.strings[i];
             const match = lastAttributeNameRegex.exec(s);
             
@@ -30,7 +29,7 @@ export class Template {
                 html += piece;
             }
         }
-        return html + this.strings[endIndex];
+        return html + this.strings[this.strings.length - 1];
     }
 
     getTemplate() {
@@ -46,6 +45,7 @@ export class Template {
         let index = -1;
         let lastPartIndex = 0;
         let nodesToRemove = [];
+        let part;
         while(walker.nextNode()) {
             // Get the current node.
             index += 1;
@@ -69,16 +69,16 @@ export class Template {
                             // Get the template portion before the first expression.
                             let attributeName = attrs[i].name;
 
-                            // Add a new part and set the mosaic key.
-                            let key = String(Math.random()).slice(2);
-                            node.setAttribute('__mosaicKey__', key);
-                            
                             // Make sure the new part fits the type of attribute, for simplicity later.
                             if(attributeName.startsWith('on')) {
-                                this.parts.push({ type: 'event', eventName: attributeName, __mosaicKey__: key });
+                                part = new Part(Part.EVENT_TYPE, undefined, undefined, attributeName);
                             } else {
-                                this.parts.push({ type: 'attribute', attributeName, __mosaicKey__: key });
+                                part = new Part(Part.ATTRIBUTE_TYPE, undefined, attributeName);
                             }
+                            this.parts.push(part);
+
+                            // Add a new part and set the mosaic key.
+                            node.setAttribute('__mosaicKey__', part.__mosaicKey__);
                         }
                     }
                     break;
@@ -95,15 +95,18 @@ export class Template {
                         for(let i = 0; i < strings.length - 1; i++) {
                             // Create an identifying key for the text node, set the key, and insert it into the DOM.
                             let newNode = (strings[i] === '' ? createMarker() : document.createTextNode(strings[i]));
-                            let key = String(Math.random()).slice(2);
-                            newNode.setAttribute('__mosaicKey__', key);
+                            part = new Part(Part.NODE_TYPE, 0);
+                            
+                            newNode.setAttribute('__mosaicKey__', part.__mosaicKey__);
                             parent.insertBefore(newNode, node);
-
-                            this.parts.push({ type: 'node', __mosaicKey__: key });
+                            this.parts.push(part);
                         }
 
                         // Make sure to add a placeholder for this text node.
-                        if(strings[lastIndex] === '') { nodesToRemove.push(node); }
+                        if(strings[lastIndex] === '') {
+                            parent.insertBefore(createMarker(), node);
+                            nodesToRemove.push(node);
+                        }
                         else { node.data = strings[lastIndex]; }
                     }
                     break;
@@ -115,13 +118,23 @@ export class Template {
                         
                         // If there's no previousSibling or the previousSibling is the start of the last part,
                         // then add a new marker node to this Part's start node.
-                        let key = String(Math.random()).slice(2);
+                        let subCount = 0;
                         if(!node.previousSibling || index === lastPartIndex) {
                             index++;
-                            parent.setAttribute('__mosaicKey__', key);
+                            subCount += 1;
+                            parent.insertBefore(createMarker(), node);
                         }
                         lastPartIndex = index;
-                        this.parts.push({ type: 'node', __mosaicKey__: key });
+                        
+                        // Find the child node that needs to be replaced and
+                        // send over the index of that child node.
+                        let childIndex = Array.from(parent.childNodes).indexOf(node);
+                        childIndex -= subCount;
+
+                        part = new Part(Part.NODE_TYPE, childIndex);
+                        parent.setAttribute('__mosaicKey__', part.__mosaicKey__);
+                        
+                        this.parts.push(part);
 
                         // If there is no nextSibling, then you know you are at the end.
                         if(!node.nextSibling) { node.data = ''; }
@@ -132,9 +145,9 @@ export class Template {
                     } else {
                         let i = -1;
                         while((i = node.data.indexOf(marker, i + 1)) !== -1) {
-                            let key = String(Math.random()).slice(2);;
-                            node.setAttribute('__mosaicKey__', key);
-                            this.parts.push({ type: 'node', __mosaicKey__: key });
+                            part = new Part(Part.NODE_TYPE, 0);
+                            node.setAttribute('__mosaicKey__', part.__mosaicKey__);
+                            this.parts.push(part);
                         }
                     }
                     break;
