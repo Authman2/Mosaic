@@ -48,7 +48,6 @@ const Mosaic = function(options) {
 
     this.tid = options.tid || randomKey();
     this.element = typeof options.element === 'string' ? getDOMfromID(options.element) : options.element;
-    this.router = options.router;
     this.view = options.view;
     this.created = options.created;
     this.willUpdate = options.willUpdate;
@@ -75,7 +74,6 @@ const Mosaic = function(options) {
         template: view.element,
         values: view.values[0]
     }
-    console.log(TemplateTable[this.tid]);
 
     return this;
 }
@@ -109,10 +107,35 @@ Mosaic.prototype.paint = function() {
     if(this.created) this.created(this.data, this.actions);
 }
 
+/** Creates a new "piece" of a Mosaic. This is how Mosaics are injected
+* into other Mosaics (i.e. how components are nested).
+* @param {Object} data Additional data to add to a Mosaic. */
+Mosaic.prototype.piece = function(newData = {}) {
+    // Since this is just an instance of an already existing template,
+    // just find it in the TemplateTable. Then just repaint the template
+    // using a new instance.
+    let templateResult = TemplateTable[this.tid];
+    let clonedElement = document.importNode(templateResult.template.content.childNodes[0], true);
+
+    // Create a copy of this Mosaic.
+    let options = Object.assign({}, this.options);
+    options.data = Object.assign({}, this.data, newData);
+    options.actions = Object.assign({}, this.actions);
+    options.element = clonedElement;
+    
+    let copy = new Mosaic(options);
+    copy.iid = randomKey();
+
+    // Update the element.
+    updateParts.call(copy, templateResult, copy.element);
+
+    return copy.element;
+}
+
 /** Checks if two Mosaics are equal to each other. 
 * @param {Mosaic} other Whether or not this Mosaic is equal to another. */
 Mosaic.prototype.equals = function(other) {
-    return (this.templateID === other.templateID) && (this.instanceID === other.instanceID);
+    return (this.tid === other.tid) && (this.iid === other.iid);
 }
 
 
@@ -120,7 +143,7 @@ Mosaic.prototype.equals = function(other) {
 * ------------- HELPERS -------------- 
 */
 
-const makeArraysObservable = (data) => {
+const makeArraysObservable = function(data) {
     let _tempData = data;
     for(var i in _tempData) {
         if(!Array.isArray(_tempData[i])) continue;

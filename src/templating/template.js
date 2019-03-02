@@ -1,5 +1,6 @@
 import { marker, nodeMarker, boundAttributeSuffix, lastAttributeNameRegex, createMarker, markerRegex } from '../util';
 import { Part } from './parts';
+import { TemplateTable } from './m';
 
 /**
 * ------------- TEMPLATES -------------
@@ -19,6 +20,7 @@ export class Template {
         this.parts = [];
         this.element = this.getTemplate();
         this.createParts(this.element.content);
+        // console.log(this.strings, this.values);
     }
 
     getHTML() {
@@ -60,97 +62,21 @@ export class Template {
             switch(node.nodeType) {
                 // ELEMENT
                 case 1:
-                    if(!(node instanceof Element)) break;
-                    if(node.hasAttributes()) {
-                        const attrs = node.attributes;
-
-                        // Find all of the attributes.
-                        for(let i = 0; i < attrs.length; i++) {
-                            let attributeName = attrs[i].name;
-                            let attributeValue = attrs[i].value;
-
-                            if(attributeValue.indexOf(marker) !== -1) {
-                                if(attributeName.startsWith('on')) {
-                                    part = new Part(Part.EVENT_TYPE, undefined, undefined, attributeName);
-                                } else {
-                                    part = new Part(Part.ATTRIBUTE_TYPE, undefined, { attributeName, attributeValue });
-                                }
-                                this.parts.push(part);
-                                node.setAttribute('__mosaicKey__', part.__mosaicKey__);
-                            }
-                        }
-                    }
+                    // Find a way to tell if it's a Mosaic and there's already
+                    // a template for it. In other words, just find a way to 
+                    // tell if the node is a Mosaic or not.
+                    const tag = node.nodeName;
+                    const existingTemplates = Object.values(TemplateTable).map(t => t.template.content.childNodes[0].nodeName);
+                    const isMosaic = existingTemplates.filter(t => t === tag);
+                    console.log(isMosaic);
+                    this.parseNode(node, part, index, lastPartIndex);
                     break;
                 // TEXT
-                case 3:
-                    if(!(node instanceof Text)) break;
-                    const data = node.data;
-                    if(data.indexOf(marker) >= 0) {
-                        // Create a new text node.
-                        const parent = node.parentNode;
-                        const strings = data.split(markerRegex);
-                        
-                        // Go through each text and create a new text node.
-                        for(let i = 0; i < strings.length - 1; i++) {
-                            // Create an identifying key for the text node, set the key, and insert it into the DOM.
-                            let newNode = (strings[i] === '' ? createMarker() : document.createTextNode(strings[i]));
-                            part = new Part(Part.NODE_TYPE, 0);
-                            
-                            newNode.setAttribute('__mosaicKey__', part.__mosaicKey__);
-                            parent.insertBefore(newNode, node);
-                            this.parts.push(part);
-                        }
-
-                        // Make sure to add a placeholder for this text node.
-                        if(strings[lastIndex] === '') {
-                            parent.insertBefore(createMarker(), node);
-                            nodesToRemove.push(node);
-                        }
-                        else { node.data = strings[lastIndex]; }
-                    }
-                    break;
+                case 3: this.parseText(node, part, index, lastPartIndex, nodesToRemove); break;
                 // COMMENT
-                case 8:
-                    if(!(node instanceof Comment)) break;
-                    if(node.data === marker) {
-                        const parent = node.parentNode;
-                        
-                        // If there's no previousSibling or the previousSibling is the start of the last part,
-                        // then add a new marker node to this Part's start node.
-                        let subCount = 0;
-                        if(!node.previousSibling || index === lastPartIndex) {
-                            index++;
-                            subCount += 1;
-                            parent.insertBefore(createMarker(), node);
-                        }
-                        lastPartIndex = index;
-                        
-                        // Find the child node that needs to be replaced and
-                        // send over the index of that child node.
-                        let childIndex = Array.from(parent.childNodes).indexOf(node);
-                        childIndex -= subCount;
-
-                        part = new Part(Part.NODE_TYPE, childIndex);
-                        parent.setAttribute('__mosaicKey__', part.__mosaicKey__);
-                        
-                        this.parts.push(part);
-
-                        // If there is no nextSibling, then you know you are at the end.
-                        if(!node.nextSibling) { node.data = ''; }
-                        else {
-                            nodesToRemove.push(node);
-                            index--;
-                        }
-                    } else {
-                        let i = -1;
-                        while((i = node.data.indexOf(marker, i + 1)) !== -1) {
-                            part = new Part(Part.NODE_TYPE, 0);
-                            node.setAttribute('__mosaicKey__', part.__mosaicKey__);
-                            this.parts.push(part);
-                        }
-                    }
-                    break;
+                case 8: this.parseComment(node, part, index, lastPartIndex, nodesToRemove); break;
                 default:
+                    // console.log(node);
                     break;
             }
 
@@ -162,6 +88,110 @@ export class Template {
         // Removed old nodes.
         for (const n of nodesToRemove) {
             n.parentNode.removeChild(n);
+        }
+    }
+
+    /**
+    * ------------- HELPERS -------------
+    */
+
+    /** Parses a Mosaic from the template. */
+    parseMosaic(node, part, index, lastPartIndex) {
+
+    }
+
+    /** Parses a Node from the template. */
+    parseNode(node, part, index, lastPartIndex) {
+        if(!(node instanceof Element)) return;
+        if(node.hasAttributes()) {
+            const attrs = node.attributes;
+
+            // Find all of the attributes.
+            for(let i = 0; i < attrs.length; i++) {
+                let attributeName = attrs[i].name;
+                let attributeValue = attrs[i].value;
+
+                if(attributeValue.indexOf(marker) !== -1) {
+                    if(attributeName.startsWith('on')) {
+                        part = new Part(Part.EVENT_TYPE, undefined, undefined, attributeName);
+                    } else {
+                        part = new Part(Part.ATTRIBUTE_TYPE, undefined, { attributeName, attributeValue });
+                    }
+                    this.parts.push(part);
+                    node.setAttribute('__mosaicKey__', part.__mosaicKey__);
+                }
+            }
+        }
+    }
+
+    /** Parses Text from the template. */
+    parseText(node, part, index, lastPartIndex, nodesToRemove) {
+        if(!(node instanceof Text)) return;
+        const data = node.data;
+        if(data.indexOf(marker) >= 0) {
+            // Create a new text node.
+            const parent = node.parentNode;
+            const strings = data.split(markerRegex);
+            
+            // Go through each text and create a new text node.
+            for(let i = 0; i < strings.length - 1; i++) {
+                // Create an identifying key for the text node, set the key, and insert it into the DOM.
+                let newNode = (strings[i] === '' ? createMarker() : document.createTextNode(strings[i]));
+                part = new Part(Part.NODE_TYPE, 0);
+                
+                newNode.setAttribute('__mosaicKey__', part.__mosaicKey__);
+                parent.insertBefore(newNode, node);
+                this.parts.push(part);
+            }
+
+            // Make sure to add a placeholder for this text node.
+            if(strings[lastIndex] === '') {
+                parent.insertBefore(createMarker(), node);
+                nodesToRemove.push(node);
+            }
+            else { node.data = strings[lastIndex]; }
+        }
+    }
+
+    /** Parses Comments from the template. */
+    parseComment(node, part, index, lastPartIndex, nodesToRemove) {
+        if(!(node instanceof Comment)) return;
+        if(node.data === marker) {
+            const parent = node.parentNode;
+            
+            // If there's no previousSibling or the previousSibling is the start of the last part,
+            // then add a new marker node to this Part's start node.
+            let subCount = 0;
+            if(!node.previousSibling || index === lastPartIndex) {
+                index++;
+                subCount += 1;
+                parent.insertBefore(createMarker(), node);
+            }
+            lastPartIndex = index;
+            
+            // Find the child node that needs to be replaced and
+            // send over the index of that child node.
+            let childIndex = Array.from(parent.childNodes).indexOf(node);
+            childIndex -= subCount;
+
+            part = new Part(Part.NODE_TYPE, childIndex);
+            parent.setAttribute('__mosaicKey__', part.__mosaicKey__);
+            
+            this.parts.push(part);
+
+            // If there is no nextSibling, then you know you are at the end.
+            if(!node.nextSibling) { node.data = ''; }
+            else {
+                nodesToRemove.push(node);
+                index--;
+            }
+        } else {
+            let i = -1;
+            while((i = node.data.indexOf(marker, i + 1)) !== -1) {
+                part = new Part(Part.NODE_TYPE, 0);
+                node.setAttribute('__mosaicKey__', part.__mosaicKey__);
+                this.parts.push(part);
+            }
         }
     }
 }
