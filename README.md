@@ -8,10 +8,14 @@
 Mosaic is a declarative front-end JavaScript library for building user interfaces.
 
 :diamond_shape_with_a_dot_inside:**Component-Based**: Mosaic components are reusable pieces of code that each keep track of their own state (referred to as "data"), actions, lifecycle functions, and more.
+
 ⚡️**Observable Data**: Mosaic uses Observables to keep track of changes to a component's data. This means 
 that there is no need to call "setState" or anything like that, instead just change the data directly.
+
 🧠**Smart DOM**: Updates in Mosaic work by remembering which nodes are dynamic (i.e. subject to change) and traveling directly to those nodes to make changes, rather than traversing the tree again.
+
 👌**Small Library Size**: Mosaic is extremely small, with the minified JavaScript file only 13.4KB.
+
 🔖**Tagged Template Literals**: Views are written using tagged template literals, which means there is no need for a compiler:
 ```javascript
 const name = "Mosaic";
