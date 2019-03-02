@@ -1,3 +1,17 @@
+export const marker = `{{m-${String(Math.random()).slice(2)}}}`;
+export const nodeMarker = `<!--${marker}-->`;
+export const markerRegex = new RegExp(`${marker}|${nodeMarker}`);
+export const boundAttributeSuffix = '$m$';
+export const lastAttributeNameRegex = /([ \x09\x0a\x0c\x0d])([^\0-\x1F\x7F-\x9F \x09\x0a\x0c\x0d"'>=/]+)([ \x09\x0a\x0c\x0d]*=[ \x09\x0a\x0c\x0d]*(?:[^ \x09\x0a\x0c\x0d"'`<>=]*|"[^"]*|'[^']*))$/;
+export const createMarker = () => document.createComment('');
+
+export const isPrimitive = value => {
+    return !(value === null || !(typeof value === 'object' || typeof value === 'function'));
+};
+export const isIterable = value => {
+    return Array.isArray(value) || !!(value && value[Symbol.iterator]);
+};
+
 /** Traverses a DOM tree and performs a certain action on each node. */
 export const traverse = function($node, action) {
     let children = $node.childNodes;
@@ -23,66 +37,6 @@ export const traverseTwo = function($node1, $node2, action) {
 
 
 
-
-
-
-
-/** Sets the attributes on the HTML elements that were mounted by the virtual DOM. */
-const setAttributes = function($element, key, value, instance, isPatching = false) {
-    // 1.) Function handler for dom element.
-    if(typeof value === 'function' && key.startsWith('on')) {
-        // This is not a great fix. It just disables function diffs.
-        if(isPatching === true) return;
-        
-        const event = key.slice(2).toLowerCase();
-        
-        $element.__mosaicHandlers = $element.__mosaicHandlers || {};
-        $element.removeEventListener(event, $element.__mosaicHandlers[event]);
-        
-        $element.__mosaicHandlers[event] = value.bind($element.__mosaicInstance);
-        $element.addEventListener(event, $element.__mosaicHandlers[event]);
-    }
-    // 2.) Particular types of attributes.
-    else if(key === 'checked' || key === 'value' || key === 'className') {
-        $element[key] = value;
-    }
-    // 3.) Style property.
-    else if(key === 'style') {
-        if(typeof value === 'object') Object.assign($element.style, value);
-        else if(typeof value === 'string') $element[key] = value;
-    }
-    // 5.) Support the key property for more efficient rendering.
-    else if(key === 'key') {
-        $element.__mosaicKey = value;
-    }
-    // 6.) Value is a not an object nor a function, so anything else basically.
-    else if(typeof value !== 'object' && typeof value !== 'function') {
-        // This is not a great fix. It just disables function diffs.
-        if(key.startsWith('on')) return;
-
-        $element.setAttribute(key, value);
-    }
-}
-
-/** Start with a particular VNode and traverse the entire tree and only return the ones that match
-* the comparator.
-* @param {Object} head The absolute parent VNode.
-* @param {Object} start The starting VNode.
-* @param {Array} array The final array to return.
-* @param {Function} comparator The compare function. 
-* @param {Function} action The action to take when the comparator is true. */
-const traverseVDomTree = function(head, start, array, comparator, action) {
-	// console.log("DOM: ", start);
-	if(comparator(head, start, array) === true) {
-		if(action) action(head, start, array);
-		array.push(start);
-	}
-
-	for(var i in start.children) {
-		traverseVDomTree(head, start.children[i], array, comparator, action);
-	}
-	return array;
-}
 
 /** Clones a function. */
 const cloneFunction = function() {
@@ -135,47 +89,12 @@ function isHTMLElement(obj) {
     }
 }
 
-/** Converts an html string into actual DOM elements. If the view function is passed in, it will
-* just be returned.
-* @param {String} input The HTML string. */
-const viewToDOM = function(input, caller) {
-    if(typeof input === 'function') return input.call(caller);
-
-    // Handle template strings.
-    var replaced = input;
-    for(var dataProp in caller.data) {
-        let propName = dataProp;
-        let propVal = caller.data[dataProp];
-        let re = new RegExp('{{[ ]*this.data.' + propName + '[ ]*}}', "gim");
-        let nstring = input.replace(re, propVal);
-        replaced = nstring;
-
-        /* Use "Function" object to construct an expression from the html string that can be run. */
-        // let obj = {
-        //     data: {
-        //         x: 20,
-        //         y: 50,
-        //     }
-        // }
-        // obj.func = new Function('console.log("Object Value: ", this.data.x + this.data.y);').bind(obj);
-        // obj.func();
-        // console.log(obj);
-    }
-    let parser = new DOMParser();
-    let $element = parser.parseFromString(replaced, 'text/html').body.firstChild;
-    return $element;
-}
-
-
 /** Produces a random key. */
 const randomKey = function() {
     return Math.random().toString(36).slice(2);
 }
 
-exports.setAttributes = setAttributes;
-exports.traverseVDomTree = traverseVDomTree;
 exports.deepClone = deepClone;
 exports.isHTMLElement = isHTMLElement;
-exports.viewToDOM = viewToDOM;
 exports.randomKey = randomKey;
 exports.cloneFunction = cloneFunction;

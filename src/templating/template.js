@@ -1,4 +1,4 @@
-import { marker, nodeMarker, boundAttributeSuffix, lastAttributeNameRegex, createMarker, markerRegex } from './utilities';
+import { marker, nodeMarker, boundAttributeSuffix, lastAttributeNameRegex, createMarker, markerRegex } from '../util';
 import { Part } from './parts';
 
 /**
@@ -8,7 +8,13 @@ import { Part } from './parts';
 /** Used to build templates (basically Mosaics) that will be reused for each instance of a Mosaic. */
 export class Template {
     constructor(strings, ...values) {
-        this.strings = strings.map(str => str.trim());
+        // Trims the strings, but preserves spaces before dynamic parts.
+        this.strings = strings.map(str => {
+            let ret = str.trim();
+            if(str.startsWith(' ')) ret = ' ' + ret;
+            if(str.endsWith(' ')) ret += ' ';
+            return ret;
+        });
         this.values = values;
         this.parts = [];
         this.element = this.getTemplate();
@@ -59,26 +65,19 @@ export class Template {
                         const attrs = node.attributes;
 
                         // Find all of the attributes.
-                        let count = 0;
                         for(let i = 0; i < attrs.length; i++) {
-                            if(attrs[i].value.indexOf(marker) >= 0) count += 1;
-                        }
-
-                        // Go through each attribute and create a new Part for it.
-                        for(let i = 0; i < count; i++) {
-                            // Get the template portion before the first expression.
                             let attributeName = attrs[i].name;
+                            let attributeValue = attrs[i].value;
 
-                            // Make sure the new part fits the type of attribute, for simplicity later.
-                            if(attributeName.startsWith('on')) {
-                                part = new Part(Part.EVENT_TYPE, undefined, undefined, attributeName);
-                            } else {
-                                part = new Part(Part.ATTRIBUTE_TYPE, undefined, attributeName);
+                            if(attributeValue.indexOf(marker) !== -1) {
+                                if(attributeName.startsWith('on')) {
+                                    part = new Part(Part.EVENT_TYPE, undefined, undefined, attributeName);
+                                } else {
+                                    part = new Part(Part.ATTRIBUTE_TYPE, undefined, { attributeName, attributeValue });
+                                }
+                                this.parts.push(part);
+                                node.setAttribute('__mosaicKey__', part.__mosaicKey__);
                             }
-                            this.parts.push(part);
-
-                            // Add a new part and set the mosaic key.
-                            node.setAttribute('__mosaicKey__', part.__mosaicKey__);
                         }
                     }
                     break;

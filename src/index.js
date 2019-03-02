@@ -1,10 +1,7 @@
 import { m, TemplateTable } from "./templating/m";
 import { Observable } from './observable';
 import { isHTMLElement, findInvalidOptions, getDOMfromID } from './validations';
-import { viewToDOM, randomKey, traverse, traverseTwo, walk } from './util';
-import { nodeMarker } from "./templating/utilities";
-import { TemplateInstance } from "./templating/templateInstance";
-import { Part } from "./templating/parts";
+import { randomKey } from './util';
 
 /** The configuration options for a Mosaic component.
  * @typedef {MosaicOptions} MosaicOptions Configuration options for a Mosaic component.

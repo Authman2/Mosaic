@@ -13,14 +13,17 @@ new Mosaic({
     },
     view: function() {
         return html`<div style='text-align: center; font-family: Avenir;'>
-            <h1>Count:&nbsp;${this.data.count}</h1>
-            <button onclick="${this.actions.countUp}" class="${this.data.className}" style="font-size: 24px;">
+            <h1>Count: ${this.data.count}</h1>
+            <button onclick="${this.actions.countUp}" class="something ${this.data.className}" style="font-size: 24px;">
                 +
             </button>
-            <button disabled="true" onclick="${this.actions.countDown}" style="font-size: 24px;">-</button>
+            <button onclick="${this.actions.countDown}" style="font-size: 24px;">-</button>
             <p>
-                Mosaic was created by &nbsp;<b>${this.data.name}</b>
+                Mosaic was created by <b>${this.data.name}</b>
             </p>
+            <div contenteditable="true">
+                Something
+            </div>
         </div>`
     }
 }).paint();
