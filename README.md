@@ -7,7 +7,7 @@
 # <a target='_blank' rel='noopener noreferrer' href='https://mosaicjs.netlify.com'>Mosaic</a>
 Mosaic is a declarative front-end JavaScript library for building user interfaces.
 
-:diamond_shape_with_a_dot_inside:**Component-Based**: Mosaic components are reusable pieces of code that each keep track of their own state (referred to as "data"), actions, lifecycle functions, and more.
+:diamond_shape_with_a_dot_inside:**Component-Based**: Mosaic components are reusable pieces of code that keep track of their own data, actions, lifecycle functions, and more, and can be composed using custom element tags.
 
 ⚡️**Observable Data**: Mosaic uses Observables to keep track of changes to a component's data. This means 
 that there is no need to call "setState" or anything like that, instead just change the data directly.
@@ -56,7 +56,15 @@ For a more detailed example, run the project inside the "example" folder.
 ```js
 // Import Mosaic
 import Mosaic from '@authman2/mosaic';
-    
+
+// Create a custom component.
+const Label = new Mosaic({
+    name: "label",
+    view: function() {
+        return html`<h4>This is a custom label component!</h4>`;
+    }
+});
+
 // Create an "app" component.
 const app = new Mosaic({
     element: '#root',
@@ -74,6 +82,8 @@ const app = new Mosaic({
             <h1>This is a ${this.data.title}!</h1>
             <p>Click below to print a message!</p>
             <button onclick="${this.actions.sayHello}">Click Here</button>
+
+            <m-label></m-label>
         </div>`;
     }
 });

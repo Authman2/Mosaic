@@ -47,6 +47,7 @@ const Mosaic = function(options) {
     if(invalids !== undefined) throw new Error(invalids);
 
     this.tid = options.tid || randomKey();
+    this.name = options.name;
     this.element = typeof options.element === 'string' ? getDOMfromID(options.element) : options.element;
     this.view = options.view;
     this.created = options.created;
@@ -59,6 +60,7 @@ const Mosaic = function(options) {
     this.data = new Observable(_tempData || {}, (oldData) => {
         if(this.willUpdate) this.willUpdate(oldData);
     }, () => {
+        if(!this.shouldUpdate) return;
         repaint.call(this);
         if(this.updated) this.updated(this.data, this.actions);
     });
@@ -72,7 +74,27 @@ const Mosaic = function(options) {
     TemplateTable[this.tid] = {
         parts: view.parts,
         template: view.element,
-        values: view.values[0]
+        values: view.values[0],
+        name: this.name
+    }
+    
+    // Create an HTML Custom Element so this Mosaic can be injected
+    // into other components.
+    if(this.name && !window.customElements.get(`m-${this.name}`)) {
+        const self = this;
+        customElements.define(`m-${this.name}`, class extends HTMLElement {
+            static get observedAttributes() { return ['data']; }
+            constructor() {
+                super();
+                this.replaceWith(view.element.content.childNodes[0].cloneNode(true));
+            }
+            connectedCallback() {
+                if(self.created) self.created(self.data, self.actions);
+            }
+            attributeChangedCallback(name, oldVal, newVal) {
+                
+            }
+        });
     }
 
     return this;
@@ -105,31 +127,6 @@ Mosaic.prototype.paint = function() {
 
     // Call the created lifecycle function.
     if(this.created) this.created(this.data, this.actions);
-}
-
-/** Creates a new "piece" of a Mosaic. This is how Mosaics are injected
-* into other Mosaics (i.e. how components are nested).
-* @param {Object} data Additional data to add to a Mosaic. */
-Mosaic.prototype.piece = function(newData = {}) {
-    // Since this is just an instance of an already existing template,
-    // just find it in the TemplateTable. Then just repaint the template
-    // using a new instance.
-    let templateResult = TemplateTable[this.tid];
-    let clonedElement = document.importNode(templateResult.template.content.childNodes[0], true);
-
-    // Create a copy of this Mosaic.
-    let options = Object.assign({}, this.options);
-    options.data = Object.assign({}, this.data, newData);
-    options.actions = Object.assign({}, this.actions);
-    options.element = clonedElement;
-    
-    let copy = new Mosaic(options);
-    copy.iid = randomKey();
-
-    // Update the element.
-    updateParts.call(copy, templateResult, copy.element);
-
-    return copy.element;
 }
 
 /** Checks if two Mosaics are equal to each other. 

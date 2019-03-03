@@ -42,6 +42,7 @@ export class Part {
     checkWasChanged(templateResult, partIndex) {
         if(!this.value) { this.dirty = true; return; }
         
+        // This basically checks the type that is being injected.
         const newValue = templateResult.values[partIndex];
         if(isPrimitive(this.value) && this.value !== newValue) {
             this.dirty = true;

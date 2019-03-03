@@ -62,13 +62,6 @@ export class Template {
             switch(node.nodeType) {
                 // ELEMENT
                 case 1:
-                    // Find a way to tell if it's a Mosaic and there's already
-                    // a template for it. In other words, just find a way to 
-                    // tell if the node is a Mosaic or not.
-                    const tag = node.nodeName;
-                    const existingTemplates = Object.values(TemplateTable).map(t => t.template.content.childNodes[0].nodeName);
-                    const isMosaic = existingTemplates.filter(t => t === tag);
-                    console.log(isMosaic);
                     this.parseNode(node, part, index, lastPartIndex);
                     break;
                 // TEXT
@@ -94,11 +87,6 @@ export class Template {
     /**
     * ------------- HELPERS -------------
     */
-
-    /** Parses a Mosaic from the template. */
-    parseMosaic(node, part, index, lastPartIndex) {
-
-    }
 
     /** Parses a Node from the template. */
     parseNode(node, part, index, lastPartIndex) {
