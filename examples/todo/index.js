@@ -8,11 +8,11 @@ const TodoItem = new Mosaic({
         console.log('Created the TodoItem!');
     },
     view: function() {
-        return html`<div class='todo-item' onclick="${this.data.deleteTodo}">${ this.data.title || '' }</div>`
+        return html`<div class='todo-item' onclick="${this.data['delete-todo']}">${ this.data.title }</div>`
     }
 });
 
-const todoApp = new Mosaic({
+const app = new Mosaic({
     element: '#root',
     data: {
         todos: ['Click the "Add Todo" button to add another todo item!',
@@ -41,13 +41,9 @@ const todoApp = new Mosaic({
             <input id='inp' type='text' placeholder='New Todo' onkeypress="${this.actions.addTodo}"/>
             <button onclick="${this.actions.addTodo}">Add Todo</button>
             <br>
-
-            <!-- Here's an idea... Since you know that it's a Mosaic component and is using
-            a custom element type, then just assume that any and all attributes added at this
-            level represent new data to be added. So find a way to match all data names without
-            being specific in the class implementation of custom elements. -->
-            <m-todoitem data='{ "title": "Something" }'>${this.data.todos[0]}</m-todoitem>
+            ${ TodoItem.new() }
+            ${ TodoItem.new() }
         </div>`
     }
 });
-todoApp.paint();
+app.paint();

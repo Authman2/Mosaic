@@ -43,13 +43,20 @@ export class Part {
         if(!this.value) { this.dirty = true; return; }
         
         // This basically checks the type that is being injected.
-        const newValue = templateResult.values[partIndex];
+        const newValue = templateResult.result.values[0][partIndex];
         if(isPrimitive(this.value) && this.value !== newValue) {
             this.dirty = true;
         } else if(typeof newValue === 'function') {
             this.dirty = ('' + this.value) === ('' + newValue);
-        } else if(!Object.is(this.value, newValue)) {
-            this.dirty = true;
+        } else if(typeof newValue === 'object') {
+            // Template.
+            if(('result' in newValue) && ('mosaic' in newValue) && ('name' in newValue)) {
+                console.log('Got Template: ', newValue);
+            }
+            // Regular object value.
+            else {
+                if(!Object.is(this.value, newValue)) this.dirty = true;
+            }
         } else {
             this.dirty = false;
         }
@@ -64,7 +71,7 @@ export class Part {
      * looking for changes in.
      * @param {Number} partIndex The index of the part, used to find values. */
     commit(mosaic, templateResult, element, partIndex) {
-        this.value = templateResult.values[partIndex];
+        this.value = templateResult.result.values[0][partIndex];
 
         switch(this.type) {
             case Part.NODE_TYPE: this.commitNode(element); break;
@@ -83,11 +90,22 @@ export class Part {
 
     /** Commits the changes for "node" types. */
     commitNode(element) {
+        // Here's the problem. It can't find any nodes with the right key.
         let dynamicNodes = element.querySelectorAll(`[__mosaicKey__='${this.__mosaicKey__}']`);
-        dynamicNodes.forEach(node => {
-            let childIndex = this.childIndex || 0;
-            node.childNodes[childIndex].replaceWith(this.value);
-        });
+        
+        // This is working, but now make sure that the Parts are
+        // created and the template is updated in the TemplateTable
+        // upon initialization.
+        if(dynamicNodes.length === 0) {
+            let html = this.value.result.element.content.childNodes[0];
+            // element.insertBefore(html, element.childNodes[this.childIndex]);
+            element.childNodes[this.childIndex].replaceWith(html);
+        } else {
+            dynamicNodes.forEach(node => {
+                let childIndex = this.childIndex || 0;
+                node.childNodes[childIndex].replaceWith(this.value);
+            });
+        }
     }
 
     /** Commits the changes for "attribute" types. */

@@ -61,7 +61,7 @@ const Mosaic = function(options) {
         if(this.willUpdate) this.willUpdate(oldData);
     }, () => {
         if(!this.shouldUpdate) return;
-        repaint.call(this);
+        this.repaint();
         if(this.updated) this.updated(this.data, this.actions);
     });
 
@@ -71,31 +71,37 @@ const Mosaic = function(options) {
 
     // Create the template for this component and find the dynamic "parts."
     const view = this.view(this.data, this.actions);
-    TemplateTable[this.tid] = {
-        parts: view.parts,
-        template: view.element,
-        values: view.values[0],
-        name: this.name
+    console.log(view.element); // <--- Template is first being messed up here.
+    if(!(this.tid in TemplateTable)) {
+        TemplateTable[this.tid] = {
+            result: view,
+            name: this.name,
+            mosaic: this
+        }
     }
+    // console.log(TemplateTable);
     
     // Create an HTML Custom Element so this Mosaic can be injected
     // into other components.
-    if(this.name && !window.customElements.get(`m-${this.name}`)) {
-        const self = this;
-        customElements.define(`m-${this.name}`, class extends HTMLElement {
-            static get observedAttributes() { return ['data']; }
-            constructor() {
-                super();
-                this.replaceWith(view.element.content.childNodes[0].cloneNode(true));
-            }
-            connectedCallback() {
-                if(self.created) self.created(self.data, self.actions);
-            }
-            attributeChangedCallback(name, oldVal, newVal) {
+    // if(this.name && !window.customElements.get(`m-${this.name}`)) {
+    //     const self = this;
+    //     customElements.define(`m-${this.name}`, class extends HTMLElement {
+    //         constructor() {
+    //             super();
+    //             this.appendChild(view.element.content.childNodes[0].cloneNode(true));
+    //         }
+    //         connectedCallback() {
+    //             if(self.created) self.created(self.data, self.actions);
                 
-            }
-        });
-    }
+    //             // This might turn into something...
+    //             // console.log(this.attributes);
+    //             // console.log(this.firstChild);
+    //         }
+    //         disconnectedCallback() {
+    //             if(self.willDestroy) self.willDestroy();
+    //         }
+    //     });
+    // }
 
     return this;
 }
@@ -106,16 +112,19 @@ Mosaic.prototype.paint = function() {
         throw new Error(`This Mosaic could not be painted because its element property is either not set
         or is not a valid HTML element.`);
     }
+    // Give it an instance id.
+    this.iid = randomKey();
     
     // Clear anything that is there.
     while(this.element.firstChild) this.element.removeChild(this.element.firstChild);
 
     // Create a brand new DOM element from the template. This will basically be
     // a new instance of this Mosaic. Make sure to set the instance ID.
-    this.iid = randomKey();
-    let templateResult = TemplateTable[this.tid];
-    let clonedElement = document.importNode(templateResult.template.content.childNodes[0], true);
-    updateParts.call(this, templateResult, clonedElement);
+    let template = TemplateTable[this.tid];
+    let result = template.result;
+    console.log(result);
+    let clonedElement = document.importNode(result.element.content.childNodes[0], true);
+    setupParts.call(this, template, clonedElement);
     
     // Now take that cloned element that has all of its nodes and attributes
     // set and inject it into the DOM. When you "paint" it's ok to just replace
@@ -127,6 +136,46 @@ Mosaic.prototype.paint = function() {
 
     // Call the created lifecycle function.
     if(this.created) this.created(this.data, this.actions);
+}
+
+/** Forces an update (repaint of the DOM) on this component. */
+Mosaic.prototype.repaint = function() {
+    // You still need to look at the template result to find out which parts to
+    // change. But make sure you update the dynamic values though, so you have
+    // to call the "view" function again and change the template, but only
+    // change the "values" property. Leave the template the same since it 
+    // should persist between components.
+    // * For right now, also leave the parts alone. Later on parts might be
+    // removed if a node is removed, but for now do not worry about that.
+    let newView = this.view(this.data, this.actions);
+    let template = TemplateTable[this.tid];
+    template.result.values = newView.values[0];
+
+    // Now go through the parts and change all the dynamic parts that need to be
+    // changed. The only difference is that instead of looking at a cloned
+    // element, you are looking directly at this Mosaic's element, since it
+    // should already be in the DOM at this point.
+    if(this.element) {
+        // i.e. The main component being painted.
+        setupParts.call(this, template, this.element);
+    } else {
+        // If there's no element already, clone the template and set the element.
+        let clonedElement = document.importNode(template.result.element.content.childNodes[0], true);
+        
+        this.element = clonedElement;
+        setupParts.call(this, template, this.element);
+    }
+}
+
+Mosaic.prototype.new = function(newData = {}) {
+    // Create a copy of this Mosaic.
+    let _options = Object.assign({}, this.options);
+    _options.tid = this.tid;
+    _options.data = Object.assign({}, newData, _options.data);
+    
+    let copy = new Mosaic(_options);
+    let template = TemplateTable[copy.tid];
+    return template;
 }
 
 /** Checks if two Mosaics are equal to each other. 
@@ -148,7 +197,7 @@ const makeArraysObservable = function(data) {
         _tempData[i] = new Observable(_tempData[i], () => {
             if(this.willUpdate) this.willUpdate(oldData);
         }, () => {
-            repaint.call(this);
+            this.repaint();
             if(this.updated) this.updated();
         });
     }
@@ -158,10 +207,10 @@ const makeArraysObservable = function(data) {
 /** Helper method to go through a list of parts and make updates to the DOM element.
 * @param {Object} templateResult The templateResult object that exists in the Template Table.
 * @param {HTMLElement} element The DOM element to look through. */
-const updateParts = function(templateResult, element) {
+const setupParts = function(templateResult, element) {
     // Go through each Part and decide what to do with its DOM node.
-    for(let i = 0; i < templateResult.parts.length; i++) {
-        let part = templateResult.parts[i];
+    for(let i = 0; i < templateResult.result.parts.length; i++) {
+        let part = templateResult.result.parts[i];
 
         // Label the part as either dirty or clean.
         // Check whether or not the part is dirty.
@@ -170,26 +219,6 @@ const updateParts = function(templateResult, element) {
         if(part.dirty === false) continue;
         part.commit(this, templateResult, element, i);
     }
-}
-
-/** Handles the updating/diffing part of the render. */
-const repaint = function() {
-    // You still need to look at the template result to find out which parts to
-    // change. But make sure you update the dynamic values though, so you have
-    // to call the "view" function again and change the template, but only
-    // change the "values" property. Leave the template the same since it 
-    // should persist between components.
-    // * For right now, also leave the parts alone. Later on parts might be
-    // removed if a node is removed, but for now do not worry about that.
-    let newView = this.view(this.data, this.actions);
-    let templateResult = TemplateTable[this.tid];
-    templateResult.values = newView.values[0];
-
-    // Now go through the parts and change all the dynamic parts that need to be
-    // changed. The only difference is that instead of looking at a cloned
-    // element, you are looking directly at this Mosaic's element, since it
-    // should already be in the DOM at this point.
-    updateParts.call(this, templateResult, this.element);
 }
 
 

@@ -19,7 +19,7 @@ export class Template {
         this.values = values;
         this.parts = [];
         this.element = this.getTemplate();
-        this.createParts(this.element.content);
+        this.createParts(this.element.content); // <--- Taking out this line gives correct output, so something is wrong with creating parts.
         // console.log(this.strings, this.values);
     }
 
@@ -62,14 +62,16 @@ export class Template {
             switch(node.nodeType) {
                 // ELEMENT
                 case 1:
+                    // let defined = window.customElements.get(node.nodeName.toLowerCase());
+                    // if(defined) this.parseMosaic(node, part, index, lastPartIndex);
                     this.parseNode(node, part, index, lastPartIndex);
                     break;
                 // TEXT
                 case 3: this.parseText(node, part, index, lastPartIndex, nodesToRemove); break;
                 // COMMENT
-                case 8: this.parseComment(node, part, index, lastPartIndex, nodesToRemove); break;
+                case 8: this.parseComment(node, part, index, lastPartIndex, nodesToRemove); break; // <--- This is the problem that keeps wrongly replacing dynamic Mosaics.
                 default:
-                    // console.log(node);
+                    console.log(node);
                     break;
             }
 
@@ -87,6 +89,11 @@ export class Template {
     /**
     * ------------- HELPERS -------------
     */
+
+    /** Parses a Mosaic component from the template and gives it new data. */
+    parseMosaic(node, part, index, lastPartIndex) {
+        
+    }
 
     /** Parses a Node from the template. */
     parseNode(node, part, index, lastPartIndex) {
@@ -164,15 +171,17 @@ export class Template {
 
             part = new Part(Part.NODE_TYPE, childIndex);
             parent.setAttribute('__mosaicKey__', part.__mosaicKey__);
-            
             this.parts.push(part);
 
-            // If there is no nextSibling, then you know you are at the end.
-            if(!node.nextSibling) { node.data = ''; }
-            else {
-                nodesToRemove.push(node);
-                index--;
-            }
+            // // If there is no nextSibling, then you know you are at the end.
+            // if(!node.nextSibling) {
+            //     node.data = '';
+            // }
+            // else {
+            //     nodesToRemove.push(node);
+            //     index--;
+            // }
+            return;
         } else {
             let i = -1;
             while((i = node.data.indexOf(marker, i + 1)) !== -1) {
