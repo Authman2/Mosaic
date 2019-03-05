@@ -8,9 +8,10 @@ const TodoItem = new Mosaic({
         console.log('Created the TodoItem!');
     },
     view: function() {
-        return html`<div class='todo-item' onclick="${this.data['delete-todo']}">${ this.data.title }</div>`
+        return html`<div class='todo-item' onclick="${this.data.deleteTodo}">${ this.data.title }</div>`
     }
 });
+TodoItem.new({ title: "Thing 1", deleteTodo: function() {} });
 
 const app = new Mosaic({
     element: '#root',
@@ -41,8 +42,7 @@ const app = new Mosaic({
             <input id='inp' type='text' placeholder='New Todo' onkeypress="${this.actions.addTodo}"/>
             <button onclick="${this.actions.addTodo}">Add Todo</button>
             <br>
-            ${ TodoItem.new() }
-            ${ TodoItem.new() }
+            ${ TodoItem.new({ title: "Thing 1", deleteTodo: this.actions.deleteTodo }) }
         </div>`
     }
 });

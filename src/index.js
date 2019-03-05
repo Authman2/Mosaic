@@ -70,14 +70,31 @@ const Mosaic = function(options) {
     this.__isMosaic = true;
 
     // Create the template for this component and find the dynamic "parts."
-    const view = this.view(this.data, this.actions);
-    console.log(view.element); // <--- Template is first being messed up here.
     if(!(this.tid in TemplateTable)) {
+        // Get the newest view and add it to the template table.
+        const view = this.view(this.data, this.actions);
+
+        // Clone the template node and either set this element to that and
+        // replace it or just set the element. Then, setup the parts on the
+        // cloned element, WHETHER OR NOT THE DATA HAS BEEN SET YET. If the
+        // data hasn't been set, then the functino should basically just
+        // replace everything with undefined, which is fine for now because
+        // at least the placeholders are set correctly. Don't forget, at this
+        // stage to update the template view in the Template Table.
+        let cloned = document.importNode(view.element.content, true);
+        setupParts.call(this, view, cloned);
+        
+        // Set the template table.
+        view.element = cloned;
         TemplateTable[this.tid] = {
             result: view,
             name: this.name,
             mosaic: this
         }
+
+        console.log(view.element);
+        console.log(view.parts);
+        console.log(view.values);
     }
     // console.log(TemplateTable);
     
@@ -112,27 +129,22 @@ Mosaic.prototype.paint = function() {
         throw new Error(`This Mosaic could not be painted because its element property is either not set
         or is not a valid HTML element.`);
     }
+
     // Give it an instance id.
     this.iid = randomKey();
     
     // Clear anything that is there.
     while(this.element.firstChild) this.element.removeChild(this.element.firstChild);
 
-    // Create a brand new DOM element from the template. This will basically be
-    // a new instance of this Mosaic. Make sure to set the instance ID.
+    // At this stage, this Mosaic should already have a completed template put
+    // together from its initialization. This means that you can just grab the
+    // node from the Tmplate Table and add a clone of it to this element, which
+    // should already be an existing DOM node.
     let template = TemplateTable[this.tid];
-    let result = template.result;
-    console.log(result);
-    let clonedElement = document.importNode(result.element.content.childNodes[0], true);
-    setupParts.call(this, template, clonedElement);
-    
-    // Now take that cloned element that has all of its nodes and attributes
-    // set and inject it into the DOM. When you "paint" it's ok to just replace
-    // because you know that this is the first and only time you are using this
-    // component, and that if you are painting it you can be sure that it will
-    // have the "element" property set to an existing DOM node.
-    this.element.replaceWith(clonedElement);
-    this.element = clonedElement;
+    let $element = template.result.element.cloneNode(true).firstChild;
+    this.element.replaceWith($element);
+    this.element = $element;
+    console.log(this.element);
 
     // Call the created lifecycle function.
     if(this.created) this.created(this.data, this.actions);
@@ -155,16 +167,7 @@ Mosaic.prototype.repaint = function() {
     // changed. The only difference is that instead of looking at a cloned
     // element, you are looking directly at this Mosaic's element, since it
     // should already be in the DOM at this point.
-    if(this.element) {
-        // i.e. The main component being painted.
-        setupParts.call(this, template, this.element);
-    } else {
-        // If there's no element already, clone the template and set the element.
-        let clonedElement = document.importNode(template.result.element.content.childNodes[0], true);
-        
-        this.element = clonedElement;
-        setupParts.call(this, template, this.element);
-    }
+    setupParts.call(this, template.result, this.element);
 }
 
 Mosaic.prototype.new = function(newData = {}) {
@@ -174,8 +177,17 @@ Mosaic.prototype.new = function(newData = {}) {
     _options.data = Object.assign({}, newData, _options.data);
     
     let copy = new Mosaic(_options);
-    let template = TemplateTable[copy.tid];
-    return template;
+    copy.iid = randomKey();
+    
+    // If there is new data to be added, then you need to account for that.
+    // This means that you need to recalculate the template
+    // Update the values in the template results by creating the parts again.
+    let newView = copy.view(copy.data, copy.actions);
+    console.log(newView);
+    // setup <--- what do we do here...
+    // let cloned = document.importNode(newView.element.content.childNodes[0], true);
+
+    return newView;
 }
 
 /** Checks if two Mosaics are equal to each other. 
@@ -205,19 +217,21 @@ const makeArraysObservable = function(data) {
 }
 
 /** Helper method to go through a list of parts and make updates to the DOM element.
-* @param {Object} templateResult The templateResult object that exists in the Template Table.
+* @param {Object} template The template result object that exists in the Template Table.
 * @param {HTMLElement} element The DOM element to look through. */
-const setupParts = function(templateResult, element) {
+const setupParts = function(template, element) {
     // Go through each Part and decide what to do with its DOM node.
-    for(let i = 0; i < templateResult.result.parts.length; i++) {
-        let part = templateResult.result.parts[i];
+    for(let i = 0; i < template.parts.length; i++) {
+        let part = template.parts[i];
 
         // Label the part as either dirty or clean.
         // Check whether or not the part is dirty.
         // If dirty, commit new changes to the DOM.
-        part.checkWasChanged(templateResult, i);
+        part.checkWasChanged(template, i);
         if(part.dirty === false) continue;
-        part.commit(this, templateResult, element, i);
+
+        let value = template.values[0][i];
+        part.commit(this, element, value);
     }
 }
 

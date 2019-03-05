@@ -10,6 +10,7 @@ import { TemplateTable } from './m';
 export class Template {
     constructor(strings, ...values) {
         // Trims the strings, but preserves spaces before dynamic parts.
+        this.__isTemplate = true;
         this.strings = strings.map(str => {
             let ret = str.trim();
             if(str.startsWith(' ')) ret = ' ' + ret;
@@ -61,17 +62,13 @@ export class Template {
             
             switch(node.nodeType) {
                 // ELEMENT
-                case 1:
-                    // let defined = window.customElements.get(node.nodeName.toLowerCase());
-                    // if(defined) this.parseMosaic(node, part, index, lastPartIndex);
-                    this.parseNode(node, part, index, lastPartIndex);
-                    break;
+                case 1: this.parseNode(node, part, index, lastPartIndex); break;
                 // TEXT
                 case 3: this.parseText(node, part, index, lastPartIndex, nodesToRemove); break;
                 // COMMENT
                 case 8: this.parseComment(node, part, index, lastPartIndex, nodesToRemove); break; // <--- This is the problem that keeps wrongly replacing dynamic Mosaics.
                 default:
-                    console.log(node);
+                    // console.log(node);
                     break;
             }
 
@@ -107,11 +104,9 @@ export class Template {
                 let attributeValue = attrs[i].value;
 
                 if(attributeValue.indexOf(marker) !== -1) {
-                    if(attributeName.startsWith('on')) {
-                        part = new Part(Part.EVENT_TYPE, undefined, undefined, attributeName);
-                    } else {
-                        part = new Part(Part.ATTRIBUTE_TYPE, undefined, { attributeName, attributeValue });
-                    }
+                    if(attributeName.startsWith('on')) { part = new Part(Part.EVENT_TYPE, undefined, undefined, attributeName); }
+                    else { part = new Part(Part.ATTRIBUTE_TYPE, undefined, { attributeName, attributeValue }); }
+                    
                     this.parts.push(part);
                     node.setAttribute('__mosaicKey__', part.__mosaicKey__);
                 }
@@ -160,14 +155,14 @@ export class Template {
             if(!node.previousSibling || index === lastPartIndex) {
                 index++;
                 subCount += 1;
-                parent.insertBefore(createMarker(), node);
+                // parent.insertBefore(createMarker(), node);
             }
             lastPartIndex = index;
             
             // Find the child node that needs to be replaced and
             // send over the index of that child node.
             let childIndex = Array.from(parent.childNodes).indexOf(node);
-            childIndex -= subCount;
+            if(childIndex !== 0) childIndex -= subCount;
 
             part = new Part(Part.NODE_TYPE, childIndex);
             parent.setAttribute('__mosaicKey__', part.__mosaicKey__);

@@ -43,7 +43,7 @@ export class Part {
         if(!this.value) { this.dirty = true; return; }
         
         // This basically checks the type that is being injected.
-        const newValue = templateResult.result.values[0][partIndex];
+        const newValue = templateResult.values[0][partIndex];
         if(isPrimitive(this.value) && this.value !== newValue) {
             this.dirty = true;
         } else if(typeof newValue === 'function') {
@@ -66,19 +66,18 @@ export class Part {
      * to this part, then "cleans" this Part so that it does not get reupdated
      * again unnecessarily.
      * @param {Mosaic} mosaic The Mosaic to use for event binding.
-     * @param {Template} templateResult The Template object used for values.
      * @param {HTMLElement} element The DOM element to use as the root to start
-     * looking for changes in.
-     * @param {Number} partIndex The index of the part, used to find values. */
-    commit(mosaic, templateResult, element, partIndex) {
-        this.value = templateResult.result.values[0][partIndex];
+     * looking for changes in.*/
+    commit(mosaic, element, value) {
+        this.value = value;
+        // console.log(this.value);
 
         switch(this.type) {
-            case Part.NODE_TYPE: this.commitNode(element); break;
+            case Part.NODE_TYPE:this.commitNode(element); break;
             case Part.ATTRIBUTE_TYPE: this.commitAttribute(element); break;
             case Part.EVENT_TYPE: this.commitEvent(element, mosaic); break;
             default:
-                console.log('Got here for some reason: ', partIndex);
+                console.log('Got here for some reason: ');
                 break;
         }
         this.dirty = false;
@@ -92,14 +91,11 @@ export class Part {
     commitNode(element) {
         // Here's the problem. It can't find any nodes with the right key.
         let dynamicNodes = element.querySelectorAll(`[__mosaicKey__='${this.__mosaicKey__}']`);
-        
-        // This is working, but now make sure that the Parts are
-        // created and the template is updated in the TemplateTable
-        // upon initialization.
-        if(dynamicNodes.length === 0) {
-            let html = this.value.result.element.content.childNodes[0];
-            // element.insertBefore(html, element.childNodes[this.childIndex]);
-            element.childNodes[this.childIndex].replaceWith(html);
+
+        if(typeof this.value === 'object' && this.value.__isTemplate === true) {
+            // This is correct, except for some reason it's not maintaining the replaced parts...
+            let updatedView = this.value.element.content ? this.value.element.content.childNodes[0].cloneNode(true) : this.value.element;
+            element.firstChild.childNodes[this.childIndex].replaceWith(updatedView);
         } else {
             dynamicNodes.forEach(node => {
                 let childIndex = this.childIndex || 0;
