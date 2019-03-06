@@ -7,14 +7,14 @@
 # <a target='_blank' rel='noopener noreferrer' href='https://mosaicjs.netlify.com'>Mosaic</a>
 Mosaic is a declarative front-end JavaScript library for building user interfaces.
 
-:diamond_shape_with_a_dot_inside:**Component-Based**: Mosaic components are reusable pieces of code that keep track of their own data, actions, lifecycle functions, and more, and can be composed using custom element tags.
+:diamond_shape_with_a_dot_inside:**Component-Based**: Mosaic components are reusable pieces of code that keep track of their own data, actions, lifecycle functions, and more.
 
 ⚡️**Observable Data**: Mosaic uses Observables to keep track of changes to a component's data. This means 
 that there is no need to call "setState" or anything like that, instead just change the data directly.
 
 🧠**Smart DOM**: Updates in Mosaic work by remembering which nodes are dynamic (i.e. subject to change) and traveling directly to those nodes to make changes, rather than traversing the tree again.
 
-👌**Small Library Size**: Mosaic is extremely small, with the minified JavaScript file only 13.4KB.
+👌**Small Library Size**: Mosaic is extremely small, with the minified JavaScript file only 14.2KB.
 
 🔖**Tagged Template Literals**: Views are written using tagged template literals, which means there is no need for a compiler:
 ```javascript
@@ -57,20 +57,21 @@ For a more detailed example, run the project inside the "example" folder.
 // Import Mosaic
 import Mosaic from '@authman2/mosaic';
 
-// Create a custom component.
+// Create a label component. Data is not defined yet,
+// however, it will be injected later on.
 const Label = new Mosaic({
-    name: "label",
     view: function() {
-        return html`<h4>This is a custom label component!</h4>`;
+        return html`<div>
+            <h2>${ this.data.text }</h2>
+            <p>This is a custom label component!</p>
+        </div>`;
     }
 });
 
 // Create an "app" component.
 const app = new Mosaic({
     element: '#root',
-    data: {
-        title: "Mosaic App"
-    },
+    data: { title: "Mosaic App" },
     actions: {
         sayHello: function() {
             console.log("Hello World!!");
@@ -83,7 +84,7 @@ const app = new Mosaic({
             <p>Click below to print a message!</p>
             <button onclick="${this.actions.sayHello}">Click Here</button>
 
-            <m-label></m-label>
+            ${ Label.new({ text: "Welcome to Mosaic!" }) }
         </div>`;
     }
 });
@@ -91,7 +92,6 @@ const app = new Mosaic({
 // Paint the Mosaic onto the page.
 app.paint();
 ```
-
 
 # Author
 - Year: 2019

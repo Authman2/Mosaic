@@ -127,11 +127,13 @@ Mosaic.prototype.new = function(newData = {}) {
 
     let copy = new Mosaic(_options);
     copy.iid = randomKey();
-    copy.parts = this.parts.slice();
+    copy.parts = this.parts.slice(); // <---- Each part needs to have the keys remapped to the new instance element when it gets repainted.
     copy.element = this.element.cloneNode(true);
-    
-    // Update the values.
+
+    // Update the values (very important for having new values).
     let newView = copy.view(copy.data, copy.actions);
+    // THIS WORKS!!!! But you're traversing again... try to improve performance. Maybe traverse the old parts and "this.element" to do like a double traversal (since they are the same) and just switch out the keys? Remember when you traverse, you only want to update the values and keys.
+    copy.parts = newView.createParts(copy.element); 
     copy.values = newView.values.slice()[0];
 
     // Repaint with the new values.

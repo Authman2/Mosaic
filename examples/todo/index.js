@@ -2,12 +2,24 @@ import Mosaic from '../../src/index';
 
 /* Example of a Todo application using Mosaic. */
 
+const Item = new Mosaic({
+    view: function() {
+        return html`<div>
+            <h1>This works!!!</h1>
+            <p>Wow this is awesome!</p>
+        </div>`;
+    }
+})
+
 const TodoItem = new Mosaic({
     created: function() {
         console.log('Created the TodoItem!');
     },
     view: function() {
-        return html`<div class='todo-item' onclick="${this.data.deleteTodo}">${ this.data.title }</div>`
+        return html`<div class='todo-item' onclick="${this.data.deleteTodo}">
+            <p>${ this.data.title }</p>
+            ${ Item.new() }
+        </div>`
     }
 });
 
@@ -43,6 +55,7 @@ const app = new Mosaic({
             <br>
             ${ TodoItem.new({ title: "Thing 1", deleteTodo: this.actions.deleteTodo }) }
             ${ TodoItem.new({ title: "Thing 2", deleteTodo: this.actions.deleteTodo }) }
+            ${ TodoItem.new({ title: "Thing 3", deleteTodo: this.actions.deleteTodo }) }
         </div>`
     }
 });
