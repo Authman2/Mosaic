@@ -18,10 +18,7 @@ export class Template {
             return ret;
         });
         this.values = values;
-        this.parts = [];
         this.element = this.getTemplate();
-        this.createParts(this.element.content); // <--- Taking out this line gives correct output, so something is wrong with creating parts.
-        // console.log(this.strings, this.values);
     }
 
     getHTML() {
@@ -54,7 +51,7 @@ export class Template {
         let index = -1;
         let lastPartIndex = 0;
         let nodesToRemove = [];
-        let part;
+        let parts = [];
         while(walker.nextNode()) {
             // Get the current node.
             index += 1;
@@ -62,11 +59,11 @@ export class Template {
             
             switch(node.nodeType) {
                 // ELEMENT
-                case 1: this.parseNode(node, part, index, lastPartIndex); break;
+                case 1: this.parseNode(node, parts, index, lastPartIndex); break;
                 // TEXT
-                case 3: this.parseText(node, part, index, lastPartIndex, nodesToRemove); break;
+                case 3: this.parseText(node, parts, index, lastPartIndex, nodesToRemove); break;
                 // COMMENT
-                case 8: this.parseComment(node, part, index, lastPartIndex, nodesToRemove); break; // <--- This is the problem that keeps wrongly replacing dynamic Mosaics.
+                case 8: this.parseComment(node, parts, index, lastPartIndex, nodesToRemove); break; // <--- This is the problem that keeps wrongly replacing dynamic Mosaics.
                 default:
                     // console.log(node);
                     break;
@@ -81,19 +78,17 @@ export class Template {
         for (const n of nodesToRemove) {
             n.parentNode.removeChild(n);
         }
+
+        return parts;
     }
 
     /**
     * ------------- HELPERS -------------
     */
 
-    /** Parses a Mosaic component from the template and gives it new data. */
-    parseMosaic(node, part, index, lastPartIndex) {
-        
-    }
-
     /** Parses a Node from the template. */
-    parseNode(node, part, index, lastPartIndex) {
+    parseNode(node, parts, index, lastPartIndex) {
+        let part;
         if(!(node instanceof Element)) return;
         if(node.hasAttributes()) {
             const attrs = node.attributes;
@@ -107,7 +102,7 @@ export class Template {
                     if(attributeName.startsWith('on')) { part = new Part(Part.EVENT_TYPE, undefined, undefined, attributeName); }
                     else { part = new Part(Part.ATTRIBUTE_TYPE, undefined, { attributeName, attributeValue }); }
                     
-                    this.parts.push(part);
+                    parts.push(part);
                     node.setAttribute('__mosaicKey__', part.__mosaicKey__);
                 }
             }
@@ -115,7 +110,8 @@ export class Template {
     }
 
     /** Parses Text from the template. */
-    parseText(node, part, index, lastPartIndex, nodesToRemove) {
+    parseText(node, parts, index, lastPartIndex, nodesToRemove) {
+        let part;
         if(!(node instanceof Text)) return;
         const data = node.data;
         if(data.indexOf(marker) >= 0) {
@@ -131,7 +127,7 @@ export class Template {
                 
                 newNode.setAttribute('__mosaicKey__', part.__mosaicKey__);
                 parent.insertBefore(newNode, node);
-                this.parts.push(part);
+                parts.push(part);
             }
 
             // Make sure to add a placeholder for this text node.
@@ -144,7 +140,8 @@ export class Template {
     }
 
     /** Parses Comments from the template. */
-    parseComment(node, part, index, lastPartIndex, nodesToRemove) {
+    parseComment(node, parts, index, lastPartIndex, nodesToRemove) {
+        let part;
         if(!(node instanceof Comment)) return;
         if(node.data === marker) {
             const parent = node.parentNode;
@@ -166,7 +163,7 @@ export class Template {
 
             part = new Part(Part.NODE_TYPE, childIndex);
             parent.setAttribute('__mosaicKey__', part.__mosaicKey__);
-            this.parts.push(part);
+            parts.push(part);
 
             // // If there is no nextSibling, then you know you are at the end.
             // if(!node.nextSibling) {
@@ -182,7 +179,7 @@ export class Template {
             while((i = node.data.indexOf(marker, i + 1)) !== -1) {
                 part = new Part(Part.NODE_TYPE, 0);
                 node.setAttribute('__mosaicKey__', part.__mosaicKey__);
-                this.parts.push(part);
+                parts.push(part);
             }
         }
     }

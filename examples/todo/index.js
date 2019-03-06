@@ -3,7 +3,6 @@ import Mosaic from '../../src/index';
 /* Example of a Todo application using Mosaic. */
 
 const TodoItem = new Mosaic({
-    name: 'todoitem',
     created: function() {
         console.log('Created the TodoItem!');
     },
@@ -11,7 +10,6 @@ const TodoItem = new Mosaic({
         return html`<div class='todo-item' onclick="${this.data.deleteTodo}">${ this.data.title }</div>`
     }
 });
-TodoItem.new({ title: "Thing 1", deleteTodo: function() {} });
 
 const app = new Mosaic({
     element: '#root',
@@ -31,7 +29,8 @@ const app = new Mosaic({
             // console.log(this.data.todos);
         },
         deleteTodo: function(todoIndex) {
-            this.data.todos.splice(todoIndex, 1);
+            console.log('Here!!');
+            // this.data.todos.splice(todoIndex, 1);
             // this.data.todos = this.data.todos.filter((_, index) => index !== todoIndex);
             // console.log(this.data.todos);
         }
@@ -43,6 +42,7 @@ const app = new Mosaic({
             <button onclick="${this.actions.addTodo}">Add Todo</button>
             <br>
             ${ TodoItem.new({ title: "Thing 1", deleteTodo: this.actions.deleteTodo }) }
+            ${ TodoItem.new({ title: "Thing 2", deleteTodo: this.actions.deleteTodo }) }
         </div>`
     }
 });

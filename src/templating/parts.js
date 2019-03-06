@@ -39,11 +39,10 @@ export class Part {
      * @param {Number} partIndex The index for this part, used to find the
      * correct value associated with this part in the template.
      */
-    checkWasChanged(templateResult, partIndex) {
+    checkWasChanged(newValue, partIndex) {
         if(!this.value) { this.dirty = true; return; }
         
         // This basically checks the type that is being injected.
-        const newValue = templateResult.values[0][partIndex];
         if(isPrimitive(this.value) && this.value !== newValue) {
             this.dirty = true;
         } else if(typeof newValue === 'function') {
@@ -91,11 +90,13 @@ export class Part {
     commitNode(element) {
         // Here's the problem. It can't find any nodes with the right key.
         let dynamicNodes = element.querySelectorAll(`[__mosaicKey__='${this.__mosaicKey__}']`);
-
-        if(typeof this.value === 'object' && this.value.__isTemplate === true) {
-            // This is correct, except for some reason it's not maintaining the replaced parts...
-            let updatedView = this.value.element.content ? this.value.element.content.childNodes[0].cloneNode(true) : this.value.element;
-            element.firstChild.childNodes[this.childIndex].replaceWith(updatedView);
+        
+        // If Mosaic, replace with it's element.
+        if(typeof this.value === 'object' && this.value.__isMosaic === true) {
+            // Don't forget to call the created function for this Mosaic too,
+            // because this is where it gets added to the DOM.
+            element.firstChild.childNodes[this.childIndex].replaceWith(this.value.element);
+            if(this.value.created) this.value.created();
         } else {
             dynamicNodes.forEach(node => {
                 let childIndex = this.childIndex || 0;
