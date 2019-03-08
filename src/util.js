@@ -6,7 +6,7 @@ export const lastAttributeNameRegex = /([ \x09\x0a\x0c\x0d])([^\0-\x1F\x7F-\x9F 
 export const createMarker = () => document.createComment('');
 
 export const isPrimitive = value => {
-    return !(value === null || !(typeof value === 'object' || typeof value === 'function'));
+    return (typeof value === 'string' || typeof value === 'boolean' || typeof value === 'number' || typeof value === 'bigint');
 };
 export const isIterable = value => {
     return Array.isArray(value) || !!(value && value[Symbol.iterator]);

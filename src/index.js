@@ -59,7 +59,7 @@ const Mosaic = function(options) {
     this.data = new Observable(_tempData || {}, (oldData) => {
         if(this.willUpdate) this.willUpdate(oldData);
     }, () => {
-        this.repaint();
+        this.repaint(true);
         if(this.updated) this.updated(this.data, this.actions);
     });
 
@@ -76,7 +76,7 @@ const Mosaic = function(options) {
         TemplateTable[this.tid] = template;
 
         if(!document.contains(this.element)) {
-            this.element = template.element.content.cloneNode(true);
+            this.element = document.importNode(template.element.content, true);
         }
     }
 
@@ -94,11 +94,12 @@ Mosaic.prototype.paint = function() {
     // Clone the template and repaint it, which basically paints it
     // for the first time.
     let template = TemplateTable[this.tid];
-    let cloned = template.element.content;
+    let cloned = document.importNode(template.element.content.firstChild, true);
 
     let base = this.element;
     this.element = cloned;
     this.repaint();
+    // console.log(this.element);
     
     // Replace the base element with the repainted element.
     base.replaceWith(this.element);
@@ -108,12 +109,25 @@ Mosaic.prototype.paint = function() {
 }
 
 /** Forces an update (repaint of the DOM) on this component. */
-Mosaic.prototype.repaint = function() {
+Mosaic.prototype.repaint = function(repainting = false) {
+    let oldVals = [];
+
+    if(repainting === true) {
+        oldVals = this.values.slice();
+        let newView = this.view(this.data, this.actions);
+        this.values = newView.values[0];
+    }
+
     // Go through each Part and decide what to do with its DOM node.
     for(let i = 0; i < this.parts.length; i++) {
         let part = this.parts[i];
 
-        part.checkWasChanged(this.values[i], i);
+        // maybe instead of keeping a value in each part, you continue to separate them.
+        // so parts and values exist separately, and you pass in the old val and the new val
+        // into a part at check time (i.e. when you repaint). This means you never have to
+        // recalculate the parts cause they don't depend on the values anymore. You will now
+        // just need to hold on to the old values in an array real quick.
+        part.checkWasChanged(oldVals[i], this.values[i]);
         if(part.dirty === false) continue;
         part.commit(this, this.element, this.values[i]);
     }

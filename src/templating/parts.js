@@ -1,8 +1,5 @@
 import { isPrimitive, isIterable, createMarker, marker } from "../util";
 
-const noChange = {};
-const nothing = {};
-
 /**
 * ------------- PARTS -------------
 */
@@ -27,7 +24,6 @@ export class Part {
         this.childIndex = childIndex;
         this.attributePair = attributePair;
         this.eventName = eventName;
-        this.value = undefined;
         this.dirty = true;
         this.__mosaicKey__ = String(Math.random()).slice(2);
     }
@@ -39,14 +35,14 @@ export class Part {
      * @param {Number} partIndex The index for this part, used to find the
      * correct value associated with this part in the template.
      */
-    checkWasChanged(newValue, partIndex) {
-        if(!this.value) { this.dirty = true; return; }
+    checkWasChanged(oldValue, newValue) {
+        if(!oldValue) { this.dirty = true; return; }
         
         // This basically checks the type that is being injected.
-        if(isPrimitive(this.value) && this.value !== newValue) {
+        if(isPrimitive(oldValue) && oldValue !== newValue) {
             this.dirty = true;
         } else if(typeof newValue === 'function') {
-            this.dirty = ('' + this.value) === ('' + newValue);
+            this.dirty = ('' + oldValue) === ('' + newValue);
         } else if(typeof newValue === 'object') {
             // Template.
             if(('result' in newValue) && ('mosaic' in newValue) && ('name' in newValue)) {
@@ -54,7 +50,7 @@ export class Part {
             }
             // Regular object value.
             else {
-                if(!Object.is(this.value, newValue)) this.dirty = true;
+                if(!Object.is(oldValue, newValue)) this.dirty = true;
             }
         } else {
             this.dirty = false;
@@ -68,13 +64,13 @@ export class Part {
      * @param {HTMLElement} element The DOM element to use as the root to start
      * looking for changes in.*/
     commit(mosaic, element, value) {
-        this.value = value;
+        // this.value = value;
         // console.log(this.value);
 
         switch(this.type) {
-            case Part.NODE_TYPE:this.commitNode(element); break;
-            case Part.ATTRIBUTE_TYPE: this.commitAttribute(element); break;
-            case Part.EVENT_TYPE: this.commitEvent(element, mosaic); break;
+            case Part.NODE_TYPE:this.commitNode(element, value); break;
+            case Part.ATTRIBUTE_TYPE: this.commitAttribute(element, value); break;
+            case Part.EVENT_TYPE: this.commitEvent(element, mosaic, value); break;
             default:
                 console.log('Got here for some reason: ');
                 break;
@@ -87,41 +83,45 @@ export class Part {
     */
 
     /** Commits the changes for "node" types. */
-    commitNode(element) {
+    commitNode(element, value) {
+        // console.log(this, element, value);
+
+        // Below this line is the problem...
         // Here's the problem. It can't find any nodes with the right key.
         let dynamicNodes = element.querySelectorAll(`[__mosaicKey__='${this.__mosaicKey__}']`);
         
         // If Mosaic, replace with it's element.
-        if(typeof this.value === 'object' && this.value.__isMosaic === true) {
+        if(typeof value === 'object' && value.__isMosaic === true) {
             // Don't forget to call the created function for this Mosaic too,
             // because this is where it gets added to the DOM.
-            element.firstChild.childNodes[this.childIndex].replaceWith(this.value.element);
-            if(this.value.created) this.value.created();
+            element.firstChild.childNodes[this.childIndex].replaceWith(value.element);
+            if(value.created) value.created();
         } else {
+            console.log(value, dynamicNodes);
             dynamicNodes.forEach(node => {
                 let childIndex = this.childIndex || 0;
-                node.childNodes[childIndex].replaceWith(this.value);
+                node.childNodes[childIndex].replaceWith(value);
             });
         }
     }
 
     /** Commits the changes for "attribute" types. */
-    commitAttribute(element) {
+    commitAttribute(element, value) {
         let { attributeName, attributeValue } = this.attributePair;
         
         let dynamicAttributeNodes = element.querySelectorAll(`*[${attributeName}]`);
         dynamicAttributeNodes.forEach(node => {
-            let replacedValue = attributeValue.replace(marker, this.value);
+            let replacedValue = attributeValue.replace(marker, value);
             node.setAttribute(attributeName, replacedValue);
         });
     }
 
     /** Commits the changes for "event" types. Currently does not support
      * dynamically changing function attributes. */
-    commitEvent(element, mosaic) {
+    commitEvent(element, mosaic, value) {
         // Get the name and function value of the event.
         let name = this.eventName;
-        let val = this.value;
+        let val = value;
 
         // Get the first (which really means next) dynamic node that hasn't
         // had its event set yet.
