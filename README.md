@@ -14,7 +14,7 @@ that there is no need to call "setState" or anything like that, instead just cha
 
 🧠**Smart DOM**: Updates in Mosaic work by remembering which nodes are dynamic (i.e. subject to change) and traveling directly to those nodes to make changes, rather than traversing the tree again.
 
-👌**Small Library Size**: Mosaic is extremely small, with the minified JavaScript file only 14.2KB.
+👌**Small Library Size**: Mosaic is extremely small, with the minified JavaScript file being only 12KB.
 
 🔖**Tagged Template Literals**: Views are written using tagged template literals, which means there is no need for a compiler:
 ```javascript

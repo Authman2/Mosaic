@@ -6,12 +6,18 @@ const TodoItem = new Mosaic({
     created: function() {
         setTimeout(() => {
             this.data.title = this.data.title + " Now a different title!";
-            console.log('Updated: ', this);
+            console.log('Updated Once: ', this);
+
+            setTimeout(() => {
+                this.data.title = this.data.title.substring(2,10);
+                console.log('Updated Twice: ', this);
+            }, 5000);
         }, 5000);
     },
     view: function() {
         return html`<div class='todo-item' onclick="${this.data.deleteTodo}">
             <p>${ this.data.title }</p>
+            <p>Test: ${ this.data.title }</p>
         </div>`
     }
 });
