@@ -163,7 +163,9 @@ export class Template {
 
             part = new Part(Part.NODE_TYPE, childIndex);
             parent.setAttribute('__mosaicKey__', part.__mosaicKey__);
+            node.data = `{{m-${part.__mosaicKey__}}}`;
             parts.push(part);
+            // console.log(parent, node, part.__mosaicKey__);
 
             // // If there is no nextSibling, then you know you are at the end.
             // if(!node.nextSibling) {

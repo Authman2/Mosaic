@@ -65,10 +65,10 @@ export class Part {
      * looking for changes in.*/
     commit(mosaic, element, value) {
         // this.value = value;
-        // console.log(this.value);
+        // console.log(value);
 
         switch(this.type) {
-            case Part.NODE_TYPE:this.commitNode(element, value); break;
+            case Part.NODE_TYPE: this.commitNode(element, value); break;
             case Part.ATTRIBUTE_TYPE: this.commitAttribute(element, value); break;
             case Part.EVENT_TYPE: this.commitEvent(element, mosaic, value); break;
             default:
@@ -84,25 +84,49 @@ export class Part {
 
     /** Commits the changes for "node" types. */
     commitNode(element, value) {
+        // console.log(this, element);
         // console.log(this, element, value);
+        // console.log('Has Key: ', this.__mosaicKey__); // <--- problem!! The keys are incorrect!
+
+        // Look for comment nodes that have the data of the Mosaic key.
+        let walker = document.createTreeWalker(element, NodeFilter.SHOW_COMMENT, null, false);
+        while(walker.nextNode()) {
+            let regex = new RegExp(`${this.__mosaicKey__}`);
+            let found = regex.test(walker.currentNode.data);
+            if(found) {
+                // console.log(value);
+                // console.log(walker.currentNode);
+                if(typeof value === 'object' && value.__isMosaic === true) {
+                    let view = value.element;
+                    walker.currentNode.parentNode.insertBefore(view, walker.currentNode);
+                    if(value.created) value.created();
+                } else {
+                    let view = value;
+                    walker.currentNode.parentNode.insertBefore(document.createTextNode(view), walker.currentNode);
+                }
+                console.log(element);
+            }
+        }
 
         // Below this line is the problem...
         // Here's the problem. It can't find any nodes with the right key.
-        let dynamicNodes = element.querySelectorAll(`[__mosaicKey__='${this.__mosaicKey__}']`);
+        // let dynamicNodes = element.querySelectorAll(`[__mosaicKey__='${this.__mosaicKey__}']`);
+        // console.log(dynamicNodes);
         
-        // If Mosaic, replace with it's element.
-        if(typeof value === 'object' && value.__isMosaic === true) {
-            // Don't forget to call the created function for this Mosaic too,
-            // because this is where it gets added to the DOM.
-            element.firstChild.childNodes[this.childIndex].replaceWith(value.element);
-            if(value.created) value.created();
-        } else {
-            console.log(value, dynamicNodes);
-            dynamicNodes.forEach(node => {
-                let childIndex = this.childIndex || 0;
-                node.childNodes[childIndex].replaceWith(value);
-            });
-        }
+        // // If Mosaic, replace with it's element.
+        // if(typeof value === 'object' && value.__isMosaic === true) {
+        //     // Don't forget to call the created function for this Mosaic too,
+        //     // because this is where it gets added to the DOM.
+        //     // element.firstChild.childNodes[this.childIndex].replaceWith(document.importNode(value.element));
+        //     // console.log(element, value.element);
+        //     if(value.created) value.created();
+        // } else {
+        //     // console.log(value, dynamicNodes);
+        //     dynamicNodes.forEach(node => {
+        //         let childIndex = this.childIndex || 0;
+        //         node.childNodes[childIndex].replaceWith(value);
+        //     });
+        // }
     }
 
     /** Commits the changes for "attribute" types. */
@@ -125,22 +149,38 @@ export class Part {
 
         // Get the first (which really means next) dynamic node that hasn't
         // had its event set yet.
-        let dynamicEventNodes = element.querySelectorAll(`*[${name}]`);
-        let node = dynamicEventNodes[0];
-        if(!node) return;
+        let walker = document.createTreeWalker(element, NodeFilter.SHOW_ELEMENT, null, false);
+        while(walker.nextNode()) {
+            let hasSameAttribute = walker.currentNode.hasAttribute(name);
+            if(hasSameAttribute) {
+                walker.currentNode.removeAttribute(name);
+                walker.currentNode.eventHandlers = walker.currentNode.eventHandlers || {};
+                if(walker.currentNode.eventHandlers[name]) {
+                    walker.currentNode.removeEventListener(name.substring(2), walker.currentNode.eventHandlers[name]);
+                }
+                walker.currentNode.eventHandlers[name] = (e) => {
+                    val.call(mosaic, e);
+                }
+                walker.currentNode.addEventListener(name.substring(2), walker.currentNode.eventHandlers[name]);
+            }
+        }
 
-        // Remove the placeholder event attribute. Once it doesn't have the
-        // placeholder it will not be included in the search for next nodes
-        // the next time this function gets called for a different part.
-        node.removeAttribute(name);
+        // let dynamicEventNodes = element.querySelectorAll(`*[${name}]`);
+        // let node = dynamicEventNodes[0];
+        // if(!node) return;
 
-        // Add the event listener to the node.
-        node.eventHandlers = node.eventHandlers || {};
-        if(node.eventHandlers[name]) node.removeEventListener(name.substring(2), node.eventHandlers[name]);
-        node.eventHandlers[name] = (e) => {
-            val.call(mosaic, e);
-        };
-        node.addEventListener(name.substring(2), node.eventHandlers[name]);
+        // // Remove the placeholder event attribute. Once it doesn't have the
+        // // placeholder it will not be included in the search for next nodes
+        // // the next time this function gets called for a different part.
+        // node.removeAttribute(name);
+
+        // // Add the event listener to the node.
+        // node.eventHandlers = node.eventHandlers || {};
+        // if(node.eventHandlers[name]) node.removeEventListener(name.substring(2), node.eventHandlers[name]);
+        // node.eventHandlers[name] = (e) => {
+        //     val.call(mosaic, e);
+        // };
+        // node.addEventListener(name.substring(2), node.eventHandlers[name]);
     }
 }
 Part.NODE_TYPE = 'node';
