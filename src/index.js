@@ -1,16 +1,18 @@
-import { createElement } from './vdom/createElement';
-import { render } from './vdom/render';
-import { mount } from './vdom/mount';
-import { patch } from './vdom/patch';
+import { Template } from './template';
 import { Observable } from './observable';
-import { Router } from './router';
-import { isHTMLElement, findInvalidOptions } from './validations';
-import { viewToDOM, randomKey } from './util';
+import { isHTMLElement, findInvalidOptions, getDOMfromID } from './validations';
+import { randomKey } from './util';
+import { Memory } from './memory';
+
+/** A table for the templates. */
+const TemplateTable = {};
+
+/** The equivalent of the 'html' tagged function. */
+const m = (strings, ...values) => new Template(strings, values);
 
 /** The configuration options for a Mosaic component.
  * @typedef {MosaicOptions} MosaicOptions Configuration options for a Mosaic component.
  * @param {HTMLElement} element The DOM element to inject this component into.
- * @param {Router} router THe router to use for client-side routing on this component.
  * @param {Object} data The data of this component.
  * @param {Function | String} view The view to define the appearance of this component.
  * @param {Function} created Called when this component is created.
@@ -21,9 +23,6 @@ import { viewToDOM, randomKey } from './util';
 const MosaicOptions = {
     /** The HTML element to inject this Mosaic component into. */
     element: HTMLElement,
-
-    /** The optional router to use for this Mosaic app. */
-    router: Router,
 
     /** The state of this component. */
     data: Object,
@@ -54,88 +53,195 @@ const Mosaic = function(options) {
     let invalids = findInvalidOptions(options);
     if(invalids !== undefined) throw new Error(invalids);
 
-    this.id = randomKey();
-    this.element = options.element;
-    this.router = options.router;
+    this.tid = options.tid || randomKey();
+    this.element = typeof options.element === 'string' ? getDOMfromID(options.element) : options.element;
     this.view = options.view;
     this.created = options.created;
     this.willUpdate = options.willUpdate;
     this.updated = options.updated;
     this.willDestroy = options.willDestroy;
-    this.absoluteParent = options.absoluteParent || null;
 
-    // Make each array a proxy of its own so that 
-    let _tempData = options.data;
-    for(var i in _tempData) {
-        if(!Array.isArray(_tempData[i])) continue;
-        
-        _tempData[i] = new Observable(_tempData[i], () => {
-            if(this.willUpdate) this.willUpdate(oldData);
-            this.oldHtree = viewToDOM(this.view, this);
-        }, () => {
-            let htree = viewToDOM(this.view, this);
-            let patches = patch(this.oldHtree, htree);
-            this.element = patches(this.element);
-            
-            if(this.updated) this.updated();
-        });
-    }
-    // Setup the data observer.
+    // Make each array a proxy of its own then etup the data observer.
+    let _tempData = makeArraysObservable.call(this, options.data);
     this.data = new Observable(_tempData || {}, (oldData) => {
         if(this.willUpdate) this.willUpdate(oldData);
-        this.oldHtree = viewToDOM(this.view, this);
     }, () => {
-        let htree = viewToDOM(this.view, this);
-        let patches = patch(this.oldHtree, htree);
-        this.element = patches(this.element);
-
-        console.log(htree);
-        if(this.updated) this.updated();
+        this.repaint();
+        if(this.updated) this.updated(this.data, this.actions);
     });
 
-    // Check for a parent-child link.
-    if(options.link) {
-        this.parent = options.link.parent;
-        options.link.parent[options.link.name] = this;
-    }
     this.actions = options.actions;
+    this.options = Object.assign({}, options);
     this.__isMosaic = true;
 
+    // Create the Template, set the Parts on this Mosaic, and set the element
+    // on this Mosaic. Parts will be updated when we create instances with new.
+    let template = this.view(this.data, this.actions);
+    if(!(this.tid in TemplateTable)) {
+        this.values = template.values.slice();
+        delete template.values; // Delete the values from the Template cause it doesn't really need them. Maybe remove later.
+        TemplateTable[this.tid] = template;
+    }
+
+    // Set the element property on this Mosaic to a clone of the template.
+    let cloned = template.element.content.cloneNode(true).firstChild;
+    if(!document.contains(this.element)) {
+        this.element = cloned;
+    } else {
+        this.base = getDOMfromID(options.element);
+        this.element = cloned;
+    }
     return this;
 }
 
 /** "Paints" the Mosaic onto the page by injecting it into its base element. */
 Mosaic.prototype.paint = function() {
-    if(!this.element || !isHTMLElement(this.element)) {
+    if(!this.base || !isHTMLElement(this.base)) {
         throw new Error(`This Mosaic could not be painted because its element property is either not set
         or is not a valid HTML element.`);
     }
-    
-    // Clear anything that is there.
-    while(this.element.firstChild) this.element.removeChild(this.element.firstChild);
+    while(this.base.firstChild) this.base.removeChild(this.base.firstChild);
 
-    // Render an h-tree.
-    let htree = createElement(this);
-    let $node = render(htree, this);
-    let $mounted = mount($node, this.element);
-    this.element = $mounted;
+    // Create a new version of this base Mosaic. This will also cause it to
+    // be repainted with the placeholders filled in.
+    let instance = this.new();
+    instance.base.replaceWith(instance.element);
+
+
+    // // Clone the template and repaint it, which basically paints it
+    // // for the first time.
+    // let template = TemplateTable[this.tid];
+    // // console.log(template.element.content.firstChild);
+    // // console.log(template.element.content);
+    // // console.log(this.element);
+    // // console.log(document.importNode(template.element.content));
+    
+    // let base = this.element;
+    // this.element = template.element.content.firstChild;
+    
+    // base.replaceWith(this.element);
+    // this.repaint();
+    // // let cloned = document.importNode(template.element.content, true);
+
+    // // let base = this.element;
+    // // this.element = cloned;
+    // // // console.log(this.element);
+    
+    // // // Replace the base element with the repainted element.
+    // // base.replaceWith(this.element);
+    // // this.repaint();
+    // // console.log(cloned, this.element);
+
+
+    // Call the created lifecycle function.
+    if(this.created) this.created(this.data, this.actions);
 }
 
+/** Forces an update (repaint of the DOM) on this component. */
+Mosaic.prototype.repaint = function() {
+    // Get the old and new values so you can compare.
+    let newView = this.view(this.data, this.actions);
+    let oldValues = this.values.slice();
+    this.values = newView.values.slice();
+    
+    // Get the template for this Mosaic from the Template Table.
+    let template = TemplateTable[this.tid];
+    
+    // Go through each Memory and make changes to the node at the correct
+    // location in the DOM.
+    for(let i = 0; i < template.memories.length; i++) {
+        let mem = template.memories[i];
+        if(!(mem instanceof Memory)) continue;
+        
+        // If the memory was changed, update the node.
+        let oldVal = oldValues[i];
+        let newVal = this.values[i];
+        if(mem.memoryWasChanged(oldVal, newVal)) {
+            mem.commit(this, newVal);
+        }
+    }
 
-/** A basic routing solution for Mosaic apps.
-* @param {Array} routes A list of routes of the form { path: String | Array of Strings, mosaic: Mosaic }. */
-Mosaic.Router = Router;
 
+    // let oldVals = [];
+
+    // if(repainting === true) {
+    //     oldVals = this.values.slice();
+    //     let newView = this.view(this.data, this.actions);
+    //     this.values = newView.values[0];
+    // }
+
+    // // Go through each Part and decide what to do with its DOM node.
+    // for(let i = 0; i < this.parts.length; i++) {
+    //     let part = this.parts[i];
+    //     // let found = this.element.querySelectorAll(`[__mosaicKey__='${part.__mosaicKey__}']`);
+    //     // console.log(part.__mosaicKey__, this.element, found);
+
+    //     // maybe instead of keeping a value in each part, you continue to separate them.
+    //     // so parts and values exist separately, and you pass in the old val and the new val
+    //     // into a part at check time (i.e. when you repaint). This means you never have to
+    //     // recalculate the parts cause they don't depend on the values anymore. You will now
+    //     // just need to hold on to the old values in an array real quick.
+    //     part.checkWasChanged(oldVals[i], this.values[i]);
+    //     if(part.dirty === false) continue;
+    //     part.commit(this, this.element, this.values[i]);
+    // }
+}
+
+/** Creates a new instance of this Mosaic and fills in the correct values
+ * for its view.
+ * @param {Object} newData Any additional data to add to this instance.
+ * @returns A new instance of this Mosaic. */
+Mosaic.prototype.new = function(newData = {}) {
+    // Make a copy of this Mosaic.
+    let _options = Object.assign({}, this.options);
+    _options.data = Object.assign({}, this.data, newData);
+    _options.tid = this.tid;
+
+    let copy = new Mosaic(_options);
+    copy.iid = randomKey();
+    copy.element = this.element.cloneNode(true);
+    copy.values = this.values.slice();
+    // console.log(copy.element, this.element, copy.element === this.element);
+
+    // // Update the values (very important for having new values).
+    // let newView = copy.view(copy.data, copy.actions);
+    // copy.oldValues = this.values.slice();
+    // copy.values = newView.values.slice();
+    // console.log(copy);
+
+    // // Repaint with the new values.
+    copy.repaint();
+    // console.log(copy.element);
+    return copy;
+}
 
 /** Checks if two Mosaics are equal to each other. 
 * @param {Mosaic} other Whether or not this Mosaic is equal to another. */
 Mosaic.prototype.equals = function(other) {
-    return this.id === other.id;
+    return (this.tid === other.tid) && (this.iid === other.iid);
 }
 
 
+/*
+* ------------- HELPERS -------------- 
+*/
 
-window.h = createElement;
+const makeArraysObservable = function(data) {
+    let _tempData = data;
+    for(var i in _tempData) {
+        if(!Array.isArray(_tempData[i])) continue;
+        
+        _tempData[i] = new Observable(_tempData[i], () => {
+            if(this.willUpdate) this.willUpdate(oldData);
+        }, () => {
+            this.repaint();
+            if(this.updated) this.updated();
+        });
+    }
+    return _tempData;
+}
+
+
+window.html = m;
 window.Mosaic = Mosaic;
-exports.h = createElement;
-exports.Mosaic = Mosaic;
+export default Mosaic;
