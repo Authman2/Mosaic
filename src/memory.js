@@ -1,4 +1,4 @@
-import { isPrimitive, isIterable, createMarker, marker } from "./util";
+import { isPrimitive, isIterable } from "./util";
 
 /** A Memory is used to remember where in the DOM tree a change will occur.
 * In other words, it keeps track of dynamic parts of a component. Later on,
@@ -30,9 +30,15 @@ export class Memory {
         // This basically checks the type that is being injected.
         if(isPrimitive(oldValue) && oldValue !== newValue) {
             return true;
-        } else if(typeof newValue === 'function') {
+        }
+        else if(typeof newValue === 'function') {
             return ('' + oldValue) === ('' + newValue);
-        } else if(typeof newValue === 'object') {
+        }
+        else if(isIterable(newValue)) {
+            this.oldArray = oldValue.slice();
+            return true; // for right now, always assume that arrays will be dirty.
+        }
+        else if(typeof newValue === 'object') {
             if(!Object.is(oldValue, newValue)) return true;
             else return false;
         }
@@ -71,12 +77,38 @@ export class Memory {
 
     /** Commits the changes for "node" types. */
     commitNode(mosaic, child, value) {
-        if(typeof value === 'object' && value.__isMosaic === true) {
+        if(Array.isArray(value)) {
+            this.commitArray(child, value);
+        }
+        else if(typeof value === 'object' && value.__isMosaic === true) {
             child.replaceWith(value.element);
             if(value.created) value.created();
         } else {
             child.replaceWith(value);
         }
+    }
+
+    /** Commits the changes for "node" types where the value is an array. */
+    commitArray(child, value) {
+        // NOTE: Now you have a reference to the old array and the new array.
+        // Find a way to determine what changed between the two, i.e. which
+        // ones were added, which ones were removed.
+        // Once you know that, you can either insert the item into the DOM
+        // or you can find the index of the delete node.
+        // Maybe give each array item its own placeholder?
+
+        // For right now, just replace the entire thing and basically make a
+        // new array.
+        let holder = document.createElement('div');
+        for(let i = 0; i < value.length; i++) {
+            if(typeof value[i] === 'object' && value[i].__isMosaic === true) {
+                holder.appendChild(value[i].element);
+                if(value[i].created) value[i].created();
+            } else {
+                holder.appendChild(value[i]);
+            }
+        }
+        child.replaceWith(holder);
     }
 
     /** Commits the changes for "attribute" types. */
@@ -94,9 +126,7 @@ export class Memory {
         if(eventHandlers[name]) {
             child.removeEventListener(name.substring(2), eventHandlers[name]);
         }
-        eventHandlers[name] = (e) => {
-            value.call(mosaic, e);
-        }
+        eventHandlers[name] = value.bind(mosaic);
 
         child.eventHandlers = eventHandlers;
         child.addEventListener(name.substring(2), child.eventHandlers[name]);

@@ -1,6 +1,6 @@
 {
   "name": "@authman2/mosaic",
-  "version": "0.2.5",
+  "version": "0.3.0",
   "description": "A front-end JavaScript library for creating user interfaces",
   "main": "dist/index.js",
   "scripts": {

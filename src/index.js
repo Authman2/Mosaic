@@ -107,34 +107,8 @@ Mosaic.prototype.paint = function() {
     let instance = this.new();
     instance.base.replaceWith(instance.element);
 
-
-    // // Clone the template and repaint it, which basically paints it
-    // // for the first time.
-    // let template = TemplateTable[this.tid];
-    // // console.log(template.element.content.firstChild);
-    // // console.log(template.element.content);
-    // // console.log(this.element);
-    // // console.log(document.importNode(template.element.content));
-    
-    // let base = this.element;
-    // this.element = template.element.content.firstChild;
-    
-    // base.replaceWith(this.element);
-    // this.repaint();
-    // // let cloned = document.importNode(template.element.content, true);
-
-    // // let base = this.element;
-    // // this.element = cloned;
-    // // // console.log(this.element);
-    
-    // // // Replace the base element with the repainted element.
-    // // base.replaceWith(this.element);
-    // // this.repaint();
-    // // console.log(cloned, this.element);
-
-
     // Call the created lifecycle function.
-    if(this.created) this.created(this.data, this.actions);
+    if(instance.created) instance.created(instance.data, instance.actions);
 }
 
 /** Forces an update (repaint of the DOM) on this component. */
@@ -160,31 +134,6 @@ Mosaic.prototype.repaint = function() {
             mem.commit(this, newVal);
         }
     }
-
-
-    // let oldVals = [];
-
-    // if(repainting === true) {
-    //     oldVals = this.values.slice();
-    //     let newView = this.view(this.data, this.actions);
-    //     this.values = newView.values[0];
-    // }
-
-    // // Go through each Part and decide what to do with its DOM node.
-    // for(let i = 0; i < this.parts.length; i++) {
-    //     let part = this.parts[i];
-    //     // let found = this.element.querySelectorAll(`[__mosaicKey__='${part.__mosaicKey__}']`);
-    //     // console.log(part.__mosaicKey__, this.element, found);
-
-    //     // maybe instead of keeping a value in each part, you continue to separate them.
-    //     // so parts and values exist separately, and you pass in the old val and the new val
-    //     // into a part at check time (i.e. when you repaint). This means you never have to
-    //     // recalculate the parts cause they don't depend on the values anymore. You will now
-    //     // just need to hold on to the old values in an array real quick.
-    //     part.checkWasChanged(oldVals[i], this.values[i]);
-    //     if(part.dirty === false) continue;
-    //     part.commit(this, this.element, this.values[i]);
-    // }
 }
 
 /** Creates a new instance of this Mosaic and fills in the correct values
@@ -201,17 +150,9 @@ Mosaic.prototype.new = function(newData = {}) {
     copy.iid = randomKey();
     copy.element = this.element.cloneNode(true);
     copy.values = this.values.slice();
-    // console.log(copy.element, this.element, copy.element === this.element);
 
-    // // Update the values (very important for having new values).
-    // let newView = copy.view(copy.data, copy.actions);
-    // copy.oldValues = this.values.slice();
-    // copy.values = newView.values.slice();
-    // console.log(copy);
-
-    // // Repaint with the new values.
+    // Repaint with the new values.
     copy.repaint();
-    // console.log(copy.element);
     return copy;
 }
 
