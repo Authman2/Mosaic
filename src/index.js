@@ -22,7 +22,7 @@ const m = (strings, ...values) => new Template(strings, values);
 */
 const MosaicOptions = {
     /** The HTML element to inject this Mosaic component into. */
-    element: HTMLElement,
+    element: String | HTMLElement,
 
     /** The state of this component. */
     data: Object,
@@ -76,9 +76,16 @@ const Mosaic = function(options) {
 
     // Create the Template, set the Parts on this Mosaic, and set the element
     // on this Mosaic. Parts will be updated when we create instances with new.
+    // - By deleting the Mosaics that exist in the Template at initialization,
+    // you can ensure that the diffing algo in Memory does not need to have an
+    // extra edge case, yet also does not mistakenly update Mosaics.
     let template = this.view(this.data, this.actions);
+    this.values = template.values.slice();
+    this.values.forEach((val, index) => {
+        if(typeof val === 'object' && val.__isMosaic) this.values[index] = undefined;
+    });
+
     if(!(this.tid in TemplateTable)) {
-        this.values = template.values.slice();
         delete template.values; // Delete the values from the Template cause it doesn't really need them. Maybe remove later.
         TemplateTable[this.tid] = template;
     }

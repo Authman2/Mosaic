@@ -1,4 +1,4 @@
-import { Mosaic } from "../../src/index";
+import Mosaic from "../../src/index";
 
 // Exports a menu component.
 export default new Mosaic({
@@ -7,9 +7,9 @@ export default new Mosaic({
         about: function() { this.parent.data.page = 1; },
     },
     view: function() {
-        return <div class='menu'>
-            <div class='menu-item' onclick={this.actions.home}>Home</div>
-            <div class='menu-item' onclick={this.actions.about}>About</div>
-        </div>
+        return html`<div class='menu'>
+            <div class='menu-item' onclick=${this.actions.home}>Home</div>
+            <div class='menu-item' onclick=${this.actions.about}>About</div>
+        </div>`
     }
 });

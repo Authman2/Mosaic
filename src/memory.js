@@ -28,7 +28,7 @@ export class Memory {
         if(!oldValue) { return true; }
         
         // This basically checks the type that is being injected.
-        if(isPrimitive(oldValue) && oldValue !== newValue) {
+        if(isPrimitive(newValue) && oldValue !== newValue) {
             return true;
         }
         else if(typeof newValue === 'function') {
@@ -39,7 +39,27 @@ export class Memory {
             return true; // for right now, always assume that arrays will be dirty.
         }
         else if(typeof newValue === 'object') {
-            if(!Object.is(oldValue, newValue)) return true;
+            // Check for when a Mosaic changes. Only consider it a change when:
+            // - There is no new value
+            // - The new value is either not an object or not a Mosaic
+            // - The new value is a different Mosaic component type
+            if(oldValue.__isMosaic) {
+                if(!newValue) {
+                    if(oldValue.willDestroy) oldValue.willDestroy();
+                    return true;
+                } else if(typeof newValue !== 'object') {
+                    if(oldValue.willDestroy) oldValue.willDestroy();
+                    return true;
+                } else if(!newValue.__isMosaic) {
+                    if(oldValue.willDestroy) oldValue.willDestroy();
+                    return true;
+                } else if(newValue.tid !== oldValue.tid) {
+                    if(oldValue.willDestroy) oldValue.willDestroy();
+                    return true;
+                }
+                return false;
+            }
+            else if(!Object.is(oldValue, newValue)) return true;
             else return false;
         }
         return false;
@@ -81,6 +101,7 @@ export class Memory {
             this.commitArray(child, value);
         }
         else if(typeof value === 'object' && value.__isMosaic === true) {
+            value.parent = mosaic;
             child.replaceWith(value.element);
             if(value.created) value.created();
         } else {

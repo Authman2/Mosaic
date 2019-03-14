@@ -31,7 +31,7 @@ or with a script tag.
 ```html
 <script src='https://unpkg.com/@authman2/mosaic@latest/dist/index.js'></script>
 ```
-Then, for fast builds and hot reloading, install the build tool "Parcel." Although Parcel is the easiest build tool to use with Mosaic, any other can be used as well such as Webpack, for example.
+**(Optional)** For fast builds and hot reloading, install the build tool "Parcel." This is not required, though, as Mosaic uses built-in JavaScript features. This means that no build tool is required, but any may be used if it helps the overall project structure.
 ```shell
 npm install --save-dev parcel-bundler
 ```
@@ -49,6 +49,7 @@ For a more detailed example, run the project inside the "example" folder.
   </head>
     
   <div id='root'></div>
+  <script src='https://unpkg.com/@authman2/mosaic@latest/dist/index.js'></script>
   <script type="text/javascript" src='./index.js'></script>
 </html>
 ```
@@ -68,7 +69,7 @@ const Label = new Mosaic({
     }
 });
 
-// Create an "app" component.
+// Create an app component.
 const app = new Mosaic({
     element: '#root',
     data: { title: "Mosaic App" },
