@@ -1,5 +1,6 @@
-import { Mosaic } from '../../src/index';
+import Mosaic from '../../src/index';
 
+// Home Page
 export const Home = new Mosaic({
     actions: {
         next: function() {
@@ -7,16 +8,15 @@ export const Home = new Mosaic({
         }
     },
     view: function() {
-        return <div>
+        return html`<div>
             <h1 style="text-align: center; font-family: Avenir;">Home</h1>
             <br/>
-            <button onclick={this.actions.next}>Go to About</button>
-        </div>
+            <button onclick=${this.actions.next}>Go to About</button>
+        </div>`
     },
-    created() {
-        // console.log(this);
-    }
 });
+
+// About Page
 export const About = new Mosaic({
     actions: {
         next: function() {
@@ -24,13 +24,15 @@ export const About = new Mosaic({
         }
     },
     view: function() {
-        return <div>
+        return html`<div>
             <h1 style="text-align: center; font-family: Avenir;">About</h1>
             <br/>
-            <button onclick={this.actions.next}>Go to Contact</button>
-        </div>
+            <button onclick=${this.actions.next}>Go to Contact</button>
+        </div>`
     }
 });
+
+// Contact Page
 export const Contact = new Mosaic({
     actions: {
         next: function() {
@@ -38,10 +40,10 @@ export const Contact = new Mosaic({
         }
     },
     view: function() {
-        return <div>
+        return html`<div>
             <h1 style="text-align: center; font-family: Avenir;">Contact</h1>
             <br/>
-            <button onclick={this.actions.next}>Go forward to Home</button>
-        </div>
+            <button onclick=${this.actions.next}>Go forward to Home</button>
+        </div>`
     }
 });

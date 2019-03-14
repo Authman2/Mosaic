@@ -1,4 +1,5 @@
 import { Template } from './template';
+import { Router } from './router';
 import { Observable } from './observable';
 import { isHTMLElement, findInvalidOptions, getDOMfromID } from './validations';
 import { randomKey } from './util';
@@ -163,12 +164,21 @@ Mosaic.prototype.new = function(newData = {}) {
     return copy;
 }
 
+/** A basic routing solution for Mosaic apps. 
+* @param {String | HTMLElement} root The element to inject the router into. */
+Mosaic.Router = Router;
+
 /** Checks if two Mosaics are equal to each other. 
 * @param {Mosaic} other Whether or not this Mosaic is equal to another. */
 Mosaic.prototype.equals = function(other) {
     return (this.tid === other.tid) && (this.iid === other.iid);
 }
 
+/** Returns an HTML element that represents this component. */
+Mosaic.prototype.toHTML = function() {
+    this.repaint();
+    return this.element;
+}
 
 /*
 * ------------- HELPERS -------------- 
