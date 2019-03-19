@@ -17,7 +17,7 @@ export class Template {
         this.__isTemplate = true;
         this.element = this.createTemplate();
         this.values = values[0];
-        this.memories = this.memorizeDynamicPortions();
+        this.memories = this.memorize();
     }
 
     /** Adds placeholders in the innerHTML string. */
@@ -48,7 +48,7 @@ export class Template {
 
     /** Constructs and returns an array of Memories that can be used to make
     * fast changes later on. */
-    memorizeDynamicPortions() {
+    memorize() {
         const fragment = this.element.content.cloneNode(true);
         
         let ret = [];

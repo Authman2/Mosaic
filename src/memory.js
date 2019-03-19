@@ -43,6 +43,7 @@ export class Memory {
             // - There is no new value
             // - The new value is either not an object or not a Mosaic
             // - The new value is a different Mosaic component type
+            // - When the data changes between components
             if(oldValue.__isMosaic) {
                 if(!newValue) {
                     if(oldValue.willDestroy) oldValue.willDestroy();
@@ -57,6 +58,10 @@ export class Memory {
                     if(oldValue.willDestroy) oldValue.willDestroy();
                     return true;
                 }
+                let oldData = JSON.stringify(Object.assign({}, oldValue.data));
+                let newData = JSON.stringify(Object.assign({}, newValue.data));
+                if(oldData !== newData) return true;
+
                 return false;
             }
             else if(!Object.is(oldValue, newValue)) return true;
