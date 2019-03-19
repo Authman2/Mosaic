@@ -1,5 +1,6 @@
 import { Template } from './template';
 import { Router } from './router';
+import { Portfolio } from "./portfolio";
 import { Observable } from './observable';
 import { isHTMLElement, findInvalidOptions, getDOMfromID } from './validations';
 import { randomKey } from './util';
@@ -30,6 +31,12 @@ const MosaicOptions = {
 
     /** The view that will be rendered on the screen. */
     view: Function,
+
+    /** The client-side router to use for paging. */
+    router: Router,
+
+    /** The global state manager. */
+    portfolio: Portfolio,
 
     /** The actions that can be used on this Mosaic component. */
     actions: Object,
@@ -72,6 +79,8 @@ const Mosaic = function(options) {
     });
 
     this.actions = options.actions;
+    this.router = options.router;
+    this.portfolio = options.portfolio;
     this.options = Object.assign({}, options);
     this.__isMosaic = true;
 
@@ -158,6 +167,7 @@ Mosaic.prototype.new = function(newData = {}) {
     copy.iid = randomKey();
     copy.element = this.element.cloneNode(true);
     copy.values = this.values.slice();
+    if(copy.portfolio) copy.portfolio.dependencies.push(copy);
 
     // Repaint with the new values.
     copy.repaint();
@@ -167,6 +177,13 @@ Mosaic.prototype.new = function(newData = {}) {
 /** A basic routing solution for Mosaic apps. 
 * @param {String | HTMLElement} root The element to inject the router into. */
 Mosaic.Router = Router;
+
+/** Portfolio is a state manager for Mosaic. You first define the global data
+* properties that will be used, and then you define methods that will be used
+* throughout your app to manipulate that data.
+* @param {Object} data The global data object.
+* @param {Function} action A function that runs when "dispatch" is called. */
+Mosaic.Portfolio = Portfolio;
 
 /** Checks if two Mosaics are equal to each other. 
 * @param {Mosaic} other Whether or not this Mosaic is equal to another. */
@@ -198,7 +215,6 @@ const makeArraysObservable = function(data) {
     }
     return _tempData;
 }
-
 
 window.html = m;
 window.Mosaic = Mosaic;

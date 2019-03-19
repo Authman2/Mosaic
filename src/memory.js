@@ -18,6 +18,7 @@ export class Memory {
         this.steps = steps;
         this.attribute = attribute;
         this.event = event;
+        this.calledCreate = false; // Makes sure the "created" function does not run multiple times.
     }
 
 
@@ -108,7 +109,11 @@ export class Memory {
         else if(typeof value === 'object' && value.__isMosaic === true) {
             value.parent = mosaic;
             child.replaceWith(value.element);
-            if(value.created) value.created();
+
+            if(value.created && this.calledCreate === false) {
+                value.created();
+                this.calledCreate = true;
+            }
         } else {
             child.replaceWith(value);
         }
