@@ -29,6 +29,7 @@ export class Memory {
         if(!oldValue) { return true; }
         
         // This basically checks the type that is being injected.
+        console.log(newValue);
         if(isPrimitive(newValue) && oldValue !== newValue) {
             return true;
         }
@@ -64,6 +65,13 @@ export class Memory {
                 if(oldData !== newData) return true;
 
                 return false;
+            }
+            // If the value to be injected is a template, just make a clone of
+            // its element and place that in there.
+            else if(newValue.__isTemplate) {
+                let old = '' + oldValue;
+                let _new = '' + newValue.element;
+                return old !== _new;
             }
             else if(!Object.is(oldValue, newValue)) return true;
             else return false;
@@ -114,7 +122,12 @@ export class Memory {
                 value.created();
                 this.calledCreate = true;
             }
-        } else {
+        }
+        else if(typeof value === 'object' && value.__isTemplate === true) {
+            let cloned = value.element.content.cloneNode(true).firstChild;
+            child.replaceWith(cloned);
+        }
+        else {
             child.replaceWith(value);
         }
     }
