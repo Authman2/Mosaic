@@ -33,6 +33,15 @@ export const traverseValues = function(mosaic, action, last) {
     if(action) action(mosaic, last);
 }
 
+/** Disposes of any unused resources by Mosaics to free up space and
+* improve memory performance. */
+export const cleanUpMosaic = function() {
+    this.data = undefined;
+    this.portfolio = undefined;
+    if(this.willDestroy) this.willDestroy();
+}
+
+
 /** Returns whether or not an object is an HTML element. */
 function isHTMLElement(obj) {
     try { return obj instanceof HTMLElement; }

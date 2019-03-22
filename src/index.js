@@ -68,19 +68,15 @@ const Mosaic = function(options) {
     this.willUpdate = options.willUpdate;
     this.updated = options.updated;
     this.willDestroy = options.willDestroy;
-
-    // Make each array a proxy of its own then etup the data observer.
-    let _tempData = makeArraysObservable.call(this, options.data);
-    this.data = new Observable(_tempData || {}, oldData => {
-        if(this.willUpdate) this.willUpdate(oldData);
-    }, () => {
-        this.repaint();
-        if(this.updated) this.updated(this.data, this.actions);
-    });
-
-    this.actions = options.actions;
     this.router = options.router;
     this.portfolio = options.portfolio;
+
+    // Make each array a proxy of its own then etup the data observer.
+    let _tempData = attachArrayObservers.call(this, options.data);
+    this.data = attachObservable.call(this, _tempData);
+    if(this.portfolio) this.portfolio.attach(attachPortfolioObservable.call(this, this.portfolio));
+
+    this.actions = options.actions;
     this.options = Object.assign({}, options);
     this.__isMosaic = true;
 
@@ -130,6 +126,7 @@ Mosaic.prototype.paint = function() {
     traverseValues(instance, (mosaic, last) => {
         if(mosaic.created) mosaic.created();
     });
+    // if(instance.created) instance.created();
 }
 
 /** Forces an update (repaint of the DOM) on this component. */
@@ -151,7 +148,7 @@ Mosaic.prototype.repaint = function() {
         // Get the old and new values.
         let oldVal = oldValues[i];
         let newVal = this.values[i];
-        
+
         // If the memory was changed, update the node.
         if(mem.memoryWasChanged(oldVal, newVal)) {
             mem.commit(this, newVal);
@@ -168,9 +165,9 @@ Mosaic.prototype.new = function(newData = {}) {
     let _options = Object.assign({}, this.options);
     _options.data = Object.assign({}, this.data, newData);
     _options.tid = this.tid;
-
+    
     let copy = new Mosaic(_options);
-    // copy.iid = randomKey();
+    copy.iid = randomKey();
     copy.element = this.element.cloneNode(true);
     copy.values = this.values.slice();
     copy.injected = newData;
@@ -207,19 +204,50 @@ Mosaic.prototype.toHTML = function() {
 * ------------- HELPERS -------------- 
 */
 
-const makeArraysObservable = function(data) {
+/** Makes array methods observable. */
+const attachArrayObservers = function(data) {
     let _tempData = data;
     for(var i in _tempData) {
         if(!Array.isArray(_tempData[i])) continue;
         
         _tempData[i] = new Observable(_tempData[i], () => {
+            if(!this.iid) return; // Only update the instances, not the diagrams.
             if(this.willUpdate) this.willUpdate(oldData);
         }, () => {
+            if(!this.iid) return; // Only update the instances, not the diagrams.
             this.repaint();
             if(this.updated) this.updated();
         });
     }
     return _tempData;
+}
+
+/** Makes the data JavaScript object an Observable, and also attaches
+* Portfolio data if it is present. */
+const attachObservable = function(data = {}) {
+    let ret = new Observable(data, (old) => {
+        if(!this.iid) return; // Only update the instances, not the diagrams.
+        if(this.willUpdate) this.willUpdate(old);
+    }, () => {
+        if(!this.iid) return; // Only update the instances, not the diagrams.
+        this.repaint();
+        if(this.updated) this.updated();
+    })
+    return ret;
+}
+
+/** Makes the Portfolio of a Mosaic Observable, binding any changes to the
+ * Portfolio to a repaint of this component. At this point assume not null. */
+const attachPortfolioObservable = function(portfolio) {
+    let ret = new Observable(portfolio.data, (old) => {
+        if(!this.iid) return; // Only update the instances, not the diagrams.
+        if(this.willUpdate) this.willUpdate(old);
+    }, () => {
+        if(!this.iid) return; // Only update the instances, not the diagrams.
+        this.repaint();
+        if(this.updated) this.updated();
+    });
+    return ret;
 }
 
 window.html = m;

@@ -23,7 +23,7 @@
   "repository": {
     "url": "https://github.com/authman2/Mosaic"
   },
-  "homepage": "https://mosaicjs.netlify.com",
+  "homepage": "https://mosaicjs.herokuapp.com",
   "devDependencies": {},
   "dependencies": {}
 }

@@ -1,4 +1,4 @@
-import { isPrimitive, isIterable, randomKey, isMosaic, traverseValues } from "./util";
+import { isPrimitive, isIterable, randomKey, isMosaic, traverseValues, cleanUpMosaic } from "./util";
 
 /** A Memory is used to remember where in the DOM tree a change will occur.
 * In other words, it keeps track of dynamic parts of a component. Later on,
@@ -25,8 +25,6 @@ export class Memory {
     * @param {Any} newValue The new value. */
     memoryWasChanged(oldValue, newValue) {
         if(!oldValue) {
-            // Makes a new iid.
-            if(isMosaic(newValue) && !newValue.iid) { newValue.iid = randomKey(); }
             return true;
         }
         
@@ -49,30 +47,25 @@ export class Memory {
             // - When the data changes between components
             if(isMosaic(oldValue)) {
                 if(!newValue) {
-                    if(oldValue.willDestroy) oldValue.willDestroy();
+                    cleanUpMosaic.call(oldValue);
                     return true;
-                } else if(typeof newValue !== 'object') {
-                    if(oldValue.willDestroy) oldValue.willDestroy();
-                    return true;
-                } else if(!newValue.__isMosaic) {
-                    if(oldValue.willDestroy) oldValue.willDestroy();
+                } else if(typeof newValue !== 'object' || !newValue.__isMosaic) {
+                    cleanUpMosaic.call(oldValue);
                     return true;
                 } else if(newValue.tid !== oldValue.tid) {
-                    // Keep the same iid.
                     // Destroy the old component.
-                    // Create the new component.
-                    if(oldValue.iid) newValue.iid = oldValue.iid;
-                    if(oldValue.willDestroy) oldValue.willDestroy();
+                    // Create the new component and its children.
+                    cleanUpMosaic.call(oldValue);
                     traverseValues(oldValue, (mosaic, last) => { if(mosaic.created) mosaic.created(); });
                     return true;
                 }
-
-                // Keep the same iid.
-                if(oldValue.iid) newValue.iid = oldValue.iid;
-
+                
                 let oldData = JSON.stringify(Object.assign({}, oldValue.injected));
                 let newData = JSON.stringify(Object.assign({}, newValue.injected));
-                if(oldData !== newData) { return true; }
+                if(oldData !== newData) {
+                    cleanUpMosaic.call(oldValue);
+                    return true;
+                }
                 return false;
             }
             // If the value to be injected is a template, just make a clone of

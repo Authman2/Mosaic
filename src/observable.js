@@ -19,16 +19,16 @@ const Observable = function(observingObject, willChange, didChange) {
             // Did update.
             if(didChange) didChange(object);
 
-            return Reflect.set(object, name, value);
+            return true;
         },
-        // defineProperty(object, name, descriptor) {
-        //     didChange(object);
-        //     return Reflect.defineProperty(object, name, descriptor);
-        // },
-        // deleteProperty(object, name) {
-        //     didChange(object);
-        //     return Reflect.deleteProperty(object, name);
-        // }
+        defineProperty(object, name, descriptor) {
+            if(didChange) didChange(object);
+            return Reflect.defineProperty(object, name, descriptor);
+        },
+        deleteProperty(object, name) {
+            if(didChange) didChange(object);
+            return Reflect.deleteProperty(object, name);
+        }
     };
     return new Proxy(observingObject, Handler);
 }

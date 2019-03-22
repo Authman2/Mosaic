@@ -6,22 +6,18 @@
 const Portfolio = function(data, action) {
     this.data = data;
     this.action = action;
-    this.dependencies = new Map();
+    this.dependencies = {};
     this.__isPortfolio = true;
 
     return this;
 }
 
-/** Adds an instance of a Mosaic as a dependency of this Portfolio.
-* @param {Mosaic} instance An instance of a Mosaic. */
-Portfolio.prototype.addDependency = function(instance) {
-    this.dependencies.set(instance.tid, instance);
-}
-
-/** Removes a dependency from this Portoflio.
-* @param {Mosaic} instance An instance of a Mosaic. */
-Portfolio.prototype.removeDependency = function(instance) {
-    this.dependencies.delete(instance.tid);
+/** Attaches an Observable to this Portfolio. Changes the data property from a
+* JS object to an Observable.
+* @param {Observable} to The Observable object to use as the data, already bound
+* to a particular action on a Mosaic. */
+Portfolio.prototype.attach = function(to) {
+    this.data = to;
 }
 
 /** Returns the specified property value given the name.
@@ -43,7 +39,7 @@ Portfolio.prototype.dispatch = function(event, newData = {}) {
             this.action(event, this.data, newData);
         }
     }
-    Array.from(this.dependencies.values()).forEach(dep => dep.repaint());
+    // Object.values(this.dependencies).forEach(dep => dep.repaint());
 }
 
 exports.Portfolio = Portfolio;
