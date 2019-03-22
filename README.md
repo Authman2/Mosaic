@@ -1,10 +1,10 @@
-<p align="center"><a href="https://mosaicjs.netlify.com" target="_blank" rel="noopener noreferrer"><img width="100" height="100" src="./MosaicLogo.png" alt="Mosaic logo"></a></p>
+<p align="center"><a href="https://mosaicjs.herokuapp.com" target="_blank" rel="noopener noreferrer"><img width="100" height="100" src="./MosaicLogo.png" alt="Mosaic logo"></a></p>
 <p align="center">
   <a href="https://npmcharts.com/compare/@authman2/mosaic?minimal=true"><img src="https://img.shields.io/npm/dm/@authman2/mosaic.svg" alt="Downloads"></a>
   <a href="https://www.npmjs.com/package/@authman2/mosaic"><img src="https://img.shields.io/npm/v/@authman2/mosaic.svg" alt="Version"></a>
 </p>
 
-# <a target='_blank' rel='noopener noreferrer' href='https://mosaicjs.netlify.com'>Mosaic</a>
+# <a target='_blank' rel='noopener noreferrer' href='https://mosaicjs.herokuapp.com'>Mosaic</a>
 Mosaic is a declarative front-end JavaScript library for building user interfaces.
 
 :diamond_shape_with_a_dot_inside:**Component-Based**: Mosaic components are reusable pieces of code that keep track of their own data, actions, lifecycle functions, and more.
