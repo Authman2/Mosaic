@@ -1,4 +1,4 @@
-import { marker, nodeMarker, lastAttributeNameRegex, traverse } from './util';
+import { marker, nodeMarker, markerRegex, lastAttributeNameRegex, traverse } from './util';
 import { Memory } from './memory';
 
 

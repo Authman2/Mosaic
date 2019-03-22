@@ -1,4 +1,4 @@
-import { isPrimitive, isIterable } from "./util";
+import { isPrimitive, isIterable, randomKey, isMosaic, traverseValues } from "./util";
 
 /** A Memory is used to remember where in the DOM tree a change will occur.
 * In other words, it keeps track of dynamic parts of a component. Later on,
@@ -18,18 +18,19 @@ export class Memory {
         this.steps = steps;
         this.attribute = attribute;
         this.event = event;
-        this.calledCreate = false; // Makes sure the "created" function does not run multiple times.
     }
-
 
     /** Checks if the old value is different to the new value.
     * @param {Any} oldValue The old value.
     * @param {Any} newValue The new value. */
     memoryWasChanged(oldValue, newValue) {
-        if(!oldValue) { return true; }
+        if(!oldValue) {
+            // Makes a new iid.
+            if(isMosaic(newValue) && !newValue.iid) { newValue.iid = randomKey(); }
+            return true;
+        }
         
         // This basically checks the type that is being injected.
-        console.log(newValue);
         if(isPrimitive(newValue) && oldValue !== newValue) {
             return true;
         }
@@ -46,7 +47,7 @@ export class Memory {
             // - The new value is either not an object or not a Mosaic
             // - The new value is a different Mosaic component type
             // - When the data changes between components
-            if(oldValue.__isMosaic) {
+            if(isMosaic(oldValue)) {
                 if(!newValue) {
                     if(oldValue.willDestroy) oldValue.willDestroy();
                     return true;
@@ -57,13 +58,21 @@ export class Memory {
                     if(oldValue.willDestroy) oldValue.willDestroy();
                     return true;
                 } else if(newValue.tid !== oldValue.tid) {
+                    // Keep the same iid.
+                    // Destroy the old component.
+                    // Create the new component.
+                    if(oldValue.iid) newValue.iid = oldValue.iid;
                     if(oldValue.willDestroy) oldValue.willDestroy();
+                    traverseValues(oldValue, (mosaic, last) => { if(mosaic.created) mosaic.created(); });
                     return true;
                 }
-                let oldData = JSON.stringify(Object.assign({}, oldValue.data));
-                let newData = JSON.stringify(Object.assign({}, newValue.data));
-                if(oldData !== newData) return true;
 
+                // Keep the same iid.
+                if(oldValue.iid) newValue.iid = oldValue.iid;
+
+                let oldData = JSON.stringify(Object.assign({}, oldValue.injected));
+                let newData = JSON.stringify(Object.assign({}, newValue.injected));
+                if(oldData !== newData) { return true; }
                 return false;
             }
             // If the value to be injected is a template, just make a clone of
@@ -78,7 +87,6 @@ export class Memory {
         }
         return false;
     }
-
 
     /** Does the work of actually committing necessary changes to the DOM.
     * @param {Mosaic} mosaic The Mosaic component for event binding.
@@ -99,11 +107,10 @@ export class Memory {
             case Memory.ATTRIBUTE_TYPE: this.commitAttribute(mosaic, child, value); break;
             case Memory.EVENT_TYPE: this.commitEvent(mosaic, child, value); break;
             default:
-                console.log('Got here for some reason: ');
+                // console.log('Got here for some reason: ');
                 break;
         }
     }
-
 
     /**
     * ------------- HELPERS -------------
@@ -117,11 +124,6 @@ export class Memory {
         else if(typeof value === 'object' && value.__isMosaic === true) {
             value.parent = mosaic;
             child.replaceWith(value.element);
-
-            if(value.created && this.calledCreate === false) {
-                value.created();
-                this.calledCreate = true;
-            }
         }
         else if(typeof value === 'object' && value.__isTemplate === true) {
             let cloned = value.element.content.cloneNode(true).firstChild;

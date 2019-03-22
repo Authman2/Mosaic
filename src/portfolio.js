@@ -6,10 +6,22 @@
 const Portfolio = function(data, action) {
     this.data = data;
     this.action = action;
-    this.dependencies = [];
+    this.dependencies = new Map();
     this.__isPortfolio = true;
 
     return this;
+}
+
+/** Adds an instance of a Mosaic as a dependency of this Portfolio.
+* @param {Mosaic} instance An instance of a Mosaic. */
+Portfolio.prototype.addDependency = function(instance) {
+    this.dependencies.set(instance.tid, instance);
+}
+
+/** Removes a dependency from this Portoflio.
+* @param {Mosaic} instance An instance of a Mosaic. */
+Portfolio.prototype.removeDependency = function(instance) {
+    this.dependencies.delete(instance.tid);
 }
 
 /** Returns the specified property value given the name.
@@ -31,7 +43,7 @@ Portfolio.prototype.dispatch = function(event, newData = {}) {
             this.action(event, this.data, newData);
         }
     }
-    this.dependencies.forEach(dep => dep.repaint());
+    Array.from(this.dependencies.values()).forEach(dep => dep.repaint());
 }
 
 exports.Portfolio = Portfolio;

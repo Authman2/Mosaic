@@ -3,10 +3,10 @@ import { Router } from './router';
 import { Portfolio } from "./portfolio";
 import { Observable } from './observable';
 import { isHTMLElement, findInvalidOptions, getDOMfromID } from './validations';
-import { randomKey } from './util';
+import { randomKey, traverseValues, isMosaic } from './util';
 import { Memory } from './memory';
 
-/** A table for the templates. */
+/** A table for the templates and instances. */
 const TemplateTable = {};
 
 /** The equivalent of the 'html' tagged function. */
@@ -71,7 +71,7 @@ const Mosaic = function(options) {
 
     // Make each array a proxy of its own then etup the data observer.
     let _tempData = makeArraysObservable.call(this, options.data);
-    this.data = new Observable(_tempData || {}, (oldData) => {
+    this.data = new Observable(_tempData || {}, oldData => {
         if(this.willUpdate) this.willUpdate(oldData);
     }, () => {
         this.repaint();
@@ -93,6 +93,7 @@ const Mosaic = function(options) {
     this.values = template.values.slice();
     this.values.forEach((val, index) => {
         if(typeof val === 'object' && val.__isMosaic) this.values[index] = undefined;
+        else if(typeof val === 'number') this.values[index] = ''+val;
     });
 
     if(!(this.tid in TemplateTable)) {
@@ -108,6 +109,7 @@ const Mosaic = function(options) {
         this.base = getDOMfromID(options.element);
         this.element = cloned;
     }
+
     return this;
 }
 
@@ -125,11 +127,13 @@ Mosaic.prototype.paint = function() {
     instance.base.replaceWith(instance.element);
 
     // Call the created lifecycle function.
-    if(instance.created) instance.created(instance.data, instance.actions);
+    traverseValues(instance, (mosaic, last) => {
+        if(mosaic.created) mosaic.created();
+    });
 }
 
 /** Forces an update (repaint of the DOM) on this component. */
-Mosaic.prototype.repaint = function() {
+Mosaic.prototype.repaint = function() {    
     // Get the old and new values so you can compare.
     let newView = this.view(this.data, this.actions);
     let oldValues = this.values.slice();
@@ -144,9 +148,11 @@ Mosaic.prototype.repaint = function() {
         let mem = template.memories[i];
         if(!(mem instanceof Memory)) continue;
         
-        // If the memory was changed, update the node.
+        // Get the old and new values.
         let oldVal = oldValues[i];
         let newVal = this.values[i];
+        
+        // If the memory was changed, update the node.
         if(mem.memoryWasChanged(oldVal, newVal)) {
             mem.commit(this, newVal);
         }
@@ -164,10 +170,10 @@ Mosaic.prototype.new = function(newData = {}) {
     _options.tid = this.tid;
 
     let copy = new Mosaic(_options);
-    copy.iid = randomKey();
+    // copy.iid = randomKey();
     copy.element = this.element.cloneNode(true);
     copy.values = this.values.slice();
-    if(copy.portfolio) copy.portfolio.dependencies.push(copy);
+    copy.injected = newData;
 
     // Repaint with the new values.
     copy.repaint();

@@ -1,5 +1,6 @@
 export const marker = `{{m-${String(Math.random()).slice(2)}}}`;
 export const nodeMarker = `<!--${marker}-->`;
+export const markerRegex = new RegExp(`${marker}|${nodeMarker}`);
 export const lastAttributeNameRegex = /([ \x09\x0a\x0c\x0d])([^\0-\x1F\x7F-\x9F \x09\x0a\x0c\x0d"'>=/]+)([ \x09\x0a\x0c\x0d]*=[ \x09\x0a\x0c\x0d]*(?:[^ \x09\x0a\x0c\x0d"'`<>=]*|"[^"]*|'[^']*))$/;
 export const createMarker = () => document.createComment('');
 
@@ -9,6 +10,9 @@ export const isPrimitive = value => {
 export const isIterable = value => {
     return Array.isArray(value) || !!(value && value[Symbol.iterator]);
 };
+export const isMosaic = value => {
+    return typeof value === 'object' && value.__isMosaic;
+}
 
 /** Traverses a DOM tree and performs a certain action on each node. It also
  * returns, in the callback, the steps taken to get to that node in the form
@@ -19,6 +23,14 @@ export const traverse = function($node, action, steps = [0]) {
     for(var i = 0; i < children.length; i++) {
         traverse(children[i], action, steps.concat(i));
     }
+}
+export const traverseValues = function(mosaic, action, last) {
+    let children = mosaic.values;
+    for(var i = 0; i < children.length; i++) {
+        if(!isMosaic(children[i])) continue;
+        else traverseValues(children[i], action, mosaic);
+    }
+    if(action) action(mosaic, last);
 }
 
 /** Returns whether or not an object is an HTML element. */
