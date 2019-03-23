@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "module": "commonjs",
+        "outDir": "build/",
+        "typeRoots": ["dist/"],
+        "removeComments": true,
+        "declaration": true,
+        "strict": true
+    },
+    "include": ["src/*"],
+    "exclude": ["node_modules"]
+}
