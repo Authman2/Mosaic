@@ -12,12 +12,12 @@ const Portfolio = function(data, action) {
     return this;
 }
 
-/** Attaches an Observable to this Portfolio. Changes the data property from a
-* JS object to an Observable.
-* @param {Observable} to The Observable object to use as the data, already bound
-* to a particular action on a Mosaic. */
-Portfolio.prototype.attach = function(to) {
-    this.data = to;
+/** Makes a copy of this Portfolio. */
+Portfolio.prototype.copy = function() {
+    let d = this.data;
+    let a = this.action;
+    let p = new Portfolio(d, a);
+    return p;
 }
 
 /** Returns the specified property value given the name.
@@ -33,13 +33,10 @@ Portfolio.prototype.get = function(name) {
 * dispatched event. */
 Portfolio.prototype.dispatch = function(event, newData = {}) {
     if(this.action) {
-        if(Array.isArray(event)) {
-            event.forEach(eve => this.action(eve, this.data, newData));
-        } else {
-            this.action(event, this.data, newData);
-        }
+        if(Array.isArray(event)) event.forEach(eve => this.action(eve, this.data, newData));
+        else this.action(event, this.data, newData);
     }
-    // Object.values(this.dependencies).forEach(dep => dep.repaint());
+    Object.values(this.dependencies).forEach(dep => dep.repaint());
 }
 
 exports.Portfolio = Portfolio;

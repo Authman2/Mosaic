@@ -69,12 +69,10 @@ const Mosaic = function(options) {
     this.updated = options.updated;
     this.willDestroy = options.willDestroy;
     this.router = options.router;
-    this.portfolio = options.portfolio;
 
     // Make each array a proxy of its own then etup the data observer.
     let _tempData = attachArrayObservers.call(this, options.data);
     this.data = attachObservable.call(this, _tempData);
-    if(this.portfolio) this.portfolio.attach(attachPortfolioObservable.call(this, this.portfolio));
 
     this.actions = options.actions;
     this.options = Object.assign({}, options);
@@ -126,7 +124,6 @@ Mosaic.prototype.paint = function() {
     traverseValues(instance, (mosaic, last) => {
         if(mosaic.created) mosaic.created();
     });
-    // if(instance.created) instance.created();
 }
 
 /** Forces an update (repaint of the DOM) on this component. */
@@ -233,20 +230,6 @@ const attachObservable = function(data = {}) {
         this.repaint();
         if(this.updated) this.updated();
     })
-    return ret;
-}
-
-/** Makes the Portfolio of a Mosaic Observable, binding any changes to the
- * Portfolio to a repaint of this component. At this point assume not null. */
-const attachPortfolioObservable = function(portfolio) {
-    let ret = new Observable(portfolio.data, (old) => {
-        if(!this.iid) return; // Only update the instances, not the diagrams.
-        if(this.willUpdate) this.willUpdate(old);
-    }, () => {
-        if(!this.iid) return; // Only update the instances, not the diagrams.
-        this.repaint();
-        if(this.updated) this.updated();
-    });
     return ret;
 }
 
