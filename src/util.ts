@@ -13,7 +13,14 @@ export const isIterable = (value: any) => {
     return Array.isArray(value);
 };
 export const isMosaic = (value: any) => {
-    return typeof value === 'object' && value.__isMosaic;
+    if(value instanceof Mosaic) {
+        return true;
+    } else {
+        if(typeof value === 'object' && value.__isMosaic) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /** Traverses a DOM tree and performs a certain action on each node. It also

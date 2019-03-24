@@ -12,6 +12,7 @@ class Mosaic {
     updated: Function
     willDestroy: Function
     values: any[]
+    injected?: Object
 
     /** Creates a new Mosaic component with configuration options.
     * @param {MosaicOptions} options The configuration options for this Mosaic. */
