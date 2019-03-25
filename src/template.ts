@@ -74,6 +74,11 @@ export class Template {
                         let mem = new Memory({
                             type: attributeName.startsWith('on') ? Memory.EVENT_TYPE : Memory.ATTRIBUTE_TYPE,
                             steps,
+                            attribute: {
+                                attributeName,
+                                attributeValue
+                            },
+                            event: attributeName
                         });
                         ret.push(mem);
                     }

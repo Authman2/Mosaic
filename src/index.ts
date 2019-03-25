@@ -50,7 +50,7 @@ class Mosaic {
         this.router = options.router
 
         // Make each array a proxy of its own then etup the data observer.
-        let _data = attachArrayProxy.call(this);
+        let _data = attachArrayProxy.call(this, options.data || {});
         this.data = attachDataProxy.call(this, _data);
 
         // Set some additional helper options.
@@ -141,7 +141,7 @@ class Mosaic {
      * @returns A new instance of this Mosaic. */
     new(newData = {}) {
         // Make a copy of this Mosaic.
-        let _options: MosaicOptions = Object.assign({}, this.options);
+        let _options = Object.assign({}, this.options);
         _options.data = Object.assign({}, this.data, newData);
         (_options as any).tid = this.tid;
         
@@ -182,8 +182,8 @@ Mosaic.Router = Router;
 */
 
 /** Makes array methods observable. */
-const attachArrayProxy = function() {
-    let _tempData = this.data;
+const attachArrayProxy = function(_data: Object) {
+    let _tempData = _data;
     for(var i in _tempData) {
         if(!Array.isArray(_tempData[i])) continue;
         
@@ -200,7 +200,7 @@ const attachArrayProxy = function() {
 }
 
 /** Makes regular object properties observable. */
-const attachDataProxy = function(_data) {
+const attachDataProxy = function(_data: Object) {
     let ret = new Observable(_data, (old) => {
         if(!this.iid) return; // Only update the instances, not the diagrams.
         if(this.willUpdate) this.willUpdate(old);
@@ -212,6 +212,7 @@ const attachDataProxy = function(_data) {
     return ret;
 }
 
-this.html = m;
-this.Mosaic = Mosaic;
+this.Mosaic = Mosaic; // <--- This line needs to be here for some reason.
+(window as any).html = m;
+(window as any).Mosaic = Mosaic;
 export default Mosaic;

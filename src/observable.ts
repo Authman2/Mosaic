@@ -2,8 +2,8 @@
 * @param {Object} observingObject The object to look for changes in.. */
 export class Observable {
     
-    constructor(observingObject: Object, willChange: Function, didChange: Function) {
-        const Handler = {
+    constructor(observingObject: Object|Array<any>, willChange: Function, didChange: Function) {
+        const Handler: Object = {
             get(object, name, receiver) {
                 if(name === '__TARGET') { return Object.assign({}, observingObject); };
                 if(name === '__IS_PROXY') { return true };

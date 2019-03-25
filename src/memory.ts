@@ -180,7 +180,7 @@ export class Memory {
     /** Commits the changes for "event" types. Currently does not support
      * dynamically changing function attributes. */
     commitEvent(mosaic: Mosaic, child: HTMLElement|ChildNode, value: any) {
-        let name: string = (this.attribute as MemoryAttribute).attributeName;
+        let name: string = this.event || "";
 
         let eventHandlers = (child as any).eventHandlers || {};
         if(eventHandlers[name]) {
