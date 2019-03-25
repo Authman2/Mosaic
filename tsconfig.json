@@ -1,8 +1,8 @@
 {
     "compilerOptions": {
         "target": "es6",
-        "module": "commonjs",
-        "outDir": "build/",
+        "module": "amd",
+        "outFile": "dist/index.js",
         "typeRoots": ["dist/"],
         "removeComments": true,
         "declaration": true,

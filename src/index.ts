@@ -4,33 +4,34 @@ import { randomKey, getDOMfromID, isHTMLElement, traverseValues } from "./util";
 import { Observable } from "./observable";
 import { Template } from "./template";
 import { Memory } from "./memory";
-import { Router } from "./router";
+import { Router, MosaicRouter } from "./router";
 
 /** A table for the templates and instances. */
 const TemplateTable = {};
 
 /** The equivalent of the 'html' tagged function. */
-const m = (strings, ...values) => new Template(strings, values);
+const m = (strings, ...values): Template => new Template(strings, values);
 
 class Mosaic {
     tid: string
     iid?: string
     element: string|HTMLElement|Element|Node|ChildNode|null
-    data?: Object
+    data: Object
     actions?: Object
     view: Function
     created?: Function
     willUpdate?: Function
     updated?: Function
     willDestroy?: Function
+    router?: Router
 
     options: MosaicOptions
     values: any[]
     injected?: Object
+    __isMosaic: boolean
     private base: Element|HTMLElement|ChildNode|Node|null = null
-    private __isMosaic: boolean
 
-    static Router: Router
+    static Router: MosaicRouter
 
     /** Creates a new Mosaic component with configuration options.
     * @param {MosaicOptions} options The configuration options for this Mosaic. */
@@ -38,7 +39,7 @@ class Mosaic {
         let invalids = findInvalidOptions(options);
         if(invalids) throw new Error(invalids);
 
-        this.tid = options.tid || randomKey();
+        this.tid = (options as any).tid || randomKey();
         this.element = typeof options.element === 'string' ? getDOMfromID(options.element) : options.element;
         this.view = options.view;
         this.actions = options.actions;
@@ -46,6 +47,7 @@ class Mosaic {
         this.willUpdate = options.willUpdate;
         this.updated = options.updated;
         this.willDestroy = options.willDestroy;
+        this.router = options.router
 
         // Make each array a proxy of its own then etup the data observer.
         let _data = attachArrayProxy.call(this);
@@ -139,9 +141,9 @@ class Mosaic {
      * @returns A new instance of this Mosaic. */
     new(newData = {}) {
         // Make a copy of this Mosaic.
-        let _options: MosaicOptions = this.options;
+        let _options: MosaicOptions = Object.assign({}, this.options);
         _options.data = Object.assign({}, this.data, newData);
-        _options.tid = this.tid;
+        (_options as any).tid = this.tid;
         
         let copy = new Mosaic(_options);
         copy.iid = randomKey();
@@ -210,11 +212,6 @@ const attachDataProxy = function(_data) {
     return ret;
 }
 
-interface Window {
-    html: Function
-    Mosaic: Mosaic
-}
-
-window.html = m;
-window.Mosaic = Mosaic;
+this.html = m;
+this.Mosaic = Mosaic;
 export default Mosaic;

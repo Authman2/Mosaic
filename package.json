@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "parcel -p 3000 examples/portfolio/index.html --out-dir example-dist",
-    "clean": "rm -rf .cache dist example-dist",
+    "clean": "rm -rf .cache dist example-dist build",
     "build": "parcel build src/index.js",
     "build-ts": "tsc",
     "deploy": "npm publish --access=public"
@@ -26,5 +26,6 @@
   },
   "homepage": "https://mosaicjs.herokuapp.com",
   "devDependencies": {},
-  "dependencies": {}
+  "dependencies": {},
+  "types": "dist/index.d.ts"
 }

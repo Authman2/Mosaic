@@ -1,3 +1,5 @@
+import { Router } from "./router";
+
 /** The configuration options for a Mosaic component.
  * @typedef {MosaicOptions} MosaicOptions Configuration options for a Mosaic component.
  * @param {HTMLElement} element The DOM element to inject this component into.
@@ -17,20 +19,21 @@ export type MosaicOptions = {
     /** The view that will be rendered on the screen. */
     view: Function,
 
+    /** A client-side router that allows Mosaics to be used as routes. */
+    router?: Router,
+
     /** The actions that can be used on this Mosaic component. */
     actions: Object,
 
     /** The function to run when this component is created and injected into the DOM. */
-    created: Function,
+    created?: Function,
 
     /** The function to run when this component is about to update its data. */
-    willUpdate: Function,
+    willUpdate?: Function,
 
     /** The function to run after this component has been updated. */
-    updated: Function,
+    updated?: Function,
 
     /** The function that runs just before this component gets removed from the DOM. */
-    willDestroy: Function,
-
-    tid: string
+    willDestroy?: Function,
 }

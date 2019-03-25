@@ -1,4 +1,4 @@
-import Mosaic from ".";
+import Mosaic from "./index";
 
 export const marker = `{{m-${String(Math.random()).slice(2)}}}`;
 export const nodeMarker = `<!--${marker}-->`;
@@ -45,7 +45,7 @@ export const traverseValues = function(mosaic: Mosaic, action: Function, last?: 
 /** Disposes of any unused resources by Mosaics to free up space and
 * improve memory performance. */
 export const cleanUpMosaic = function(mosaic: Mosaic) {
-    mosaic.data = undefined;
+    mosaic.data = {};
     // mosaic.portfolio = undefined;
     if(mosaic.willDestroy) mosaic.willDestroy();
 }

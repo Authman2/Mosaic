@@ -1,5 +1,5 @@
 import { isPrimitive, isIterable, randomKey, isMosaic, traverseValues, cleanUpMosaic } from "./util";
-import Mosaic from ".";
+import Mosaic from "./index";
 
 // The information that goes along with Memories.
 type MemoryAttribute = {
