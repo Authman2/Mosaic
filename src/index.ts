@@ -24,8 +24,11 @@ class Mosaic {
     options: {}
     values: any[]
     injected?: Object
+<<<<<<< HEAD
     private base: Element|HTMLElement|ChildNode|Node|null = null
     private __isMosaic: boolean
+=======
+>>>>>>> 8116f758da48dc28bd82d3cd78090c081043b693
 
     /** Creates a new Mosaic component with configuration options.
     * @param {MosaicOptions} options The configuration options for this Mosaic. */
