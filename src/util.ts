@@ -13,13 +13,20 @@ export const isIterable = (value: any) => {
     return Array.isArray(value);
 };
 export const isMosaic = (value: any) => {
-    return typeof value === 'object' && value.__isMosaic;
+    if(value instanceof Mosaic) {
+        return true;
+    } else {
+        if(typeof value === 'object' && value.__isMosaic) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /** Traverses a DOM tree and performs a certain action on each node. It also
  * returns, in the callback, the steps taken to get to that node in the form
  * of a sort of linked list. */
-export const traverse = function($node: HTMLElement | ChildNode, action: Function, steps: Number[] = [0]) {
+export const traverse = function($node: Node|HTMLElement|ChildNode, action: Function, steps: number[] = [0]) {
     if(action) action($node, steps);
     let children = $node.childNodes;
     for(var i = 0; i < children.length; i++) {
@@ -54,12 +61,12 @@ function isHTMLElement(obj: any) {
 }
 
 /** Produces a random key. */
-const randomKey = function(): String {
+const randomKey = function(): string {
     return Math.random().toString(36).slice(2);
 }
 
 /** Returns a dom element from a string. */
-const getDOMfromID = function(str: String) {
+const getDOMfromID = function(str: string) {
     if(typeof str !== 'string') return null;
     if(str.substring(0, 1) === '#') {
         let id = str.substring(1);

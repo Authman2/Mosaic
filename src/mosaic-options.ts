@@ -9,7 +9,7 @@
  * @param {Function} willDestroy Called when this component is about to be destroyed. */
 export type MosaicOptions = {
     /** The HTML element to inject this Mosaic component into. */
-    element: String | HTMLElement,
+    element: string|HTMLElement,
 
     /** The state of this component. */
     data: Object,
@@ -32,5 +32,5 @@ export type MosaicOptions = {
     /** The function that runs just before this component gets removed from the DOM. */
     willDestroy: Function,
 
-    tid: String
+    tid: string
 }
