@@ -3,6 +3,8 @@ import { findInvalidOptions } from "./validations";
 import { randomKey, getDOMfromID, isHTMLElement, traverseValues } from "./util";
 import { Observable } from "./observable";
 import { Template } from "./template";
+import { Memory } from "./memory";
+import { Router } from "./router";
 
 /** A table for the templates and instances. */
 const TemplateTable = {};
@@ -12,7 +14,8 @@ const m = (strings, ...values) => new Template(strings, values);
 
 class Mosaic {
     tid: string
-    element: string|HTMLElement|null
+    iid?: string
+    element: string|HTMLElement|Element|Node|ChildNode|null
     data?: Object
     actions?: Object
     view: Function
@@ -21,14 +24,13 @@ class Mosaic {
     updated?: Function
     willDestroy?: Function
 
-    options: {}
+    options: MosaicOptions
     values: any[]
     injected?: Object
-<<<<<<< HEAD
     private base: Element|HTMLElement|ChildNode|Node|null = null
     private __isMosaic: boolean
-=======
->>>>>>> 8116f758da48dc28bd82d3cd78090c081043b693
+
+    static Router: Router
 
     /** Creates a new Mosaic component with configuration options.
     * @param {MosaicOptions} options The configuration options for this Mosaic. */
@@ -94,7 +96,7 @@ class Mosaic {
         // Create a new version of this base Mosaic. This will also cause it to
         // be repainted with the placeholders filled in.
         let instance = this.new();
-        instance.base.replaceWith(instance.element);
+        (instance.base as Element).replaceWith(instance.element as Element);
     
         // Call the created lifecycle function.
         traverseValues(instance, (mosaic, last) => {
@@ -102,15 +104,74 @@ class Mosaic {
         });
     }
 
-    
+
     /** Forces an update (repaint of the DOM) on this component. */
     repaint() {
+        // Get the old and new values so you can compare.
+        let newView = this.view(this.data, this.actions);
+        let oldValues = this.values.slice();
+        this.values = newView.values.slice();
+        
+        // Get the template for this Mosaic from the Template Table.
+        let template = TemplateTable[this.tid];
+        
+        // Go through each Memory and make changes to the node at the correct
+        // location in the DOM.
+        for(let i = 0; i < template.memories.length; i++) {
+            let mem = template.memories[i];
+            if(!(mem instanceof Memory)) continue;
+            
+            // Get the old and new values.
+            let oldVal = oldValues[i];
+            let newVal = this.values[i];
 
+            // If the memory was changed, update the node.
+            if(mem.memoryWasChanged(oldVal, newVal)) {
+                mem.commit(this, newVal);
+            }
+        }
+    }
+
+
+    /** Creates a new instance of this Mosaic and fills in the correct values
+     * for its view.
+     * @param {Object} newData Any additional data to add to this instance.
+     * @returns A new instance of this Mosaic. */
+    new(newData = {}) {
+        // Make a copy of this Mosaic.
+        let _options: MosaicOptions = this.options;
+        _options.data = Object.assign({}, this.data, newData);
+        _options.tid = this.tid;
+        
+        let copy = new Mosaic(_options);
+        copy.iid = randomKey();
+        copy.element = (this.element as Element)!.cloneNode(true);
+        copy.values = this.values.slice();
+        copy.injected = newData;
+
+        // Repaint with the new values.
+        copy.repaint();
+        return copy;
+    }
+
+
+    /** Checks if two Mosaics are equal to each other. 
+    * @param {Mosaic} other Whether or not this Mosaic is equal to another. */
+    equals(other) {
+        return (this.tid === other.tid) && (this.iid === other.iid);
+    }
+
+    /** Returns an HTML element that represents this component. */
+    toHTML() {
+        this.repaint();
+        return this.element;
     }
 
 }
 
-
+/** A basic routing solution for Mosaic apps. 
+* @param {String | HTMLElement} root The element to inject the router into. */
+Mosaic.Router = Router;
 
 
 
@@ -149,4 +210,11 @@ const attachDataProxy = function(_data) {
     return ret;
 }
 
+interface Window {
+    html: Function
+    Mosaic: Mosaic
+}
+
+window.html = m;
+window.Mosaic = Mosaic;
 export default Mosaic;

@@ -7,6 +7,7 @@
     "test": "parcel -p 3000 examples/portfolio/index.html --out-dir example-dist",
     "clean": "rm -rf .cache dist example-dist",
     "build": "parcel build src/index.js",
+    "build-ts": "tsc",
     "deploy": "npm publish --access=public"
   },
   "keywords": [
