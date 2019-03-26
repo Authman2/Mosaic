@@ -1,10 +1,11 @@
 import { MosaicOptions } from "./mosaic-options";
 import { findInvalidOptions } from "./validations";
-import { randomKey, getDOMfromID, isHTMLElement, traverseValues } from "./util";
+import { randomKey, getDOMfromID, isHTMLElement, traverseValues, isMosaic } from "./util";
 import { Observable } from "./observable";
 import { Template } from "./template";
 import { Memory } from "./memory";
 import { Router } from "./router";
+import { Portfolio } from "./portfolio";
 
 /** A table for the templates and instances. */
 const TemplateTable = {};
@@ -13,25 +14,27 @@ const TemplateTable = {};
 const m = (strings, ...values): Template => new Template(strings, values);
 
 class Mosaic {
-    tid: string
-    iid?: string
-    element: string|HTMLElement|Element|Node|ChildNode|null
-    data: Object
-    actions?: Object
-    view: Function
-    created?: Function
-    willUpdate?: Function
-    updated?: Function
-    willDestroy?: Function
-    router?: Router
+    tid: string;
+    iid?: string;
+    element: string|HTMLElement|Element|Node|ChildNode|null;
+    data: Object;
+    actions?: Object;
+    view: Function;
+    created?: Function;
+    willUpdate?: Function;
+    updated?: Function;
+    willDestroy?: Function;
+    router?: Router;
+    portfolio: Portfolio;
 
-    options: MosaicOptions
-    values: any[]
-    injected?: Object
-    __isMosaic: boolean = true
-    private base: Element|HTMLElement|ChildNode|Node|null = null
+    options: MosaicOptions;
+    values: any[];
+    injected?: Object;
+    __isMosaic: boolean = true;
+    private base: Element|HTMLElement|ChildNode|Node|null = null;
 
-    static Router: typeof Router = Router
+    static Router: typeof Router = Router;
+    static Portfolio: typeof Portfolio = Portfolio;
 
     /** Creates a new Mosaic component with configuration options.
     * @param {MosaicOptions} options The configuration options for this Mosaic. */
@@ -47,7 +50,12 @@ class Mosaic {
         this.willUpdate = options.willUpdate;
         this.updated = options.updated;
         this.willDestroy = options.willDestroy;
-        this.router = options.router
+        
+        // Setup some optional interesting properties of Mosaics. For the
+        // Portfolio, if it is not specified by default, then give it a default
+        // value.
+        this.router = options.router;
+        this.portfolio = options.portfolio || new Mosaic.Portfolio({}, () => {});
 
         // Make each array a proxy of its own then etup the data observer.
         let _data = attachArrayProxy.call(this, options.data || {});
@@ -56,15 +64,15 @@ class Mosaic {
         // Set some additional helper options.
         this.options = Object.assign({}, options);
 
-        // Create the Template, set the Parts on this Mosaic, and set the element
-        // on this Mosaic. Parts will be updated when we create instances with new.
+        // Create the Template, set the Memories on this Mosaic, and set the element
+        // on this Mosaic. Memories will be updated when we create instances with new.
         // - By deleting the Mosaics that exist in the Template at initialization,
         // you can ensure that the diffing algo in Memory does not need to have an
         // extra edge case, yet also does not mistakenly update Mosaics.
         let template = this.view(this.data, this.actions);
         this.values = template.values.slice();
         this.values.forEach((val, index) => {
-            if(typeof val === 'object' && val.__isMosaic) this.values[index] = undefined;
+            if(isMosaic(val)) this.values[index] = undefined;
             else if(typeof val === 'number') this.values[index] = ''+val;
         });
 
@@ -85,7 +93,6 @@ class Mosaic {
         return this;
     }
 
-
     /** "Paints" the Mosaic onto the page by injecting it into its base element. */
     paint() {
         if(!this.base || !isHTMLElement(this.base)) {
@@ -100,11 +107,15 @@ class Mosaic {
         (instance.base as Element).replaceWith(instance.element as Element);
     
         // Call the created lifecycle function.
-        traverseValues(instance, (mosaic, last) => {
-            if(mosaic.created) mosaic.created();
+        instance.portfolio.clear();
+        traverseValues(instance, (child: Mosaic, parent: Mosaic) => {
+            child.portfolio = instance.portfolio;
+            instance.portfolio.addDependency(child);
+
+            child.repaint();
+            if(child.created) child.created();
         });
     }
-
 
     /** Forces an update (repaint of the DOM) on this component. */
     repaint() {
@@ -112,16 +123,15 @@ class Mosaic {
         let newView = this.view(this.data, this.actions);
         let oldValues = this.values.slice();
         this.values = newView.values.slice();
-        
+
         // Get the template for this Mosaic from the Template Table.
         let template = TemplateTable[this.tid];
         
         // Go through each Memory and make changes to the node at the correct
         // location in the DOM.
         for(let i = 0; i < template.memories.length; i++) {
-            let mem = template.memories[i];
-            if(!(mem instanceof Memory)) continue;
-            
+            let mem: Memory = template.memories[i];
+                        
             // Get the old and new values.
             let oldVal = oldValues[i];
             let newVal = this.values[i];
@@ -133,11 +143,10 @@ class Mosaic {
         }
     }
 
-
     /** Creates a new instance of this Mosaic and fills in the correct values
-     * for its view.
-     * @param {Object} newData Any additional data to add to this instance.
-     * @returns A new instance of this Mosaic. */
+    * for its view.
+    * @param {Object} newData Any additional data to add to this instance.
+    * @returns A new instance of this Mosaic. */
     new(newData: Object = {}): Mosaic {
         // Make a copy of this Mosaic.
         let _options = Object.assign({}, this.options);
@@ -154,7 +163,6 @@ class Mosaic {
         copy.repaint();
         return copy;
     }
-
 
     /** Checks if two Mosaics are equal to each other. 
     * @param {Mosaic} other Whether or not this Mosaic is equal to another. */

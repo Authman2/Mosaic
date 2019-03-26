@@ -2,14 +2,10 @@ import { isPrimitive, isIterable, randomKey, isMosaic, traverseValues, cleanUpMo
 import Mosaic from "./index";
 
 // The information that goes along with Memories.
-type MemoryAttribute = {
-    attributeName: string,
-    attributeValue: string
-}
 type MemoryOptions = {
     type: string,
     steps: number[],
-    attribute?: MemoryAttribute,
+    attribute?: { attributeName: string, attributeValue: string },
     event?: string
 }
 
@@ -48,6 +44,14 @@ export class Memory {
         if(!oldValue) {
             return true;
         }
+
+        // If the old and new are both Mosaics, regardless of whether or not
+        // they are of the same Template, make sure they have the same iid.
+        // This is because at this point you know that they are still in the
+        // same spot in the html, so it's technically still the same component.
+        if(isMosaic(oldValue) && isMosaic(newValue)) {
+            newValue.iid = oldValue.iid;
+        }
         
         // This basically checks the type that is being injected.
         if(isPrimitive(newValue) && oldValue !== newValue) {
@@ -77,7 +81,9 @@ export class Memory {
                     // Destroy the old component.
                     // Create the new component and its children.
                     cleanUpMosaic(oldValue as Mosaic);
-                    traverseValues(oldValue, (mosaic: Mosaic, last: Mosaic) => { if(mosaic.created) mosaic.created(); });
+                    traverseValues(oldValue, (child: Mosaic, parent: Mosaic) => {
+                        if(child.created) child.created();
+                    });
                     return true;
                 }
                 
@@ -135,7 +141,7 @@ export class Memory {
         if(Array.isArray(value)) {
             this.commitArray(child, value);
         }
-        else if(typeof value === 'object' && value.__isMosaic === true) {
+        else if(isMosaic(value)) {
             value.parent = mosaic;
             child.replaceWith(value.element);
         }
@@ -161,7 +167,7 @@ export class Memory {
         // new array.
         let holder = document.createElement('div');
         for(let i = 0; i < value.length; i++) {
-            if(typeof value[i] === 'object' && value[i].__isMosaic === true) {
+            if(isMosaic(value[i])) {
                 holder.appendChild(value[i].element);
                 if(value[i].created) value[i].created();
             } else {
@@ -173,7 +179,7 @@ export class Memory {
 
     /** Commits the changes for "attribute" types. */
     commitAttribute(mosaic: Mosaic, child: HTMLElement|ChildNode, value: any) {
-        let name: string = (this.attribute as MemoryAttribute).attributeName;
+        let name: string = (this.attribute as any).attributeName;
         (child as Element).setAttribute(name, value);
     }
 

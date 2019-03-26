@@ -20,6 +20,7 @@ export class Router {
             if(route) {
                 let instance = route.new();
                 instance.router = this;
+                instance.repaint();
                 (this.base as ChildNode).replaceWith(instance.element);
                 this.base = instance.element;
             }
@@ -35,6 +36,7 @@ export class Router {
         let route = this.routes[this.currentRoute];
         let instance = route.new();
         instance.router = this;
+        instance.repaint();
         (this.base as ChildNode).replaceWith(instance.element);
         this.base = instance.element;
     }
