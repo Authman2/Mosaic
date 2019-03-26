@@ -1,11 +1,9 @@
 import Mosaic from './index';
 import { getDOMfromID } from './util';
 
-export interface MosaicRouter {}
-
 /** A basic routing solution for Mosaic apps. 
 * @param {String | HTMLElement} root The element to inject the router into. */
-export class Router implements MosaicRouter {
+export class Router {
     currentRoute: string
     routes: Object
     base: Node|Element|HTMLElement|ChildNode|null

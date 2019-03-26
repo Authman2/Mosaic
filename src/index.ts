@@ -4,7 +4,7 @@ import { randomKey, getDOMfromID, isHTMLElement, traverseValues } from "./util";
 import { Observable } from "./observable";
 import { Template } from "./template";
 import { Memory } from "./memory";
-import { Router, MosaicRouter } from "./router";
+import { Router } from "./router";
 
 /** A table for the templates and instances. */
 const TemplateTable = {};
@@ -28,10 +28,10 @@ class Mosaic {
     options: MosaicOptions
     values: any[]
     injected?: Object
-    __isMosaic: boolean
+    __isMosaic: boolean = true
     private base: Element|HTMLElement|ChildNode|Node|null = null
 
-    static Router: MosaicRouter
+    static Router: typeof Router = Router
 
     /** Creates a new Mosaic component with configuration options.
     * @param {MosaicOptions} options The configuration options for this Mosaic. */
@@ -55,7 +55,6 @@ class Mosaic {
 
         // Set some additional helper options.
         this.options = Object.assign({}, options);
-        this.__isMosaic = true;
 
         // Create the Template, set the Parts on this Mosaic, and set the element
         // on this Mosaic. Parts will be updated when we create instances with new.
@@ -139,7 +138,7 @@ class Mosaic {
      * for its view.
      * @param {Object} newData Any additional data to add to this instance.
      * @returns A new instance of this Mosaic. */
-    new(newData = {}) {
+    new(newData: Object = {}): Mosaic {
         // Make a copy of this Mosaic.
         let _options = Object.assign({}, this.options);
         _options.data = Object.assign({}, this.data, newData);
@@ -159,21 +158,17 @@ class Mosaic {
 
     /** Checks if two Mosaics are equal to each other. 
     * @param {Mosaic} other Whether or not this Mosaic is equal to another. */
-    equals(other) {
+    equals(other: Mosaic): boolean {
         return (this.tid === other.tid) && (this.iid === other.iid);
     }
 
     /** Returns an HTML element that represents this component. */
-    toHTML() {
+    toHTML(): Element {
         this.repaint();
-        return this.element;
+        return (this.element as Element);
     }
 
 }
-
-/** A basic routing solution for Mosaic apps. 
-* @param {String | HTMLElement} root The element to inject the router into. */
-Mosaic.Router = Router;
 
 
 

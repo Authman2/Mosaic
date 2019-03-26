@@ -4,3 +4,4 @@ example-dist/
 ts-build/
 package-lock.json
 example/
+.DS_Store
