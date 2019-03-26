@@ -2,7 +2,7 @@ import Mosaic from '../../dist/index';
 
 const portfolio = new Mosaic.Portfolio({
     age: 21
-}, (event, data, newData) => {
+}, function(event, data, newData) {
     if(event === 'age') {
         data.age += 1;
     }
@@ -12,8 +12,8 @@ const Child2 = new Mosaic({
     created() {
         console.log('Child 2, there should be two of these: ', this);
         setInterval(() => {
-            this.portfolio.dispatch('age');
-            console.log(this.portfolio);
+            this.portfolio.dispatch(this, 'age');
+            // console.log(this.portfolio);
         }, 2000);
     },
     view: function() {

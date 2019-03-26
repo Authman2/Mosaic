@@ -31,6 +31,7 @@ class Mosaic {
     values: any[];
     injected?: Object;
     __isMosaic: boolean = true;
+    __isMosaicBase: boolean = true;
     private base: Element|HTMLElement|ChildNode|Node|null = null;
 
     static Router: typeof Router = Router;
@@ -109,9 +110,16 @@ class Mosaic {
         // Call the created lifecycle function.
         instance.portfolio.clear();
         traverseValues(instance, (child: Mosaic, parent: Mosaic) => {
+            // let template: Template = TemplateTable[child.tid];
+
             child.portfolio = instance.portfolio;
             instance.portfolio.addDependency(child);
 
+            // if(template.shouldPortfolioUpdate === true) {
+            //     (child as any).shouldPortfolioUpdate = true;
+            //     template.shouldPortfolioUpdate = false;
+            // }
+            
             child.repaint();
             if(child.created) child.created();
         });
@@ -158,6 +166,7 @@ class Mosaic {
         copy.element = (this.element as Element)!.cloneNode(true);
         copy.values = this.values.slice();
         copy.injected = newData;
+        delete copy.__isMosaicBase;
 
         // Repaint with the new values.
         copy.repaint();

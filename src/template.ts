@@ -8,6 +8,7 @@ export class Template {
     element: HTMLTemplateElement
     values?: any[]
     memories: Object[]
+    shouldPortfolioUpdate: boolean = true;
 
     /** A reusable Template for each Mosaic. When you make different instances of a
     * Mosaic, it will look at the already existing template for it. */
