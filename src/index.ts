@@ -212,7 +212,12 @@ const attachDataProxy = function(_data: Object) {
     return ret;
 }
 
-this.Mosaic = Mosaic; // <--- This line needs to be here for some reason.
-(window as any).html = m;
-(window as any).Mosaic = Mosaic;
+declare global {
+    interface Window {
+        html: any;
+        Mosaic: any;
+    }
+}
+window.html = m;
+window.Mosaic = Mosaic;
 export default Mosaic;

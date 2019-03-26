@@ -1,4 +1,4 @@
-import Mosaic from '../../src/index';
+import Mosaic from '../../dist/index';
 
 const portfolio = new Mosaic.Portfolio({
     age: 21

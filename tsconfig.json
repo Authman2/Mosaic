@@ -1,9 +1,9 @@
 {
     "compilerOptions": {
         "target": "es6",
-        "module": "amd",
-        "outFile": "dist/index.js",
-        "typeRoots": ["dist/"],
+        "module": "commonjs",
+        "outDir": "ts-build/",
+        "typeRoots": ["ts-build/"],
         "removeComments": true,
         "declaration": true,
         "strict": true,
