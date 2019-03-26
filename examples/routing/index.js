@@ -1,4 +1,4 @@
-import Mosaic from '../../src/index';
+import Mosaic from '../../dist/index';
 import { Home, About, Contact } from './routes';
 
 // 1.) Initialize the router.

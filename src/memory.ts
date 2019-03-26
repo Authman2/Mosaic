@@ -1,10 +1,31 @@
 import { isPrimitive, isIterable, randomKey, isMosaic, traverseValues, cleanUpMosaic } from "./util";
+import Mosaic from "./index";
+
+// The information that goes along with Memories.
+type MemoryAttribute = {
+    attributeName: string,
+    attributeValue: string
+}
+type MemoryOptions = {
+    type: string,
+    steps: number[],
+    attribute?: MemoryAttribute,
+    event?: string
+}
 
 /** A Memory is used to remember where in the DOM tree a change will occur.
 * In other words, it keeps track of dynamic parts of a component. Later on,
 * you can traverse the Memories contained in a Template to figure out what
 * changed and what nodes need to be updated. */
 export class Memory {
+    type: string
+    steps: number[]
+    attribute?: Object
+    event?: string
+    private oldArray?: any
+    static NODE_TYPE: string
+    static ATTRIBUTE_TYPE: string
+    static EVENT_TYPE: string
 
     /** Defines a "Memory" object that is used to remember the location of
     * a DOM node that is or contains dynamic content.
@@ -13,17 +34,17 @@ export class Memory {
     * @param {String} attribute For attribute types, the name and value
     * of the DOM attribute.
     * @param {String} event For event types, the name of the event handler. */
-    constructor({ type, steps, attribute, event }) {
-        this.type = type;
-        this.steps = steps;
-        this.attribute = attribute;
-        this.event = event;
+    constructor(options: MemoryOptions) {
+        this.type = options.type;
+        this.steps = options.steps;
+        this.attribute = options.attribute;
+        this.event = options.event;
     }
 
     /** Checks if the old value is different to the new value.
     * @param {Any} oldValue The old value.
     * @param {Any} newValue The new value. */
-    memoryWasChanged(oldValue, newValue) {
+    memoryWasChanged(oldValue: any, newValue: any) {
         if(!oldValue) {
             return true;
         }
@@ -47,23 +68,23 @@ export class Memory {
             // - When the data changes between components
             if(isMosaic(oldValue)) {
                 if(!newValue) {
-                    cleanUpMosaic.call(oldValue);
+                    cleanUpMosaic(oldValue as Mosaic);
                     return true;
                 } else if(typeof newValue !== 'object' || !newValue.__isMosaic) {
-                    cleanUpMosaic.call(oldValue);
+                    cleanUpMosaic(oldValue as Mosaic);
                     return true;
                 } else if(newValue.tid !== oldValue.tid) {
                     // Destroy the old component.
                     // Create the new component and its children.
-                    cleanUpMosaic.call(oldValue);
-                    traverseValues(oldValue, (mosaic, last) => { if(mosaic.created) mosaic.created(); });
+                    cleanUpMosaic(oldValue as Mosaic);
+                    traverseValues(oldValue, (mosaic: Mosaic, last: Mosaic) => { if(mosaic.created) mosaic.created(); });
                     return true;
                 }
                 
-                let oldData = JSON.stringify(Object.assign({}, oldValue.injected));
-                let newData = JSON.stringify(Object.assign({}, newValue.injected));
+                let oldData = JSON.stringify({ ...(oldValue as Mosaic).injected });
+                let newData = JSON.stringify({ ...(newValue as Mosaic).injected });
                 if(oldData !== newData) {
-                    cleanUpMosaic.call(oldValue);
+                    cleanUpMosaic(oldValue as Mosaic);
                     return true;
                 }
                 return false;
@@ -75,7 +96,7 @@ export class Memory {
                 let _new = '' + newValue.element;
                 return old !== _new;
             }
-            else if(!Object.is(oldValue, newValue)) return true;
+            else if(JSON.stringify(oldValue) !== JSON.stringify(newValue)) return true;
             else return false;
         }
         return false;
@@ -84,13 +105,13 @@ export class Memory {
     /** Does the work of actually committing necessary changes to the DOM.
     * @param {Mosaic} mosaic The Mosaic component for event binding.
     * @param {Any} value The value to set on this Memory. */
-    commit(mosaic, value) {
+    commit(mosaic: Mosaic, value: any) {
         // Get the element and find the child node that is being referenced by this Memory.
-        let element = mosaic.element;
+        let element = mosaic.element as HTMLElement|Element|ChildNode;
         let child = element;
         // Start from 2 because the first two indices are used for document-fragment and the node itself.
         for(let i = 2; i < this.steps.length; i++) {
-            let nextStep = this.steps[i];
+            let nextStep: number = this.steps[i];
             child = child.childNodes[nextStep];
         }
 
@@ -110,7 +131,7 @@ export class Memory {
     */
 
     /** Commits the changes for "node" types. */
-    commitNode(mosaic, child, value) {
+    commitNode(mosaic: Mosaic, child: HTMLElement | ChildNode, value: any) {
         if(Array.isArray(value)) {
             this.commitArray(child, value);
         }
@@ -128,7 +149,7 @@ export class Memory {
     }
 
     /** Commits the changes for "node" types where the value is an array. */
-    commitArray(child, value) {
+    commitArray(child: HTMLElement | ChildNode, value: any) {
         // NOTE: Now you have a reference to the old array and the new array.
         // Find a way to determine what changed between the two, i.e. which
         // ones were added, which ones were removed.
@@ -151,28 +172,29 @@ export class Memory {
     }
 
     /** Commits the changes for "attribute" types. */
-    commitAttribute(mosaic, child, value) {
-        let name = this.attribute.attributeName;
-        child.setAttribute(name, value);
+    commitAttribute(mosaic: Mosaic, child: HTMLElement|ChildNode, value: any) {
+        let name: string = (this.attribute as MemoryAttribute).attributeName;
+        (child as Element).setAttribute(name, value);
     }
 
     /** Commits the changes for "event" types. Currently does not support
      * dynamically changing function attributes. */
-    commitEvent(mosaic, child, value) {
-        let name = this.attribute.attributeName;
+    commitEvent(mosaic: Mosaic, child: HTMLElement|ChildNode, value: any) {
+        let name: string = this.event || "";
 
-        let eventHandlers = child.eventHandlers || {};
+        let eventHandlers = (child as any).eventHandlers || {};
         if(eventHandlers[name]) {
             child.removeEventListener(name.substring(2), eventHandlers[name]);
         }
         eventHandlers[name] = value.bind(mosaic);
 
-        child.eventHandlers = eventHandlers;
-        child.addEventListener(name.substring(2), child.eventHandlers[name]);
-        child.removeAttribute(name);
+        (child as any).eventHandlers = eventHandlers;
+        child.addEventListener(name.substring(2), (child as any).eventHandlers[name]);
+        (child as Element).removeAttribute(name);
     }
 }
 
-Memory.NODE_TYPE = 'node';
-Memory.ATTRIBUTE_TYPE = 'attribute';
-Memory.EVENT_TYPE = 'event';
+// The types of Memories.
+Memory.NODE_TYPE = "node";
+Memory.ATTRIBUTE_TYPE = "attribute";
+Memory.EVENT_TYPE = "event";

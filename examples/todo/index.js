@@ -1,4 +1,4 @@
-import Mosaic from '../../src/index';
+import Mosaic from '../../dist/index';
 
 const TodoItem = new Mosaic({
     view: function() {

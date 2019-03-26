@@ -1,20 +1,23 @@
-import { marker, nodeMarker, markerRegex, lastAttributeNameRegex, traverse } from './util';
-import { Memory } from './memory';
-
+import { lastAttributeNameRegex, marker, nodeMarker, traverse } from "./util";
+import { Memory } from "./memory";
 
 /** A reusable Template for each Mosaic. When you make different instances of a
 * Mosaic, it will look at the already existing template for it. */
 export class Template {
+    strings: string[]
+    element: HTMLTemplateElement
+    values?: any[]
+    memories: Object[]
 
-    /** Uses the tagged template string to construct a Template. */
-    constructor(strings, ...values) {
+    /** A reusable Template for each Mosaic. When you make different instances of a
+    * Mosaic, it will look at the already existing template for it. */
+    constructor(strings: string[], ...values: any[]) {
         this.strings = strings.map(str => {
             let ret = str.trim();
             if(str.startsWith(' ')) ret = ' ' + ret;
             if(str.endsWith(' ')) ret += ' ';
             return ret;
         });
-        this.__isTemplate = true;
         this.element = this.createTemplate();
         this.values = values[0];
         this.memories = this.memorize();
@@ -51,7 +54,7 @@ export class Template {
     memorize() {
         const fragment = this.element.content.cloneNode(true);
         
-        let ret = [];
+        let ret: Memory[] = [];
         traverse(fragment, (node, steps) => {
             if(node.nodeType === 3) return;
             // console.log(node, steps);
@@ -68,30 +71,34 @@ export class Template {
                         let attributeValue = attrs[i].value;
                         if(attributeValue.indexOf(marker) < 0) continue;
                         
-                        ret.push(new Memory({
+                        let mem = new Memory({
                             type: attributeName.startsWith('on') ? Memory.EVENT_TYPE : Memory.ATTRIBUTE_TYPE,
                             steps,
                             attribute: {
                                 attributeName,
                                 attributeValue
-                            }
-                        }))
+                            },
+                            event: attributeName
+                        });
+                        ret.push(mem);
                     }
                     break;
                 case 8:
                     if(!(node instanceof Comment)) break;
                     if(node.data === marker) {
-                        ret.push(new Memory({
+                        let mem = new Memory({
                             type: Memory.NODE_TYPE,
-                            steps
-                        }));
+                            steps,
+                        });
+                        ret.push(mem);
                     } else {
                         let i = -1;
                         while((i = node.data.indexOf(marker, i + 1)) !== -1) {
-                            ret.push(new Memory({
+                            let mem = new Memory({
                                 type: Memory.NODE_TYPE,
-                                steps
-                            }));
+                                steps,
+                            });
+                            ret.push(mem);
                         }
                     }
                     break;
