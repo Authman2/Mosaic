@@ -5,10 +5,9 @@ import { Observable } from "./observable";
 import { Template } from "./template";
 import { Memory } from "./memory";
 import { Router } from "./router";
-import { Portfolio } from "./portfolio";
 
 /** A table for the templates and instances. */
-const TemplateTable = {};
+export const TemplateTable = {};
 
 /** The equivalent of the 'html' tagged function. */
 const m = (strings, ...values): Template => new Template(strings, values);
@@ -25,17 +24,15 @@ class Mosaic {
     updated?: Function;
     willDestroy?: Function;
     router?: Router;
-    portfolio: Portfolio;
 
     options: MosaicOptions;
     values: any[];
+    mosaicsFirstRendered: boolean[];
     injected?: Object;
     __isMosaic: boolean = true;
-    __isMosaicBase: boolean = true;
     private base: Element|HTMLElement|ChildNode|Node|null = null;
 
     static Router: typeof Router = Router;
-    static Portfolio: typeof Portfolio = Portfolio;
 
     /** Creates a new Mosaic component with configuration options.
     * @param {MosaicOptions} options The configuration options for this Mosaic. */
@@ -56,7 +53,6 @@ class Mosaic {
         // Portfolio, if it is not specified by default, then give it a default
         // value.
         this.router = options.router;
-        this.portfolio = options.portfolio || new Mosaic.Portfolio({}, () => {});
 
         // Make each array a proxy of its own then etup the data observer.
         let _data = attachArrayProxy.call(this, options.data || {});
@@ -72,9 +68,9 @@ class Mosaic {
         // extra edge case, yet also does not mistakenly update Mosaics.
         let template = this.view(this.data, this.actions);
         this.values = template.values.slice();
+        this.mosaicsFirstRendered = new Array(this.values.length).fill(false);
         this.values.forEach((val, index) => {
-            if(isMosaic(val)) this.values[index] = undefined;
-            else if(typeof val === 'number') this.values[index] = ''+val;
+            if(typeof val === 'number') this.values[index] = ''+val;
         });
 
         if(!(this.tid in TemplateTable)) {
@@ -105,22 +101,11 @@ class Mosaic {
         // Create a new version of this base Mosaic. This will also cause it to
         // be repainted with the placeholders filled in.
         let instance = this.new();
+        (instance as any).__isEntry = true; // This might come in handy later?
         (instance.base as Element).replaceWith(instance.element as Element);
     
         // Call the created lifecycle function.
-        instance.portfolio.clear();
         traverseValues(instance, (child: Mosaic, parent: Mosaic) => {
-            // let template: Template = TemplateTable[child.tid];
-
-            child.portfolio = instance.portfolio;
-            instance.portfolio.addDependency(child);
-
-            // if(template.shouldPortfolioUpdate === true) {
-            //     (child as any).shouldPortfolioUpdate = true;
-            //     template.shouldPortfolioUpdate = false;
-            // }
-            
-            child.repaint();
             if(child.created) child.created();
         });
     }
@@ -140,15 +125,24 @@ class Mosaic {
         for(let i = 0; i < template.memories.length; i++) {
             let mem: Memory = template.memories[i];
                         
-            // Get the old and new values.
+            // Get the old and new values. Also, for Mosaics, send over
+            // the indicator of whether or not it has been initially rendered.
             let oldVal = oldValues[i];
             let newVal = this.values[i];
+            let initiallyRendered = this.mosaicsFirstRendered ? this.mosaicsFirstRendered[i] : true;
 
             // If the memory was changed, update the node.
-            if(mem.memoryWasChanged(oldVal, newVal)) {
+            if(mem.memoryWasChanged(oldVal, newVal, initiallyRendered)) {
                 mem.commit(this, newVal);
             }
+
+            // Update initially rendered.
+            if(isMosaic(oldVal) && initiallyRendered === false) {
+                this.mosaicsFirstRendered[i] = true;
+            }
         }
+
+        delete this.mosaicsFirstRendered;
     }
 
     /** Creates a new instance of this Mosaic and fills in the correct values
@@ -166,7 +160,6 @@ class Mosaic {
         copy.element = (this.element as Element)!.cloneNode(true);
         copy.values = this.values.slice();
         copy.injected = newData;
-        delete copy.__isMosaicBase;
 
         // Repaint with the new values.
         copy.repaint();

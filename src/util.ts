@@ -46,7 +46,6 @@ export const traverseValues = function(mosaic: Mosaic, action: Function, last?: 
 * improve memory performance. */
 export const cleanUpMosaic = function(mosaic: Mosaic) {
     mosaic.data = {};
-    // mosaic.portfolio = undefined;
     if(mosaic.willDestroy) mosaic.willDestroy();
 }
 

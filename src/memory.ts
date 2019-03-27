@@ -18,7 +18,10 @@ export class Memory {
     steps: number[]
     attribute?: Object
     event?: string
+
     private oldArray?: any
+    private holdAbsolute?: Mosaic
+
     static NODE_TYPE: string
     static ATTRIBUTE_TYPE: string
     static EVENT_TYPE: string
@@ -40,7 +43,7 @@ export class Memory {
     /** Checks if the old value is different to the new value.
     * @param {Any} oldValue The old value.
     * @param {Any} newValue The new value. */
-    memoryWasChanged(oldValue: any, newValue: any) {
+    memoryWasChanged(oldValue: any, newValue: any, initiallyRendered: boolean) {
         if(!oldValue) {
             return true;
         }
@@ -87,12 +90,20 @@ export class Memory {
                     return true;
                 }
                 
+                // Last thing to check is if the injected data changed.
                 let oldData = JSON.stringify({ ...(oldValue as Mosaic).injected });
                 let newData = JSON.stringify({ ...(newValue as Mosaic).injected });
                 if(oldData !== newData) {
                     cleanUpMosaic(oldValue as Mosaic);
                     return true;
                 }
+
+                // If it hasn't been rendered yet, render it the first time.
+                // Resetting the value will happen in the index file.
+                if(initiallyRendered === false) {
+                    return true;
+                }
+                if(''+oldValue.values !== ''+newValue.values) return true;
                 return false;
             }
             // If the value to be injected is a template, just make a clone of
@@ -150,6 +161,8 @@ export class Memory {
             child.replaceWith(cloned);
         }
         else {
+            // console.log('Replacing inside: ', mosaic);
+            // console.log('Child in the DOM?: ', document.contains(child));
             child.replaceWith(value);
         }
     }
