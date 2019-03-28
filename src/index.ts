@@ -5,6 +5,7 @@ import { Observable } from "./observable";
 import { Template } from "./template";
 import { Memory } from "./memory";
 import { Router } from "./router";
+import { Portfolio } from "./portfolio";
 
 /** A table for the templates and instances. */
 export const TemplateTable = {};
@@ -24,6 +25,7 @@ class Mosaic {
     updated?: Function;
     willDestroy?: Function;
     router?: Router;
+    portfolio?: Portfolio;
 
     options: MosaicOptions;
     values: any[];
@@ -33,6 +35,7 @@ class Mosaic {
     private base: Element|HTMLElement|ChildNode|Node|null = null;
 
     static Router: typeof Router = Router;
+    static Portfolio: typeof Portfolio = Portfolio;
 
     /** Creates a new Mosaic component with configuration options.
     * @param {MosaicOptions} options The configuration options for this Mosaic. */
@@ -53,6 +56,7 @@ class Mosaic {
         // Portfolio, if it is not specified by default, then give it a default
         // value.
         this.router = options.router;
+        this.portfolio = options.portfolio;
 
         // Make each array a proxy of its own then etup the data observer.
         let _data = attachArrayProxy.call(this, options.data || {});
@@ -70,6 +74,11 @@ class Mosaic {
         this.values = template.values.slice();
         this.mosaicsFirstRendered = new Array(this.values.length).fill(false);
         this.values.forEach((val, index) => {
+            if(isMosaic(val)) {
+                if(this.portfolio) {
+                    val.portfolio = this.portfolio;
+                }
+            }
             if(typeof val === 'number') this.values[index] = ''+val;
         });
 
@@ -116,7 +125,7 @@ class Mosaic {
         let newView = this.view(this.data, this.actions);
         let oldValues = this.values.slice();
         this.values = newView.values.slice();
-
+        
         // Get the template for this Mosaic from the Template Table.
         let template = TemplateTable[this.tid];
         
@@ -130,6 +139,19 @@ class Mosaic {
             let oldVal = oldValues[i];
             let newVal = this.values[i];
             let initiallyRendered = this.mosaicsFirstRendered ? this.mosaicsFirstRendered[i] : true;
+
+            // Add a Portfolio dependency. KEEP WORKIGN WITH THIS HERE. FIND A WAY TO REMOVE. TRY A MAP AGAIN.
+            if(isMosaic(oldVal)) {
+                if(oldVal.portfolio) {
+                    // console.log('OLD PORT: ', oldVal);
+                }
+            }
+            if(isMosaic(newVal)) {
+                if(newVal.portfolio) {
+                    (newVal as Mosaic).portfolio!!.addDependency(newVal);
+                    // console.log('NEW PORT: ', newVal);
+                }
+            }
 
             // If the memory was changed, update the node.
             if(mem.memoryWasChanged(oldVal, newVal, initiallyRendered)) {

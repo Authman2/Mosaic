@@ -47,14 +47,6 @@ export class Memory {
         if(!oldValue) {
             return true;
         }
-
-        // If the old and new are both Mosaics, regardless of whether or not
-        // they are of the same Template, make sure they have the same iid.
-        // This is because at this point you know that they are still in the
-        // same spot in the html, so it's technically still the same component.
-        if(isMosaic(oldValue) && isMosaic(newValue)) {
-            newValue.iid = oldValue.iid;
-        }
         
         // This basically checks the type that is being injected.
         if(isPrimitive(newValue) && oldValue !== newValue) {
@@ -103,7 +95,13 @@ export class Memory {
                 if(initiallyRendered === false) {
                     return true;
                 }
-                if(''+oldValue.values !== ''+newValue.values) return true;
+                if(''+oldValue.values !== ''+newValue.values) {
+                    return true;
+                }
+
+                // Here you know that they are the same Mosaic and it is not
+                // changing, so just keep the same instance id.
+                newValue.iid = oldValue.iid;
                 return false;
             }
             // If the value to be injected is a template, just make a clone of

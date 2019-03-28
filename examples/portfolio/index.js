@@ -1,9 +1,19 @@
 import Mosaic from '../../src/index';
 
+const portfolio = new Mosaic.Portfolio({
+    age: 21
+}, (event, data, options) => {
+    if(event === 'age') {
+        data.age += 1;
+    }
+});
+
 const Child2 = new Mosaic({
+    portfolio,
     actions: {
         celebrate() {
-            
+            this.portfolio.dispatch('age');
+            console.log(this.portfolio);
         }
     },
     created() {
@@ -11,14 +21,15 @@ const Child2 = new Mosaic({
     },
     view: function() {
         return html`<div>
-            <h1>Child 2: ${this.data.name}</h1>
-            <h4>Two Val: </h4>
+            <h1>Child 2: </h1>
+            <h4>Two Val: ${this.portfolio.get('age')}</h4>
             <button onclick='${this.actions.celebrate}'>Click to age!</button>
         </div>`
     }
 });
 
 const Child1 = new Mosaic({
+    portfolio,
     view: function() {
         return html`<div>
             <h1>This is Child 1</h1>
@@ -30,6 +41,7 @@ const Child1 = new Mosaic({
 
 const Parent = new Mosaic({
     element: 'root',
+    portfolio,
     data: {
         age: false,
         count: 0,
