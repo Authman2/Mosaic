@@ -140,16 +140,18 @@ class Mosaic {
             let newVal = this.values[i];
             let initiallyRendered = this.mosaicsFirstRendered ? this.mosaicsFirstRendered[i] : true;
 
-            // Add a Portfolio dependency. KEEP WORKIGN WITH THIS HERE. FIND A WAY TO REMOVE. TRY A MAP AGAIN.
-            if(isMosaic(oldVal)) {
-                if(oldVal.portfolio) {
-                    // console.log('OLD PORT: ', oldVal);
-                }
-            }
+            // Add a Portfolio dependency here, but also remember to remove old
+            // dependencies if they exist.
             if(isMosaic(newVal)) {
+                // If you're using the portfolio, add the new one and remove the old one.
                 if(newVal.portfolio) {
-                    (newVal as Mosaic).portfolio!!.addDependency(newVal);
-                    // console.log('NEW PORT: ', newVal);
+                    if(isMosaic(oldVal) && oldVal.portfolio) {
+                        if((oldVal as Mosaic).portfolio!!.dependencies.has(oldVal.iid)) {
+                            (oldVal as Mosaic).portfolio!!.removeDependency(oldVal);
+                        } else {
+                            (newVal as Mosaic).portfolio!!.addDependency(newVal);
+                        }
+                    }
                 }
             }
 

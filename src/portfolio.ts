@@ -16,7 +16,7 @@ export class Portfolio {
 
     /** Returns the specified property value given the name.
     * @param {String} name The name of the property to look for. */
-    get(name) {
+    get(name: string) {
         return this.data[name];
     }
 
@@ -24,6 +24,11 @@ export class Portfolio {
         // this.dependencies.push(mosaic);
         if(!mosaic.iid) return;
         this.dependencies.set(mosaic.iid!!, mosaic);
+    }
+
+    removeDependency(mosaic: Mosaic) {
+        if(!mosaic.iid) return;
+        this.dependencies.delete(mosaic.iid!!);
     }
 
     /** Sets a data property of this Portfolio.

@@ -35,6 +35,7 @@ const Child1 = new Mosaic({
             <h1>This is Child 1</h1>
             <h3>Value: </h3>
             ${ Child2.new() }
+            ${ Child2.new() }
         </div>`
     }
 });
@@ -46,11 +47,16 @@ const Parent = new Mosaic({
         age: false,
         count: 0,
     },
+    created() {
+        setInterval(() => {
+            this.data.age = !this.data.age;
+        }, 5000);
+    },
     view: function() {
         return html`<div>
-            ${ Child1.new() }
+            ${ this.data.age ? Child1.new() : Child2.new() }
             <hr><hr><hr><hr>
-            ${ Child1.new() }
+            ${ this.data.age ? Child1.new() : Child2.new() }
         </div>`
     }
 });
