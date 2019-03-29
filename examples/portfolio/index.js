@@ -9,7 +9,9 @@ const portfolio = new Mosaic.Portfolio({
             data.age += 1;
             break;
         case 'celebrate':
-            data.message = 'Happy birthday!!';
+            // data.message = 'Happy birthday!!';
+            data.message = `${data.age}`;
+            console.log(data.message);
             break;
         default: break;
     }
@@ -19,7 +21,10 @@ const portfolio = new Mosaic.Portfolio({
 const BirthdayBoy = new Mosaic({
     portfolio,
     created() {
-
+        setInterval(() => {
+            this.portfolio.dispatch(['get-older', 'celebrate']);
+            console.log(this.portfolio);
+        }, 5000);
     },
     view() {
         return html`<div>

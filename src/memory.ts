@@ -20,7 +20,6 @@ export class Memory {
     event?: string
 
     private oldArray?: any
-    private holdAbsolute?: Mosaic
 
     static NODE_TYPE: string
     static ATTRIBUTE_TYPE: string
@@ -44,13 +43,14 @@ export class Memory {
     * @param {Any} oldValue The old value.
     * @param {Any} newValue The new value. */
     memoryWasChanged(oldValue: any, newValue: any, initiallyRendered: boolean) {
-        if(!oldValue) {
+        if(!oldValue || initiallyRendered === false) {
             return true;
         }
-        
+
         // This basically checks the type that is being injected.
-        if(isPrimitive(newValue) && oldValue !== newValue) {
-            return true;
+        if(isPrimitive(newValue)) {
+            console.log(oldValue, newValue);
+            return oldValue !== newValue;
         }
         else if(typeof newValue === 'function') {
             return ('' + oldValue) === ('' + newValue);
@@ -90,12 +90,6 @@ export class Memory {
                     return true;
                 }
 
-                // If it hasn't been rendered yet, render it the first time.
-                // Resetting the value will happen in the index file.
-                if(initiallyRendered === false) {
-                    cleanUpMosaic(oldValue as Mosaic);
-                    return true;
-                }
                 if(''+oldValue.values !== ''+newValue.values) {
                     cleanUpMosaic(oldValue as Mosaic);
                     return true;
@@ -103,7 +97,7 @@ export class Memory {
 
                 // Here you know that they are the same Mosaic and it is not
                 // changing, so just keep the same instance id.
-                // newValue.iid = oldValue.iid;
+                newValue.iid = oldValue.iid;
                 return false;
             }
             // If the value to be injected is a template, just make a clone of
@@ -161,8 +155,6 @@ export class Memory {
             child.replaceWith(cloned);
         }
         else {
-            // console.log('Replacing inside: ', mosaic);
-            // console.log('Child in the DOM?: ', document.contains(child));
             child.replaceWith(value);
         }
     }

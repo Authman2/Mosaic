@@ -104,6 +104,11 @@ class Mosaic {
         // Create a new version of this base Mosaic. This will also cause it to
         // be repainted with the placeholders filled in.
         let instance = this.new();
+
+        // HERE'S THE PROBLEM. The main instance is not being added to the dependencies, but when you
+        // add it, it does this thing of like always adding it again when really it should remove it.
+        // Maybe just find a way to remove the base dependency each time so you don't get a memory leak again.
+        // if(instance.portfolio) instance.portfolio.addDependency(instance);
         (instance.base as Element).replaceWith(instance.element as Element);
     
         // Call the created lifecycle function.
@@ -131,24 +136,24 @@ class Mosaic {
             // the indicator of whether or not it has been initially rendered.
             let oldVal = oldValues[i];
             let newVal = this.values[i];
-            let initiallyRendered = this.mosaicsFirstRendered ? this.mosaicsFirstRendered[i] : true;
+            let initiallyRendered = this.mosaicsFirstRendered[i];
 
             // Add a Portfolio dependency here, but also remember to remove old
             // dependencies if they exist.
             if(isMosaic(newVal)) updatePortfolioDependencies.call(this, oldVal as Mosaic, newVal as Mosaic);
 
             // If the memory was changed, update the node.
+            // console.log('Before Commit: ', oldVal, newVal);
             if(mem.memoryWasChanged(oldVal, newVal, initiallyRendered)) {
+                // console.log('Committed Changes: ', oldVal, newVal);
                 mem.commit(this, newVal);
             }
 
             // Update initially rendered.
-            if(isMosaic(oldVal) && initiallyRendered === false) {
+            if(initiallyRendered === false) {
                 this.mosaicsFirstRendered[i] = true;
             }
         }
-
-        if(this.mosaicsFirstRendered) delete this.mosaicsFirstRendered;
     }
 
     /** Creates a new instance of this Mosaic and fills in the correct values
@@ -185,8 +190,6 @@ class Mosaic {
     }
 
 }
-
-
 
 /*
 * ------------- HELPERS -------------- 
