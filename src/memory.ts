@@ -93,15 +93,17 @@ export class Memory {
                 // If it hasn't been rendered yet, render it the first time.
                 // Resetting the value will happen in the index file.
                 if(initiallyRendered === false) {
+                    cleanUpMosaic(oldValue as Mosaic);
                     return true;
                 }
                 if(''+oldValue.values !== ''+newValue.values) {
+                    cleanUpMosaic(oldValue as Mosaic);
                     return true;
                 }
 
                 // Here you know that they are the same Mosaic and it is not
                 // changing, so just keep the same instance id.
-                newValue.iid = oldValue.iid;
+                // newValue.iid = oldValue.iid;
                 return false;
             }
             // If the value to be injected is a template, just make a clone of

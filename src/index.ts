@@ -66,19 +66,13 @@ class Mosaic {
         this.options = Object.assign({}, options);
 
         // Create the Template, set the Memories on this Mosaic, and set the element
-        // on this Mosaic. Memories will be updated when we create instances with new.
-        // - By deleting the Mosaics that exist in the Template at initialization,
-        // you can ensure that the diffing algo in Memory does not need to have an
-        // extra edge case, yet also does not mistakenly update Mosaics.
+        // on this Mosaic. Make numbers strings of numbers so they can be displayed.
+        // Keep track of the Mosaics that haven't been rendered yet so the diffing
+        // algorithm works.
         let template = this.view(this.data, this.actions);
         this.values = template.values.slice();
         this.mosaicsFirstRendered = new Array(this.values.length).fill(false);
         this.values.forEach((val, index) => {
-            if(isMosaic(val)) {
-                if(this.portfolio) {
-                    val.portfolio = this.portfolio;
-                }
-            }
             if(typeof val === 'number') this.values[index] = ''+val;
         });
 
@@ -110,7 +104,6 @@ class Mosaic {
         // Create a new version of this base Mosaic. This will also cause it to
         // be repainted with the placeholders filled in.
         let instance = this.new();
-        (instance as any).__isEntry = true; // This might come in handy later?
         (instance.base as Element).replaceWith(instance.element as Element);
     
         // Call the created lifecycle function.
@@ -142,18 +135,7 @@ class Mosaic {
 
             // Add a Portfolio dependency here, but also remember to remove old
             // dependencies if they exist.
-            if(isMosaic(newVal)) {
-                // If you're using the portfolio, add the new one and remove the old one.
-                if(newVal.portfolio) {
-                    if(isMosaic(oldVal) && oldVal.portfolio) {
-                        if((oldVal as Mosaic).portfolio!!.dependencies.has(oldVal.iid)) {
-                            (oldVal as Mosaic).portfolio!!.removeDependency(oldVal);
-                        } else {
-                            (newVal as Mosaic).portfolio!!.addDependency(newVal);
-                        }
-                    }
-                }
-            }
+            if(isMosaic(newVal)) updatePortfolioDependencies.call(this, oldVal as Mosaic, newVal as Mosaic);
 
             // If the memory was changed, update the node.
             if(mem.memoryWasChanged(oldVal, newVal, initiallyRendered)) {
@@ -166,7 +148,7 @@ class Mosaic {
             }
         }
 
-        delete this.mosaicsFirstRendered;
+        if(this.mosaicsFirstRendered) delete this.mosaicsFirstRendered;
     }
 
     /** Creates a new instance of this Mosaic and fills in the correct values
@@ -221,6 +203,7 @@ const attachArrayProxy = function(_data: Object) {
             if(this.willUpdate) this.willUpdate(oldData);
         }, () => {
             if(!this.iid) return; // Only update the instances, not the diagrams.
+            if(this.portfolio) this.portfolio.clear(); // Clear the dependencies, because repainting will add new ones anyway.
             this.repaint();
             if(this.updated) this.updated();
         });
@@ -235,10 +218,26 @@ const attachDataProxy = function(_data: Object) {
         if(this.willUpdate) this.willUpdate(old);
     }, () => {
         if(!this.iid) return; // Only update the instances, not the diagrams.
+        if(this.portfolio) this.portfolio.clear(); // Clear the dependencies, because repainting will add new ones anyway.
         this.repaint();
         if(this.updated) this.updated();
     })
     return ret;
+}
+
+/** Adds a Mosaic as a dependency of the portfolio it is using (if it it
+* using a portfolio), and removes it as a dependency if it no longer exists. */
+const updatePortfolioDependencies = function(oldVal: Mosaic, newVal: Mosaic) {
+    // If you're using the portfolio, add the new one and remove the old one.
+    if(isMosaic(newVal)) {
+        if(newVal.portfolio) {
+            if(isMosaic(oldVal) && oldVal.portfolio) {
+                // Add or remove the dependency here.
+                if(oldVal.portfolio!!.dependencies.has(oldVal.iid!!)) oldVal.portfolio!!.removeDependency(oldVal);
+                else newVal.portfolio!!.addDependency(newVal);
+            }
+        }
+    }
 }
 
 declare global {
