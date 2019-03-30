@@ -8,7 +8,7 @@ import { Router } from "./router";
 import { Portfolio } from "./portfolio";
 
 /** A table for the templates and instances. */
-export const TemplateTable = {};
+const TemplateTable = {};
 
 /** The equivalent of the 'html' tagged function. */
 const m = (strings, ...values): Template => new Template(strings, values);
@@ -65,16 +65,12 @@ class Mosaic {
         // Set some additional helper options.
         this.options = Object.assign({}, options);
 
-        // Create the Template, set the Memories on this Mosaic, and set the element
-        // on this Mosaic. Make numbers strings of numbers so they can be displayed.
-        // Keep track of the Mosaics that haven't been rendered yet so the diffing
-        // algorithm works.
-        let template = this.view(this.data, this.actions);
+        // Create the Template, set the Memories on this Mosaic, and set the 
+        // element on this Mosaic. Keep track of the Mosaics that haven't been
+        // rendered yet so the diffing algorithm works.
+        let template = this.view(this.data, this.actions, this.portfolio);
         this.values = template.values.slice();
         this.mosaicsFirstRendered = new Array(this.values.length).fill(false);
-        this.values.forEach((val, index) => {
-            if(typeof val === 'number') this.values[index] = ''+val;
-        });
 
         if(!(this.tid in TemplateTable)) {
             delete template.values; // Delete the values from the Template cause it doesn't really need them. Maybe remove later.
@@ -105,15 +101,10 @@ class Mosaic {
         // Create a new version of this base Mosaic. This will also cause it to
         // be repainted with the placeholders filled in.
         let instance = this.new();
-
-        // HERE'S THE PROBLEM. The main instance is not being added to the dependencies, but when you
-        // add it, it does this thing of like always adding it again when really it should remove it.
-        // Maybe just find a way to remove the base dependency each time so you don't get a memory leak again.
-        // if(instance.portfolio) instance.portfolio.addDependency(instance);
         (instance.base as Element).replaceWith(instance.element as Element);
     
         // Call the created lifecycle function.
-        traverseValues(instance, (child: Mosaic, parent: Mosaic) => {
+        traverseValues(instance, (child: Mosaic) => {
             if(child.portfolio) child.portfolio.addDependency(child);
             if(child.created) child.created();
         });
@@ -121,12 +112,8 @@ class Mosaic {
 
     /** Forces an update (repaint of the DOM) on this component. */
     repaint() {
-        // if((this as any).hasOwnProperty('__isEntry')) {
-        //     if(this.portfolio) this.portfolio.removeDependency(this);
-        // }
-
         // Get the old and new values so you can compare.
-        let newView = this.view(this.data, this.actions);
+        let newView = this.view(this.data, this.actions, this.portfolio);
         let oldValues = this.values.slice();
         this.values = newView.values.slice();
         
@@ -143,10 +130,6 @@ class Mosaic {
             let oldVal = oldValues[i];
             let newVal = this.values[i];
             let initiallyRendered = this.mosaicsFirstRendered[i];
-
-            // if(isMosaic(newVal)) {
-            //     updatePortfolioDependencies.call(this, oldVal as Mosaic, newVal as Mosaic);
-            // }
             
             // If the memory was changed, update the node.
             if(mem.memoryWasChanged(oldVal, newVal, initiallyRendered)) {
@@ -209,10 +192,15 @@ const attachArrayProxy = function(_data: Object) {
         
         _tempData[i] = new Observable(_tempData[i], (oldData) => {
             if(!this.iid) return; // Only update the instances, not the diagrams.
+            
+            // Before you update this component, remove it as a dependency so you
+            // don't get a memory leak.
+            if(this.portfolio) this.portfolio.removeDependency(this);
+
             if(this.willUpdate) this.willUpdate(oldData);
         }, () => {
             if(!this.iid) return; // Only update the instances, not the diagrams.
-            // if(this.portfolio) this.portfolio.clear(); // Clear the dependencies, because repainting will add new ones anyway.
+            
             this.repaint();
             if(this.updated) this.updated();
         });
@@ -224,29 +212,19 @@ const attachArrayProxy = function(_data: Object) {
 const attachDataProxy = function(_data: Object) {
     let ret = new Observable(_data, (old) => {
         if(!this.iid) return; // Only update the instances, not the diagrams.
+
+        // Before you update this component, remove it as a dependency so you
+        // don't get a memory leak.
+        if(this.portfolio) this.portfolio.removeDependency(this);
+
         if(this.willUpdate) this.willUpdate(old);
     }, () => {
         if(!this.iid) return; // Only update the instances, not the diagrams.
-        // if(this.portfolio) this.portfolio.clear(); // Clear the dependencies, because repainting will add new ones anyway.
+
         this.repaint();
         if(this.updated) this.updated();
     })
     return ret;
-}
-
-/** Adds a Mosaic as a dependency of the portfolio it is using (if it it
-* using a portfolio), and removes it as a dependency if it no longer exists. */
-const updatePortfolioDependencies = function(oldVal: Mosaic, newVal: Mosaic) {
-    // If you're using the portfolio, add the new one and remove the old one.
-    if(isMosaic(newVal)) {
-        if(newVal.portfolio) {
-            if(isMosaic(oldVal) && oldVal.portfolio) {
-                // Add or remove the dependency here.
-                if(!oldVal.portfolio.has(oldVal)) newVal.portfolio.addDependency(newVal);
-                else oldVal.portfolio.removeDependency(oldVal);
-            }
-        }
-    }
 }
 
 declare global {

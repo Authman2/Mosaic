@@ -89,11 +89,6 @@ export class Memory {
                     return true;
                 }
 
-                // if(oldValue.values !== newValue.values) {
-                //     cleanUpMosaic(oldValue as Mosaic);
-                //     return true;
-                // }
-
                 // Here you know that they are the same Mosaic and it is not
                 // changing, so just keep the same instance id.
                 newValue.iid = oldValue.iid;

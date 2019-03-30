@@ -1,5 +1,6 @@
-import Mosaic from '../../src/index';
+import Mosaic from '../../dist/index';
 
+// 1.) Create a new Portfolio to handle global state management.
 const portfolio = new Mosaic.Portfolio({
     age: 21,
     message: 'Not your birthday yet...'
@@ -9,22 +10,23 @@ const portfolio = new Mosaic.Portfolio({
             data.age += 1;
             break;
         case 'celebrate':
-            // data.message = 'Happy birthday!!';
-            data.message = `${data.age}`;
-            // console.log(data.message);
+            data.message = additional.message;
+            console.log(data.message);
             break;
         default: break;
     }
 });
 
-
+// 2.) Create some components that use the portfolio.
 const BirthdayBoy = new Mosaic({
     portfolio,
     created() {
-        setInterval(() => {
-            this.portfolio.dispatch(['get-older', 'celebrate']);
-            console.log(this.portfolio);
-        }, 3000);
+        // Dispatch multiple events one after another with an array.
+        setTimeout(() => {
+            this.portfolio.dispatch(['get-older', 'celebrate'], {
+                message: 'Happy birthday!!'
+            });
+        }, 5000);
     },
     view() {
         return html`<div>
@@ -40,25 +42,13 @@ const House = new Mosaic({
     </div>`
 });
 
-const Chlid = new Mosaic({
-    portfolio,
-    view: function() {
-        return html`<h1>WOrking: ${this.portfolio.get('age')}</h1>`
-    }
-})
 const party = new Mosaic({
     element: '#root',
     portfolio,
-    data: { on: false },
-    created() {
-        setInterval(() => {
-            this.data.on = !this.data.on;
-        }, 3000);
-    },
     view: function() {
         return html`<div>
             <h1>${this.portfolio.get('message')}</h1>
-            ${ this.data.on === true ? House.new() : Chlid.new() }
+            ${ House.new() }
         </div>`
     }
 });

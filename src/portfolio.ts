@@ -1,7 +1,6 @@
 import Mosaic from "./index";
 
 export class Portfolio {
-    root?: Mosaic;
     dependencies: Map<string, Mosaic> = new Map();
 
     /** Portfolio is a state manager for Mosaic. You first define the global data
@@ -59,17 +58,9 @@ export class Portfolio {
         // Update all of the dependencies.
         let vals = this.dependencies.values();
         let next = vals.next();
-        // let __failure__ = 0;
-
         while(!next.done) {
             next.value.repaint();
             next = vals.next();
-
-            // __failure__ += 1;
-            // if(__failure__ > 100) {
-            //     console.warn('forever loop');
-            //     break;
-            // }
         }
     }
 
