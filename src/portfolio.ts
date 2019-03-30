@@ -1,6 +1,7 @@
 import Mosaic from "./index";
 
 export class Portfolio {
+    root?: Mosaic;
     dependencies: Map<string, Mosaic> = new Map();
 
     /** Portfolio is a state manager for Mosaic. You first define the global data
@@ -31,6 +32,11 @@ export class Portfolio {
         this.dependencies.delete(mosaic.iid!!);
     }
 
+    /** Returns whether or not a Mosaic is a dependency of this Portfolio. */
+    has(mosaic: Mosaic) {
+        return this.dependencies.has(mosaic.iid!!);
+    }
+
     /** Removes all dependencies from the Portfolio. */
     clear() {
         this.dependencies.clear();
@@ -54,6 +60,7 @@ export class Portfolio {
         let vals = this.dependencies.values();
         let next = vals.next();
         // let __failure__ = 0;
+
         while(!next.done) {
             next.value.repaint();
             next = vals.next();

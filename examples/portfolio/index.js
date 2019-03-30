@@ -11,7 +11,7 @@ const portfolio = new Mosaic.Portfolio({
         case 'celebrate':
             // data.message = 'Happy birthday!!';
             data.message = `${data.age}`;
-            console.log(data.message);
+            // console.log(data.message);
             break;
         default: break;
     }
@@ -24,7 +24,7 @@ const BirthdayBoy = new Mosaic({
         setInterval(() => {
             this.portfolio.dispatch(['get-older', 'celebrate']);
             console.log(this.portfolio);
-        }, 5000);
+        }, 3000);
     },
     view() {
         return html`<div>
@@ -40,13 +40,25 @@ const House = new Mosaic({
     </div>`
 });
 
+const Chlid = new Mosaic({
+    portfolio,
+    view: function() {
+        return html`<h1>WOrking: ${this.portfolio.get('age')}</h1>`
+    }
+})
 const party = new Mosaic({
     element: '#root',
     portfolio,
+    data: { on: false },
+    created() {
+        setInterval(() => {
+            this.data.on = !this.data.on;
+        }, 3000);
+    },
     view: function() {
         return html`<div>
             <h1>${this.portfolio.get('message')}</h1>
-            ${ House.new() }
+            ${ this.data.on === true ? House.new() : Chlid.new() }
         </div>`
     }
 });

@@ -31,8 +31,8 @@ class Mosaic {
     values: any[];
     mosaicsFirstRendered: boolean[];
     injected?: Object;
+    base: Element|HTMLElement|ChildNode|Node|null = null;
     __isMosaic: boolean = true;
-    private base: Element|HTMLElement|ChildNode|Node|null = null;
 
     static Router: typeof Router = Router;
     static Portfolio: typeof Portfolio = Portfolio;
@@ -86,6 +86,7 @@ class Mosaic {
         if(!document.contains(this.element)) {
             this.element = cloned;
         } else {
+            (this as any).__isEntry = true;
             this.base = typeof options.element === 'string' ? getDOMfromID(options.element) : options.element;
             this.element = cloned;
         }
@@ -113,12 +114,17 @@ class Mosaic {
     
         // Call the created lifecycle function.
         traverseValues(instance, (child: Mosaic, parent: Mosaic) => {
+            if(child.portfolio) child.portfolio.addDependency(child);
             if(child.created) child.created();
         });
     }
 
     /** Forces an update (repaint of the DOM) on this component. */
     repaint() {
+        // if((this as any).hasOwnProperty('__isEntry')) {
+        //     if(this.portfolio) this.portfolio.removeDependency(this);
+        // }
+
         // Get the old and new values so you can compare.
         let newView = this.view(this.data, this.actions);
         let oldValues = this.values.slice();
@@ -138,15 +144,15 @@ class Mosaic {
             let newVal = this.values[i];
             let initiallyRendered = this.mosaicsFirstRendered[i];
 
-            // Add a Portfolio dependency here, but also remember to remove old
-            // dependencies if they exist.
-            if(isMosaic(newVal)) updatePortfolioDependencies.call(this, oldVal as Mosaic, newVal as Mosaic);
-
+            // if(isMosaic(newVal)) {
+            //     updatePortfolioDependencies.call(this, oldVal as Mosaic, newVal as Mosaic);
+            // }
+            
             // If the memory was changed, update the node.
-            // console.log('Before Commit: ', oldVal, newVal);
             if(mem.memoryWasChanged(oldVal, newVal, initiallyRendered)) {
-                // console.log('Committed Changes: ', oldVal, newVal);
                 mem.commit(this, newVal);
+            } else {
+                this.values[i] = oldValues[i];
             }
 
             // Update initially rendered.
@@ -206,7 +212,7 @@ const attachArrayProxy = function(_data: Object) {
             if(this.willUpdate) this.willUpdate(oldData);
         }, () => {
             if(!this.iid) return; // Only update the instances, not the diagrams.
-            if(this.portfolio) this.portfolio.clear(); // Clear the dependencies, because repainting will add new ones anyway.
+            // if(this.portfolio) this.portfolio.clear(); // Clear the dependencies, because repainting will add new ones anyway.
             this.repaint();
             if(this.updated) this.updated();
         });
@@ -221,7 +227,7 @@ const attachDataProxy = function(_data: Object) {
         if(this.willUpdate) this.willUpdate(old);
     }, () => {
         if(!this.iid) return; // Only update the instances, not the diagrams.
-        if(this.portfolio) this.portfolio.clear(); // Clear the dependencies, because repainting will add new ones anyway.
+        // if(this.portfolio) this.portfolio.clear(); // Clear the dependencies, because repainting will add new ones anyway.
         this.repaint();
         if(this.updated) this.updated();
     })
@@ -236,8 +242,8 @@ const updatePortfolioDependencies = function(oldVal: Mosaic, newVal: Mosaic) {
         if(newVal.portfolio) {
             if(isMosaic(oldVal) && oldVal.portfolio) {
                 // Add or remove the dependency here.
-                if(oldVal.portfolio!!.dependencies.has(oldVal.iid!!)) oldVal.portfolio!!.removeDependency(oldVal);
-                else newVal.portfolio!!.addDependency(newVal);
+                if(!oldVal.portfolio.has(oldVal)) newVal.portfolio.addDependency(newVal);
+                else oldVal.portfolio.removeDependency(oldVal);
             }
         }
     }

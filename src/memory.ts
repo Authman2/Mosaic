@@ -49,7 +49,6 @@ export class Memory {
 
         // This basically checks the type that is being injected.
         if(isPrimitive(newValue)) {
-            console.log(oldValue, newValue);
             return oldValue !== newValue;
         }
         else if(typeof newValue === 'function') {
@@ -90,10 +89,10 @@ export class Memory {
                     return true;
                 }
 
-                if(''+oldValue.values !== ''+newValue.values) {
-                    cleanUpMosaic(oldValue as Mosaic);
-                    return true;
-                }
+                // if(oldValue.values !== newValue.values) {
+                //     cleanUpMosaic(oldValue as Mosaic);
+                //     return true;
+                // }
 
                 // Here you know that they are the same Mosaic and it is not
                 // changing, so just keep the same instance id.
