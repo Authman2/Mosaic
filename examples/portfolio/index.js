@@ -1,41 +1,55 @@
-import Mosaic from '../../src/index';
+import Mosaic from '../../dist/index';
 
-const Child2 = new Mosaic({
+// 1.) Create a new Portfolio to handle global state management.
+const portfolio = new Mosaic.Portfolio({
+    age: 21,
+    message: 'Not your birthday yet...'
+}, (event, data, additional) => {
+    switch(event) {
+        case 'get-older':
+            data.age += 1;
+            break;
+        case 'celebrate':
+            data.message = additional.message;
+            console.log(data.message);
+            break;
+        default: break;
+    }
+});
+
+// 2.) Create some components that use the portfolio.
+const BirthdayBoy = new Mosaic({
+    portfolio,
     created() {
-        console.log('Created Child 2: ', this);
+        // Dispatch multiple events one after another with an array.
+        setTimeout(() => {
+            this.portfolio.dispatch(['get-older', 'celebrate'], {
+                message: 'Happy birthday!!'
+            });
+        }, 5000);
     },
-    view: function() {
+    view() {
         return html`<div>
-            <p>Working</p>
+            <h2>My birthday in 5 seconds!</h2>
+            <h2>I am ${this.portfolio.get('age')} years old!</h2>
         </div>`
     }
 });
 
-const Child1 = new Mosaic({
-    created() {
-        
-    },
-    view: function() {
-        return html`<div>
-            ${ Child2.new() }
-        </div>`
-    }
-});
-
-const Parent = new Mosaic({
-    element: 'root',
-    data: { age: false },
-    created() {
-        // setInterval(() => {
-        //     this.data.age = !this.data.age;
-        // }, 3000);
-    },
-    updated() {
-        // console.log(this);
-    },
-    view: data => html`<div>
-        ${ !data.age ? Child1.new() : Child2.new() }
-        ${ !data.age ? Child1.new() : Child2.new() }
+const House = new Mosaic({
+    view: () => html`<div>
+        ${ BirthdayBoy.new() }
     </div>`
 });
-Parent.paint();
+
+const party = new Mosaic({
+    element: '#root',
+    portfolio,
+    view: function() {
+        return html`<div>
+            <h1>${this.portfolio.get('message')}</h1>
+            ${ House.new() }
+        </div>`
+    }
+});
+party.paint();

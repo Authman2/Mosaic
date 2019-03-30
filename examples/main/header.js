@@ -1,4 +1,4 @@
-import Mosaic from "../../src/index";
+import Mosaic from "../../dist/index";
 
 // Exports a header component.
 export default new Mosaic({

@@ -1,12 +1,13 @@
 {
   "name": "@authman2/mosaic",
-  "version": "0.3.4",
+  "version": "0.4.0",
   "description": "A front-end JavaScript library for creating user interfaces",
   "main": "dist/index.js",
   "scripts": {
-    "test": "parcel -p 3000 examples/portfolio/index.html --out-dir example-dist",
-    "clean": "rm -rf .cache dist example-dist",
-    "build": "parcel build src/index.js",
+    "test": "parcel -p 3000 examples/main/index.html --out-dir example-dist",
+    "clean": "rm -rf .cache dist example-dist ts-build",
+    "move-declarations": "cp ts-build/index.d.ts dist/index.d.ts && cp ts-build/mosaic-options.d.ts dist/mosaic-options.d.ts && cp ts-build/router.d.ts dist/router.d.ts && cp ts-build/portfolio.d.ts dist/portfolio.d.ts",
+    "build": "tsc && parcel build ts-build/index.js --out-dir dist --global Mosaic && npm run move-declarations && rm -f dist/index.js.map",
     "deploy": "npm publish --access=public"
   },
   "keywords": [
@@ -15,7 +16,6 @@
     "ui"
   ],
   "files": [
-    "src/",
     "dist/"
   ],
   "author": "Adeola Uthman",
@@ -23,7 +23,11 @@
   "repository": {
     "url": "https://github.com/authman2/Mosaic"
   },
-  "homepage": "https://mosaicjs.netlify.com",
-  "devDependencies": {},
-  "dependencies": {}
+  "homepage": "https://mosaicjs.herokuapp.com",
+  "devDependencies": {
+    "parcel-bundler": "^1.12.3",
+    "typescript": "^3.3.4000"
+  },
+  "dependencies": {},
+  "types": "dist/index.d.ts"
 }

@@ -1,4 +1,4 @@
-import Mosaic from '../../src/index';
+import Mosaic from '../../build/index';
 
 new Mosaic({
     element: '#root',

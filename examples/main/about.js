@@ -1,4 +1,4 @@
-import Mosaic from "../../src/index";
+import Mosaic from "../../dist/index";
 
 // Exports an about page component.
 export default new Mosaic({

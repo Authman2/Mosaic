@@ -6,7 +6,7 @@ import { isHTMLElement } from './util';
  * @returns {undefined} If there is nothing wrong with the input options.
  * @returns {String} describing the problem.
  */
-const findInvalidOptions = function(options) {
+const findInvalidOptions = function(options: any) {
     // Element
     if(options.element && (!isHTMLElement(options.element) && typeof options.element !== 'string')) {
         return `The Mosaic could not be created because the "element" property is either not an HTML DOM 
@@ -59,17 +59,6 @@ const findInvalidOptions = function(options) {
     return undefined;
 }
 
-/** Returns a dom element from a string. */
-const getDOMfromID = function(string) {
-    if(typeof string !== 'string') return null;
-    if(string.startsWith('#')) {
-        let id = string.substring(1);
-        return document.getElementById(id);
-    } else {
-        return document.getElementById(string);
-    }
+export {
+    findInvalidOptions
 }
-
-exports.isHTMLElement = isHTMLElement;
-exports.findInvalidOptions = findInvalidOptions;
-exports.getDOMfromID = getDOMfromID;

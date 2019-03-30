@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+        "outDir": "ts-build/",
+        "typeRoots": ["ts-build/"],
+        "removeComments": true,
+        "declaration": true,
+        "strict": true,
+        "noImplicitAny": false,
+        "noImplicitThis": false
+    },
+    "include": ["src/*"],
+}

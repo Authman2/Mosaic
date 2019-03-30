@@ -1,4 +1,4 @@
-import Mosaic from '../../src/index';
+import Mosaic from '../../dist/index';
 
 // Home Page
 export const Home = new Mosaic({
