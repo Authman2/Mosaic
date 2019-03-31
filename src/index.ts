@@ -202,6 +202,10 @@ const attachArrayProxy = function(_data: Object) {
             if(!this.iid) return; // Only update the instances, not the diagrams.
             
             this.repaint();
+
+            // See if you need to re-add the dependency.
+            if(this.portfolio) this.portfolio.addDependency(this);
+
             if(this.updated) this.updated();
         });
     }
@@ -222,6 +226,10 @@ const attachDataProxy = function(_data: Object) {
         if(!this.iid) return; // Only update the instances, not the diagrams.
 
         this.repaint();
+
+        // See if you need to re-add the dependency.
+        if(this.portfolio) this.portfolio.addDependency(this);
+
         if(this.updated) this.updated();
     })
     return ret;

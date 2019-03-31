@@ -13,13 +13,13 @@ export class Observable {
             set(object, name, value) {
                 // About to update.
                 let old = Object.assign({}, observingObject);
-                if(willChange) willChange(old);
+                if(willChange) willChange(old, ''+old === ''+value);
                 
                 // Make changes.
                 object[name] = value;
                 
                 // Did update.
-                if(didChange) didChange(object);
+                if(didChange) didChange(object, old);
 
                 return true;
             },

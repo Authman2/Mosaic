@@ -62,6 +62,18 @@ export class Portfolio {
             next.value.repaint();
             next = vals.next();
         }
+
+        // Clean up.
+        let cleanups = this.dependencies.values();
+        let next2 = cleanups.next();
+        let removals: string[] = [];
+        while(!next2.done) {
+            if(document.contains(next2.value.element as Element) === false) {
+                removals.push(next2.value.iid!!);
+            }
+            next2 = cleanups.next();
+        }
+        removals.forEach(id => this.dependencies.delete(id));
     }
 
 }

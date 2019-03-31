@@ -1,4 +1,4 @@
-import Mosaic from '../../dist/index';
+import Mosaic from '../../src/index';
 
 // 1.) Create a new Portfolio to handle global state management.
 const portfolio = new Mosaic.Portfolio({

@@ -75,7 +75,8 @@ export class Memory {
                     // Destroy the old component.
                     // Create the new component and its children.
                     cleanUpMosaic(oldValue as Mosaic);
-                    traverseValues(oldValue, (child: Mosaic, parent: Mosaic) => {
+                    traverseValues(newValue, (child: Mosaic) => {
+                        if(child.portfolio) child.portfolio.addDependency(child);
                         if(child.created) child.created();
                     });
                     return true;
