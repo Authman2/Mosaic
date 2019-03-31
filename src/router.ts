@@ -18,11 +18,8 @@ export class Router {
             let oldURL = window.location.pathname;
             let route = this.routes[oldURL];
             if(route) {
-                let instance = route.new();
-                instance.router = this;
-                instance.repaint();
-                (this.base as ChildNode).replaceWith(instance.element);
-                this.base = instance.element;
+                (this.base as ChildNode).replaceWith(route.element);
+                this.base = route.element;
             }
         }
     }
@@ -34,19 +31,18 @@ export class Router {
         window.history.pushState({}, this.currentRoute, window.location.origin + this.currentRoute);
         
         let route = this.routes[this.currentRoute];
-        let instance = route.new();
-        instance.router = this;
-        instance.repaint();
-        (this.base as ChildNode).replaceWith(instance.element);
-        this.base = instance.element;
+        (this.base as ChildNode).replaceWith(route.element);
+        this.base = route.element;
     }
 
     /** Adds a new route to the router.
     * @param {String | Array} path The path (or multiple paths) for a particular endpoint.
     * @param {Mosaic} mosaic The Mosaic to display at this route. */
     addRoute(path: string|string[], mosaic: Mosaic) {
-        if(Array.isArray(path)) [...path].forEach(p => this.routes[p] = mosaic);
-        else this.routes[path] = mosaic;
+        let instance: Mosaic = mosaic.new();
+        instance.router = this;
+        if(Array.isArray(path)) [...path].forEach(p => this.routes[p] = instance);
+        else this.routes[path] = instance;
     }
 
     /** Paints the router and handles transitions between url endpoints. */
