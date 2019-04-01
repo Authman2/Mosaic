@@ -4,9 +4,13 @@ import { getDOMfromID } from './util';
 /** A basic routing solution for Mosaic apps. 
 * @param {String | HTMLElement} root The element to inject the router into. */
 export class Router {
+    /** @internal */
     currentRoute: string
+    /** @internal */
     routes: Object
+    /** @internal */
     base: Node|Element|HTMLElement|ChildNode|null
+    /** @internal */
     __isRouter: boolean = true
     
     constructor(root: string|Element|Node|ChildNode|HTMLElement) {

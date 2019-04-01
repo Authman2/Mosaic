@@ -1,6 +1,11 @@
 import Mosaic from "./index";
 
 export class Portfolio {
+    /** @internal */
+    data: Object;
+    /** @internal */
+    action: (event: string, data: Object, additionalData: Object) => any;
+    /** @internal */
     dependencies: Map<string, Mosaic> = new Map();
 
     /** Portfolio is a state manager for Mosaic. You first define the global data
@@ -8,7 +13,7 @@ export class Portfolio {
     * will be called everytime you run the "dispatch" function.
     * @param {Object} data The global data object.
     * @param {Function} action A function that runs when "dispatch" is called. */
-    constructor(public data: Object, private action: (event: string, data: Object, additionalData: Object) => any) {
+    constructor(data: Object, action: (event: string, data: Object, additionalData: Object) => any) {
         this.data = data;
         this.action = action;
     }
@@ -20,23 +25,27 @@ export class Portfolio {
     }
 
     /** Adds a new Mosaic dependency to this Portfolio. */
+    /** @internal */
     addDependency(mosaic: Mosaic) {
         if(!mosaic.iid) return;
         this.dependencies.set(mosaic.iid!!, mosaic);
     }
 
     /** Removes a dependency from this Portfolio. */
+    /** @internal */
     removeDependency(mosaic: Mosaic) {
         if(!mosaic.iid) return;
         this.dependencies.delete(mosaic.iid!!);
     }
 
     /** Returns whether or not a Mosaic is a dependency of this Portfolio. */
+    /** @internal */
     has(mosaic: Mosaic) {
         return this.dependencies.has(mosaic.iid!!);
     }
 
     /** Removes all dependencies from the Portfolio. */
+    /** @internal */
     clear() {
         this.dependencies.clear();
     }

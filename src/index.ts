@@ -27,11 +27,17 @@ class Mosaic {
     router?: Router;
     portfolio?: Portfolio;
 
+    /** @internal */
     options: MosaicOptions;
+    /** @internal */
     values: any[];
+    /** @internal */
     mosaicsFirstRendered: boolean[];
+    /** @internal */
     injected?: Object;
+    /** @internal */
     base: Element|HTMLElement|ChildNode|Node|null = null;
+    /** @internal */
     __isMosaic: boolean = true;
 
     static Router: typeof Router = Router;
@@ -86,7 +92,6 @@ class Mosaic {
             this.base = typeof options.element === 'string' ? getDOMfromID(options.element) : options.element;
             this.element = cloned;
         }
-
         return this;
     }
 
@@ -238,7 +243,7 @@ const attachDataProxy = function(_data: Object) {
 declare global {
     interface Window {
         html: any;
-        Mosaic: any;
+        Mosaic: typeof Mosaic;
     }
 }
 window.html = m;

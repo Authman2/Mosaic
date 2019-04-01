@@ -18,7 +18,7 @@ that there is no need to call "setState" or anything like that, instead just cha
 
 🌐**State Manager**: Comes with a built-in global state manager called *Portfolio*.
 
-👌**Small Library Size**: Mosaic is extremely small, with the minified JavaScript file being only 16.6KB.
+👌**Small Library Size**: Mosaic is extremely small, with the minified JavaScript file being only 17KB.
 
 🔖**Tagged Template Literals**: Views are written using tagged template literals, which means there is no need for a compiler:
 ```javascript
