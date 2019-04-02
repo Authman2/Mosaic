@@ -1,7 +1,8 @@
 <p align="center"><a href="https://mosaicjs.herokuapp.com" target="_blank" rel="noopener noreferrer"><img width="100" height="100" src="./MosaicLogo.png" alt="Mosaic logo"></a></p>
 <p align="center">
-  <a href="https://npmcharts.com/compare/@authman2/mosaic?minimal=true"><img src="https://img.shields.io/npm/dm/@authman2/mosaic.svg" alt="Downloads"></a>
-  <a href="https://www.npmjs.com/package/@authman2/mosaic"><img src="https://img.shields.io/npm/v/@authman2/mosaic.svg" alt="Version"></a>
+   <a href="https://www.npmjs.com/package/@authman2/mosaic"><img alt="npm" src="https://img.shields.io/npm/v/@authman2/mosaic.svg?color=#41bb18"></a>
+   <a href="https://npmcharts.com/compare/@authman2/mosaic?minimal=true"><img src="https://img.shields.io/npm/dm/@authman2/mosaic.svg?color=seagreen" alt="Downloads"></a>
+   <img alt="NPM" src="https://img.shields.io/npm/l/@authman2/mosaic.svg?color=blue">
 </p>
 
 # <a target='_blank' rel='noopener noreferrer' href='https://mosaicjs.herokuapp.com'>Mosaic</a>
@@ -53,6 +54,7 @@ For a more detailed example, run the project inside the "example" folder.
   </head>
     
   <div id='root'></div>
+
   <script src='https://unpkg.com/@authman2/mosaic@latest/dist/index.js'></script>
   <script type="text/javascript" src='./index.js'></script>
 </html>
@@ -76,7 +78,9 @@ const Label = new Mosaic({
 // Create an app component.
 const app = new Mosaic({
     element: '#root',
-    data: { title: "Mosaic App" },
+    data: {
+        title: "Mosaic App"
+    },
     actions: {
         sayHello: function() {
             console.log("Hello World!!");
@@ -101,4 +105,4 @@ app.paint();
 # Author
 - Year: 2019
 - Programmer: Adeola Uthman
-- Languages/Tools: JavaScript, Parcel
+- Languages/Tools: JavaScript, TypeScript, Parcel
