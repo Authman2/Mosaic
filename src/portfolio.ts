@@ -4,18 +4,18 @@ export class Portfolio {
     /** @internal */
     data: Object;
     /** @internal */
-    action: (event: string, data: Object, additionalData: Object) => any;
+    actions: Object;
     /** @internal */
     dependencies: Map<string, Mosaic> = new Map();
 
     /** Portfolio is a state manager for Mosaic. You first define the global data
-    * properties that will be used, and then you define an event function that
+    * properties that will be used, and then you define an event functions that
     * will be called everytime you run the "dispatch" function.
     * @param {Object} data The global data object.
-    * @param {Function} action A function that runs when "dispatch" is called. */
-    constructor(data: Object, action: (event: string, data: Object, additionalData: Object) => any) {
+    * @param {Object} actions A function in object that runs when "dispatch" is called. */
+    constructor(data: Object, actions: Object) {
         this.data = data;
-        this.action = action;
+        this.actions = actions;
     }
 
     /** Returns the specified property value given the name.
@@ -57,12 +57,12 @@ export class Portfolio {
     * @param {Object} additional (Optional) Any additional data to pass along to the
     * dispatched event. */
     dispatch(event: string|string[], additional: Object = {}) {
-        if(!this.action) throw new Error(`You must define an action in the Portfolio 
+        if(!this.actions) throw new Error(`You must define an action in the Portfolio 
             constructor before dispatching events.`);
 
         // Trigger the events.
-        if(Array.isArray(event)) event.forEach(eve => this.action(eve, this.data, additional));
-        else this.action(event, this.data, additional);
+        if(Array.isArray(event)) event.forEach(ev => this.actions[ev](this.data, additional));
+        else this.actions[event](this.data, additional);
 
         // Update all of the dependencies.
         let vals = this.dependencies.values();

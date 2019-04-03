@@ -4,16 +4,13 @@ import Mosaic from '../../src/index';
 const portfolio = new Mosaic.Portfolio({
     age: 21,
     message: 'Not your birthday yet...'
-}, (event, data, additional) => {
-    switch(event) {
-        case 'get-older':
-            data.age += 1;
-            break;
-        case 'celebrate':
-            data.message = additional.message;
-            console.log(data.message);
-            break;
-        default: break;
+}, {
+    'get-older'(data) {
+        data.age += 1;
+    },
+    celebrate(data, additional) {
+        data.message = additional.message;
+        console.log(data.message);
     }
 });
 
