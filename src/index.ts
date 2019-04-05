@@ -96,7 +96,26 @@ class Mosaic {
     }
 
     /** "Paints" the Mosaic onto the page by injecting it into its base element. */
-    paint() {
+    paint(options?: string|Element|Object) {
+        (this as any).__isEntry = true;
+
+        // Handle possible options first, then continue with the rest of the
+        // rest of the painting process.
+        if(options) {
+            // If the options passed in is a an element, set that as the base.
+            if(typeof options === 'string' || options instanceof Element) {
+                this.base = typeof options === 'string' ? getDOMfromID(options) : options as Element;
+            }
+            // If you have an object, assuem it is injected data.
+            else if(typeof options === 'object') {
+                let __data = Object.assign({}, this.data, options);
+                let _data = attachArrayProxy.call(this, __data || {});
+                this.data = {};
+                this.data = attachDataProxy.call(this, _data);
+            }
+        }
+
+        // Regular Painting Process:
         if(!this.base || !isHTMLElement(this.base)) {
             throw new Error(`This Mosaic could not be painted because its element property is either not set
             or is not a valid HTML element.`);
@@ -106,6 +125,7 @@ class Mosaic {
         // Create a new version of this base Mosaic. This will also cause it to
         // be repainted with the placeholders filled in.
         let instance = this.new();
+        instance.base = this.base;
         (instance.base as Element).replaceWith(instance.element as Element);
     
         // Call the created lifecycle function.
