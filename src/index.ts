@@ -89,7 +89,7 @@ class Mosaic {
             this.element = cloned;
         } else {
             (this as any).__isEntry = true;
-            this.base = typeof options.element === 'string' ? getDOMfromID(options.element) : options.element;
+            this.base = (options as any).base || (typeof options.element === 'string' ? getDOMfromID(options.element) : options.element);
             this.element = cloned;
         }
         return this;
@@ -125,7 +125,6 @@ class Mosaic {
         // Create a new version of this base Mosaic. This will also cause it to
         // be repainted with the placeholders filled in.
         let instance = this.new();
-        instance.base = this.base;
         (instance.base as Element).replaceWith(instance.element as Element);
     
         // Call the created lifecycle function.
@@ -185,6 +184,7 @@ class Mosaic {
         copy.element = (this.element as Element)!.cloneNode(true);
         copy.values = this.values.slice();
         copy.injected = newData;
+        if(this.base) copy.base = this.base;
 
         // Repaint with the new values.
         copy.repaint();
@@ -216,21 +216,18 @@ const attachArrayProxy = function(_data: Object) {
         if(!Array.isArray(_tempData[i])) continue;
         
         _tempData[i] = new Observable(_tempData[i], (oldData) => {
-            if(!this.iid) return; // Only update the instances, not the diagrams.
-            
+            // Only update the instances, not the diagrams.
             // Before you update this component, remove it as a dependency so you
             // don't get a memory leak.
+            if(!this.iid) return;
             if(this.portfolio) this.portfolio.removeDependency(this);
-
             if(this.willUpdate) this.willUpdate(oldData);
         }, () => {
-            if(!this.iid) return; // Only update the instances, not the diagrams.
-            
-            this.repaint();
-
+            // Only update the instances, not the diagrams.
             // See if you need to re-add the dependency.
+            if(!this.iid) return;
+            this.repaint();
             if(this.portfolio) this.portfolio.addDependency(this);
-
             if(this.updated) this.updated();
         });
     }
@@ -240,21 +237,18 @@ const attachArrayProxy = function(_data: Object) {
 /** Makes regular object properties observable. */
 const attachDataProxy = function(_data: Object) {
     let ret = new Observable(_data, (old) => {
-        if(!this.iid) return; // Only update the instances, not the diagrams.
-
+        // Only update the instances, not the diagrams.
         // Before you update this component, remove it as a dependency so you
         // don't get a memory leak.
+        if(!this.iid) return;
         if(this.portfolio) this.portfolio.removeDependency(this);
-
         if(this.willUpdate) this.willUpdate(old);
     }, () => {
-        if(!this.iid) return; // Only update the instances, not the diagrams.
-
-        this.repaint();
-
+        // Only update the instances, not the diagrams.
         // See if you need to re-add the dependency.
+        if(!this.iid) return;
+        this.repaint();
         if(this.portfolio) this.portfolio.addDependency(this);
-
         if(this.updated) this.updated();
     })
     return ret;

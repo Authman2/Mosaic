@@ -113,9 +113,9 @@ export class Memory {
     * @param {Any} value The value to set on this Memory. */
     commit(mosaic: Mosaic, value: any) {
         // Get the element and find the child node that is being referenced by this Memory.
+        // Start from 2 because the first two indices are used for document-fragment and the node itself.
         let element = mosaic.element as HTMLElement|Element|ChildNode;
         let child = element;
-        // Start from 2 because the first two indices are used for document-fragment and the node itself.
         for(let i = 2; i < this.steps.length; i++) {
             let nextStep: number = this.steps[i];
             child = child.childNodes[nextStep];

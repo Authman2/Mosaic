@@ -1,4 +1,4 @@
-import Mosaic from "../../dist/index";
+import Mosaic from "../../src/index";
 import Logo from '../../MosaicLogo.png';
 
 // Exports a home page component.
@@ -12,7 +12,7 @@ export default new Mosaic({
                 a different page.
             </h4>
 
-            <p onclick=${() => window.open('https://mosaicjs.netlify.com')}>Official Mosaic Website</p>
+            <p onclick=${() => window.open('https://mosaicjs.herokuapp.com')}>Official Mosaic Website</p>
         </div>`
     }
 });

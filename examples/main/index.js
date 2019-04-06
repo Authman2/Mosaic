@@ -1,4 +1,4 @@
-import Mosaic from "../../dist/index";
+import Mosaic from "../../src/index";
 import Header from './header';
 import Home from './home';
 import About from './about';
