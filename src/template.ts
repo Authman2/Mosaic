@@ -1,4 +1,4 @@
-import { lastAttributeNameRegex, marker, nodeMarker, traverse, isBooleanAttribute } from "./util";
+import { lastAttributeNameRegex, marker, nodeMarker, traverse } from "./util";
 import { Memory } from "./memory";
 
 /** A reusable Template for each Mosaic. When you make different instances of a
@@ -79,22 +79,11 @@ export class Template {
     parseAttributes(node: Element, steps: [number], ret: Memory[]) {
         if(!node.hasAttributes()) return;
         
-        /*
-        
-        When you wanna parse a conditionally added attribute, use the same syntax that you would
-        with regular attributes: attribute='${value}'. The Template parse will look at the attribute
-        name during the Memorization stage. If it determines that the name is a "boolean attribute"
-        then it will either set it or remove it depending on whether or not its already on the element.
-        If it's not a boolean attribute, just add it like a normal attribute.
-
-        */
         // Find all of the attributes.
         const attrs = node.attributes;
         for(let i = 0; i < attrs.length; i++) {
             let attributeName = attrs[i].name;
             let attributeValue = attrs[i].value;
-            console.log('Name: ', attributeName, ', Value: ', attributeValue);
-            console.log('Is Boolean: ', isBooleanAttribute(attributeName));
             if(attributeValue.indexOf(marker) < 0) continue;
             
             let mem = new Memory({

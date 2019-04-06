@@ -1,4 +1,4 @@
-import { isPrimitive, isIterable, randomKey, isMosaic, traverseValues, cleanUpMosaic } from "./util";
+import { isPrimitive, isIterable, randomKey, isMosaic, traverseValues, cleanUpMosaic, isBooleanAttribute } from "./util";
 import Mosaic from "./index";
 
 // The information that goes along with Memories.
@@ -180,7 +180,13 @@ export class Memory {
     /** Commits the changes for "attribute" types. */
     commitAttribute(mosaic: Mosaic, child: HTMLElement|ChildNode, value: any) {
         let name: string = (this.attribute as any).attributeName;
-        (child as Element).setAttribute(name, value);
+
+        if(isBooleanAttribute(name)) {
+            if(value === true) (child as Element).setAttribute(name, 'true');
+            else (child as Element).removeAttribute(name);
+        } else {
+            (child as Element).setAttribute(name, value);
+        }
     }
 
     /** Commits the changes for "event" types. Currently does not support
