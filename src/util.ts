@@ -22,6 +22,13 @@ export const isMosaic = (value: any) => {
     }
     return false;
 }
+export const isBooleanAttribute = (name: string) => {
+    let str = `async|autocomplete|autofocus|autoplay|border|challenge|checked|compact|contenteditable|controls
+    default|defer|disabled|formNoValidate|frameborder|hidden|indeterminate|ismap|loop|multiple|muted|nohref|noresize
+    noshade|novalidate|nowrap|open|readonly|required|reversed|scoped|scrolling|seamless|selected|sortable|spellcheck|translate`;
+    let regex = new RegExp(str);
+    return regex.test(name);
+}
 
 /** Traverses a DOM tree and performs a certain action on each node. It also
  * returns, in the callback, the steps taken to get to that node in the form
