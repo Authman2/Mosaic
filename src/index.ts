@@ -130,6 +130,7 @@ class Mosaic {
         // Call the created lifecycle function.
         traverseValues(instance, (child: Mosaic) => {
             if(child.portfolio) child.portfolio.addDependency(child);
+            if(child.router) child.router = this.router;
             if(child.created) child.created();
         });
     }
@@ -163,9 +164,7 @@ class Mosaic {
             }
 
             // Update initially rendered.
-            if(initiallyRendered === false) {
-                this.mosaicsFirstRendered[i] = true;
-            }
+            this.mosaicsFirstRendered[i] = true;
         }
     }
 
