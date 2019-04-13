@@ -1,4 +1,4 @@
-import Mosaic from '../../dist/index';
+import Mosaic from '../../src/index';
 
 const TodoItem = new Mosaic({
     view: function() {
@@ -11,8 +11,7 @@ const TodoItem = new Mosaic({
 const app = new Mosaic({
     element: '#root',
     data: {
-        todos: ['Click the "Add Todo" button to add another todo item!',
-                'Click on a todo item to delete it.']
+        todos: ['Click the "Add Todo" button to add another todo item!', 'Click on a todo item to delete it.']
     },
     actions: {
         addTodo: function(e) {

@@ -1,4 +1,5 @@
 import { isHTMLElement } from './util';
+import { Router } from './router';
 
 /** Looks at a Mosaic's configuration options and returns undefined if there is nothing wrong, and
  * returns a descriptor sentence if something is wrong.
@@ -6,7 +7,7 @@ import { isHTMLElement } from './util';
  * @returns {undefined} If there is nothing wrong with the input options.
  * @returns {String} describing the problem.
  */
-const findInvalidOptions = function(options: any) {
+export const findInvalidOptions = function(options: any) {
     // Element
     if(options.element && (!isHTMLElement(options.element) && typeof options.element !== 'string')) {
         return `The Mosaic could not be created because the "element" property is either not an HTML DOM 
@@ -15,7 +16,7 @@ const findInvalidOptions = function(options: any) {
     }
 
     // Router
-    if(options.router && !options.router.__isRouter) {
+    if(options.router && !(options.router instanceof Router)) {
         return `The router property must be an instance of Mosaic.Router.`;
     }
 
@@ -57,8 +58,4 @@ const findInvalidOptions = function(options: any) {
     }
 
     return undefined;
-}
-
-export {
-    findInvalidOptions
 }

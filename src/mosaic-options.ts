@@ -23,6 +23,7 @@ export type MosaicOptions = {
     /** A client-side router that allows Mosaics to be used as routes. */
     router?: Router,
 
+    /** A global state manager. */
     portfolio?: Portfolio,
 
     /** The actions that can be used on this Mosaic component. */

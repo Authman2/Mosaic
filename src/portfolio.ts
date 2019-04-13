@@ -6,7 +6,7 @@ export class Portfolio {
     /** @internal */
     action: (event: string, data: Object, additionalData: Object) => any;
     /** @internal */
-    dependencies: Map<string, Mosaic> = new Map();
+    dependencies: Object = {};
 
     /** Portfolio is a state manager for Mosaic. You first define the global data
     * properties that will be used, and then you define an event function that
@@ -28,26 +28,14 @@ export class Portfolio {
     /** @internal */
     addDependency(mosaic: Mosaic) {
         if(!mosaic.iid) return;
-        this.dependencies.set(mosaic.iid!!, mosaic);
+        this.dependencies[mosaic.iid!!] = mosaic;
     }
 
     /** Removes a dependency from this Portfolio. */
     /** @internal */
     removeDependency(mosaic: Mosaic) {
         if(!mosaic.iid) return;
-        this.dependencies.delete(mosaic.iid!!);
-    }
-
-    /** Returns whether or not a Mosaic is a dependency of this Portfolio. */
-    /** @internal */
-    has(mosaic: Mosaic) {
-        return this.dependencies.has(mosaic.iid!!);
-    }
-
-    /** Removes all dependencies from the Portfolio. */
-    /** @internal */
-    clear() {
-        this.dependencies.clear();
+        delete this.dependencies[mosaic.iid!!];
     }
 
     /** Triggers a particular event from this Portfolio and updates all of its
@@ -65,24 +53,13 @@ export class Portfolio {
         else this.action(event, this.data, additional);
 
         // Update all of the dependencies.
-        let vals = this.dependencies.values();
-        let next = vals.next();
-        while(!next.done) {
-            next.value.repaint();
-            next = vals.next();
-        }
-
-        // Clean up.
-        let cleanups = this.dependencies.values();
-        let next2 = cleanups.next();
         let removals: string[] = [];
-        while(!next2.done) {
-            if(document.contains(next2.value.element as Element) === false) {
-                removals.push(next2.value.iid!!);
-            }
-            next2 = cleanups.next();
+        for(let key of Object.keys(this.dependencies)) {
+            let next: Mosaic = this.dependencies[key];
+            next.repaint();
+            if(document.contains(next.element as Element) === false) removals.push(next.iid!!);
         }
-        removals.forEach(id => this.dependencies.delete(id));
+        removals.forEach(id => delete this.dependencies[id]);
     }
 
 }

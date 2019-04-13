@@ -5,15 +5,13 @@ import { getDOMfromID, traverseValues } from './util';
 * @param {String | HTMLElement} root The element to inject the router into. */
 export class Router {
     /** @internal */
-    currentRoute: string
+    currentRoute: string;
     /** @internal */
-    routes: Object
+    routes: Object;
     /** @internal */
-    base: Node|Element|HTMLElement|ChildNode|null
-    /** @internal */
-    __isRouter: boolean = true
+    base: Element|any;
     
-    constructor(root: string|Element|Node|ChildNode|HTMLElement) {
+    constructor(root: string|Element) {
         this.currentRoute = '/';
         this.routes = {};
         this.base = typeof root === 'string' ? getDOMfromID(root) : root;
@@ -22,8 +20,8 @@ export class Router {
             let oldURL = window.location.pathname;
             let route = this.routes[oldURL];
             if(route) {
-                (this.base as ChildNode).replaceWith(route.element);
-                this.base = route.element;
+                if(this.base.firstChild) this.base.removeChild(this.base.firstChild);
+                (this.base as ChildNode).appendChild(route.element);
             }
         }
     }
@@ -34,9 +32,9 @@ export class Router {
         this.currentRoute = to;
         window.history.pushState({}, this.currentRoute, window.location.origin + this.currentRoute);
         
+        if(this.base.firstChild) this.base.removeChild(this.base.firstChild);
         let route = this.routes[this.currentRoute];
-        (this.base as ChildNode).replaceWith(route.element);
-        this.base = route.element;
+        (this.base as ChildNode).appendChild(route.element);
 
         // Don't forget to call the "created" lifecycle function.
         traverseValues(route, (child: Mosaic) => {
@@ -52,16 +50,12 @@ export class Router {
     addRoute(path: string|string[], instance: Mosaic) {
         instance.router = this;
         instance.repaint();
-        if(Array.isArray(path)) [...path].forEach(p => this.routes[p] = instance);
+        if(Array.isArray(path)) { for(let i of path) this.routes[i] = instance; }
         else this.routes[path] = instance;
     }
 
     /** Paints the router and handles transitions between url endpoints. */
     paint() {
-        // Remove what's already there.
-        let el = this.base as Element;
-        while(el.firstChild) { el.removeChild(el.firstChild); }
-
         if(window.location.origin !== this.currentRoute) {
             this.currentRoute = window.location.href.substring(window.location.href.lastIndexOf('/'));
         }

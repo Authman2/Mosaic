@@ -2,26 +2,11 @@ import Mosaic from "./index";
 
 export const marker = `{{m-${String(Math.random()).slice(2)}}}`;
 export const nodeMarker = `<!--${marker}-->`;
-export const markerRegex = new RegExp(`${marker}|${nodeMarker}`);
 export const lastAttributeNameRegex = /([ \x09\x0a\x0c\x0d])([^\0-\x1F\x7F-\x9F \x09\x0a\x0c\x0d"'>=/]+)([ \x09\x0a\x0c\x0d]*=[ \x09\x0a\x0c\x0d]*(?:[^ \x09\x0a\x0c\x0d"'`<>=]*|"[^"]*|'[^']*))$/;
-export const createMarker = () => document.createComment('');
 
 export const isPrimitive = (value: any) => {
     return (typeof value === 'string' || typeof value === 'boolean' || typeof value === 'number' || typeof value === 'bigint');
 };
-export const isIterable = (value: any) => {
-    return Array.isArray(value);
-};
-export const isMosaic = (value: any) => {
-    if(value instanceof Mosaic) {
-        return true;
-    } else {
-        if(typeof value === 'object' && value.__isMosaic) {
-            return true;
-        }
-    }
-    return false;
-}
 export const isBooleanAttribute = (name: string) => {
     let str = `async|autocomplete|autofocus|autoplay|border|challenge|checked|compact|contenteditable|controls
     default|defer|disabled|formNoValidate|frameborder|hidden|indeterminate|ismap|loop|multiple|muted|nohref|noresize
@@ -43,7 +28,7 @@ export const traverse = function($node: Node|HTMLElement|ChildNode, action: Func
 export const traverseValues = function(mosaic: Mosaic, action: Function, last?: Mosaic) {
     let children = mosaic.values;
     for(var i = 0; i < children.length; i++) {
-        if(!isMosaic(children[i])) continue;
+        if(!(children[i] instanceof Mosaic)) continue;
         else traverseValues(children[i], action, mosaic);
     }
     if(action) action(mosaic, last);
@@ -56,14 +41,9 @@ export const cleanUpMosaic = function(mosaic: Mosaic) {
     if(mosaic.willDestroy) mosaic.willDestroy();
 }
 
-
 /** Returns whether or not an object is an HTML element. */
 function isHTMLElement(obj: any) {
-    try { return obj instanceof HTMLElement; }
-    catch(e){
-      return (typeof obj === "object") && (obj.nodeType === 1) && (typeof obj.style === "object") &&
-        (typeof obj.ownerDocument ==="object");
-    }
+    return obj instanceof HTMLElement;
 }
 
 /** Produces a random key. */

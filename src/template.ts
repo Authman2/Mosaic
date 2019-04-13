@@ -4,22 +4,21 @@ import { Memory } from "./memory";
 /** A reusable Template for each Mosaic. When you make different instances of a
 * Mosaic, it will look at the already existing template for it. */
 export class Template {
-    strings: string[]
-    element: HTMLTemplateElement
-    values?: any[]
-    memories: Object[]
+    strings: string[];
+    element: HTMLTemplateElement;
+    values?: any[];
+    memories: Object[];
 
     /** A reusable Template for each Mosaic. When you make different instances of a
     * Mosaic, it will look at the already existing template for it. */
     constructor(strings: string[], ...values: any[]) {
-        this.strings = strings.map(str => {
-            let ret = str.trim();
-            if(str.startsWith(' ')) ret = ' ' + ret;
-            if(str.endsWith(' ')) ret += ' ';
-            return ret;
-        });
-        this.element = this.createTemplate();
+        this.strings = strings;
         this.values = values[0];
+
+        const template = document.createElement('template');
+        template.innerHTML = this.constructHTML();
+        this.element = template;
+
         this.memories = this.memorize();
     }
 
@@ -27,7 +26,11 @@ export class Template {
     constructHTML() {
         let ret = '';
         for(let i = 0; i < this.strings.length - 1; i++) {
-            const str = this.strings[i];
+            // Format the string to account for spaces.
+            let str = this.strings[i].trim();
+            if(this.strings[i].startsWith(' ')) str = ` ${str}`;
+            if(this.strings[i].endsWith(' ')) str += ' ';
+
             const matched = lastAttributeNameRegex.exec(str);
             // Attribute.
             if(matched) {
@@ -40,13 +43,6 @@ export class Template {
             }
         }
         return ret + this.strings[this.strings.length - 1];
-    }
-
-    /** Returns an HTML template tag for what this Template looks like. */
-    createTemplate() {
-        const template = document.createElement('template');
-        template.innerHTML = this.constructHTML();
-        return template;
     }
 
     /** Constructs and returns an array of Memories that can be used to make
@@ -76,7 +72,7 @@ export class Template {
 
     /* HELPERS */
 
-    parseAttributes(node: Element, steps: [number], ret: Memory[]) {
+    parseAttributes(node: Element, steps: number[], ret: Memory[]) {
         if(!node.hasAttributes()) return;
         
         // Find all of the attributes.
@@ -87,11 +83,11 @@ export class Template {
             if(attributeValue.indexOf(marker) < 0) continue;
             
             let mem = new Memory({
-                type: attributeName.startsWith('on') ? Memory.EVENT_TYPE : Memory.ATTRIBUTE_TYPE,
+                type: attributeName.startsWith('on') ? "event" : "attribute",
                 steps,
                 attribute: {
-                    attributeName,
-                    attributeValue
+                    name: attributeName,
+                    value: attributeValue
                 },
                 event: attributeName
             });
@@ -102,7 +98,7 @@ export class Template {
     parseComment(node: Comment, steps: number[], ret: Memory[]) {
         if(node.data === marker) {
             let mem = new Memory({
-                type: Memory.NODE_TYPE,
+                type: "node",
                 steps,
             });
             ret.push(mem);
@@ -110,7 +106,7 @@ export class Template {
             let i = -1;
             while((i = node.data.indexOf(marker, i + 1)) !== -1) {
                 let mem = new Memory({
-                    type: Memory.NODE_TYPE,
+                    type: "node",
                     steps,
                 });
                 ret.push(mem);
@@ -121,7 +117,7 @@ export class Template {
     parseText(node: Text, steps: number[], ret: Memory[]) {
         if(node.textContent !== marker) return;
         let mem = new Memory({
-            type: Memory.NODE_TYPE,
+            type: "node",
             steps,
         });
         ret.push(mem);
