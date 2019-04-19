@@ -1,4 +1,3 @@
-import { Router } from "./router";
 import { Portfolio } from "./portfolio";
 
 /** The configuration options for a Mosaic component.
@@ -19,9 +18,6 @@ export type MosaicOptions = {
 
     /** The view that will be rendered on the screen. */
     view: Function,
-
-    /** A client-side router that allows Mosaics to be used as routes. */
-    router?: Router,
 
     /** A global state manager. */
     portfolio?: Portfolio,

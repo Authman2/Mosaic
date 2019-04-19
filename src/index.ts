@@ -35,7 +35,6 @@ class Mosaic {
     /** @internal */
     base?: Element|any = null;
 
-    static Router: typeof Router = Router;
     static Portfolio: typeof Portfolio = Portfolio;
 
     /** Creates a new Mosaic component with configuration options.
@@ -52,11 +51,6 @@ class Mosaic {
         this.willUpdate = options.willUpdate;
         this.updated = options.updated;
         this.willDestroy = options.willDestroy;
-        
-        // Setup some optional interesting properties of Mosaics. For the
-        // Portfolio, if it is not specified by default, then give it a default
-        // value.
-        this.router = options.router;
         this.portfolio = options.portfolio;
 
         // Make each array a proxy of its own then etup the data observer.
@@ -113,7 +107,6 @@ class Mosaic {
         // Call the created lifecycle function.
         traverseValues(instance, (child: Mosaic) => {
             if(child.portfolio) child.portfolio.addDependency(child);
-            if(child.router) child.router = this.router;
             if(child.created) child.created();
         });
     }
@@ -206,3 +199,4 @@ declare global {
 window.html = (strings, ...values): Template => new Template(strings, values);
 window.Mosaic = Mosaic;
 export default Mosaic;
+export { Router };
