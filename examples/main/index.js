@@ -7,9 +7,9 @@ import Menu from './menu';
 new Mosaic({
     element: '#root',
     data: { page: 0, menuOpen: false },
-    view: (data, actions) => html`<div class='page'>
-        ${ Header.new({ title: data.page === 0 ? "Home" : "About" }) }
-        ${ data.menuOpen === true ? Menu.new() : `` }
-        ${ data.page === 0 ? Home.new() : About.new() }
+    view: self => html`<div class='page'>
+        ${ Header.new({ title: self.data.page === 0 ? "Home" : "About" }) }
+        ${ self.data.menuOpen === true ? Menu.new() : `` }
+        ${ self.data.page === 0 ? Home.new() : About.new() }
     </div>`
 }).paint();

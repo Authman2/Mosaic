@@ -60,7 +60,7 @@ class Mosaic {
         // Create the Template, set the Memories on this Mosaic, and set the 
         // element on this Mosaic. Keep track of the Mosaics that haven't been
         // rendered yet so the diffing algorithm works.
-        let template = this.view(this.data, this.actions, this.portfolio);
+        let template = this.view(this);
         let cloned = template.element.content.cloneNode(true).firstChild;
         this.values = template.values.slice();
         this.mosaicsFirstRendered = new Array(this.values.length).fill(false);
@@ -112,7 +112,7 @@ class Mosaic {
     /** Forces an update (repaint of the DOM) on this component. */
     repaint() {
         // Get the old and new values so you can compare.
-        let newView = this.view(this.data, this.actions, this.portfolio);
+        let newView = this.view(this);
         let oldValues = this.values.slice();
         this.values = newView.values.slice();
         
