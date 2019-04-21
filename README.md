@@ -15,7 +15,7 @@ that there is no need to call "setState" or anything like that, instead just cha
 
 🧠 **Smart DOM**: Updates in Mosaic work by remembering which nodes are dynamic (i.e. subject to change) and traveling directly to those nodes to make changes, rather than traversing the tree again.
 
-🔀 **Built-in Router**: Comes with a basic, client-side routing solution.
+🔀 **Built-in Router**: Comes with a basic, client-side router which allows data to be passed along to components.
 
 🌐 **State Manager**: Comes with a built-in global state manager called *Portfolio*.
 
