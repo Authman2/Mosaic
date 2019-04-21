@@ -23,13 +23,14 @@ class Mosaic {
     willDestroy?: Function;
     router?: Router;
     portfolio?: Portfolio;
+    delayTemplate?: boolean;
 
     /** @internal */
     options: MosaicOptions;
     /** @internal */
-    values: any[];
+    values: any[] = [];
     /** @internal */
-    mosaicsFirstRendered: boolean[];
+    mosaicsFirstRendered: boolean[] = [];
     /** @internal */
     injected?: Object;
     /** @internal */
@@ -50,6 +51,7 @@ class Mosaic {
         this.updated = options.updated;
         this.willDestroy = options.willDestroy;
         this.portfolio = options.portfolio;
+        this.delayTemplate = options.delayTemplate;
 
         // Make each array a proxy of its own then etup the data observer.
         this.data = setupData.call(this, options.data || {});
@@ -60,19 +62,8 @@ class Mosaic {
         // Create the Template, set the Memories on this Mosaic, and set the 
         // element on this Mosaic. Keep track of the Mosaics that haven't been
         // rendered yet so the diffing algorithm works.
-        let template = this.view(this);
-        let cloned = template.element.content.cloneNode(true).firstChild;
-        this.values = template.values.slice();
-        this.mosaicsFirstRendered = new Array(this.values.length).fill(false);
-
-        // Save the template.
-        if(!(this.tid in TemplateTable)) TemplateTable[this.tid] = template;
-
-        // Determine if this is the entry point.
-        if(document.contains(this.element)) {
-            this.base = (options as any).base || (typeof options.element === 'string' ? getDOMfromID(options.element) : options.element);
-        }
-        this.element = cloned;
+        // Assuming you are NOT delaying the template...
+        if(!this.delayTemplate) setupTemplate.call(this, options);
         return this;
     }
 
@@ -144,16 +135,21 @@ class Mosaic {
     * @param {Object} newData Any additional data to add to this instance.
     * @returns A new instance of this Mosaic. */
     new(additionalData: Object = {}): Mosaic {
-        // Make a copy of this Mosaic.
+        // Copy the options.
         let _options = Object.assign({}, this.options);
         _options.data = Object.assign({}, this.data, additionalData);
         (_options as any).tid = this.tid;
-        
+
         let copy = new Mosaic(_options);
         copy.iid = randomKey();
         copy.values = this.values.slice();
         copy.injected = additionalData;
         if(this.base) copy.base = this.base;
+
+        // If the template was delayed, try creating it now. This should
+        // only be done for the first instance of the Mosaic, and then
+        // afterwards the template should already be there.
+        if(_options.delayTemplate === true) setupTemplate.call(copy, _options);
 
         // Repaint with the new values.
         copy.repaint();
@@ -186,6 +182,22 @@ const setupData = function(_data) {
         if(this.portfolio) this.portfolio.addDependency(this);
         if(this.updated) this.updated();
     });
+}
+
+const setupTemplate = function(options) {
+    let template = this.view(this);
+    let cloned = template.element.content.cloneNode(true).firstChild;
+    this.values = template.values.slice();
+    this.mosaicsFirstRendered = new Array(this.values.length).fill(false);
+
+    // Save the template.
+    if(!(this.tid in TemplateTable)) TemplateTable[this.tid] = template;
+
+    // Determine if this is the entry point.
+    if(document.contains(this.element)) {
+        this.base = (options as any).base || (typeof options.element === 'string' ? getDOMfromID(options.element) : options.element);
+    }
+    this.element = cloned;
 }
 
 declare global {

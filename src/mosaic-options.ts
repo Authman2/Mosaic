@@ -40,4 +40,8 @@ export type MosaicOptions = {
 
     /** The function that runs just before this component gets removed from the DOM. */
     willDestroy?: Function,
+
+    /** Whether or not the creation of this Mosaic's template should wait until the first
+    * instance of the component is created. */
+    delayTemplate?: boolean
 }
