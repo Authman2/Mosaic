@@ -35,8 +35,6 @@ class Mosaic {
     /** @internal */
     base?: Element|any = null;
 
-    static Portfolio: typeof Portfolio = Portfolio;
-
     /** Creates a new Mosaic component with configuration options.
     * @param {MosaicOptions} options The configuration options for this Mosaic. */
     constructor(options: MosaicOptions) {
@@ -199,4 +197,4 @@ declare global {
 window.html = (strings, ...values): Template => new Template(strings, values);
 window.Mosaic = Mosaic;
 export default Mosaic;
-export { Router };
+export { Router, Portfolio };

@@ -1,7 +1,7 @@
-import Mosaic from '../../src/index';
+import Mosaic, { Portfolio } from '../../dist/index';
 
 // 1.) Create a new Portfolio to handle global state management.
-const portfolio = new Mosaic.Portfolio({
+const portfolio = new Portfolio({
     age: 21,
     message: 'Not your birthday yet...'
 }, (event, data, additional) => {

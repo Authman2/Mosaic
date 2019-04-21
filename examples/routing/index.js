@@ -1,7 +1,8 @@
-import { Router } from '../../src/index';
+import { Router } from '../../dist/index';
 import Header from './header';
 import Home from './home';
 import About from './about';
+import Origin from './origin';
 import Contact from './contact';
 import Detail from './detail';
 
@@ -9,24 +10,25 @@ import Detail from './detail';
 const router = new Router('#root');
 
 // 2.) Add some routes!
+const header = Header.new();
 router.addRoute('/', [
-    Header.new(),
+    header,
     Home.new()
 ]);
 router.addRoute(['/about', '/test'], [
-    Header.new(),
+    header,
     About.new()
 ]);
 router.addRoute('/about/origin', [
-    Header.new(),
-    About.new()
+    header,
+    Origin.new()
 ]);
 router.addRoute('/contact', [
-    Header.new(),
+    header,
     Contact.new()
 ]);
 router.addRoute('/detail', [
-    Header.new(),
+    header,
     Detail.new()
 ]);
 
