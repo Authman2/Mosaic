@@ -3,11 +3,23 @@ import { getDOMfromID, traverseValues } from './util';
 
 // Helper function so you're not rewritting the same code multiple times.
 const displayRoute = function(to, data?: { params?: Object, data?: Object }) {
-    let routes = this.routes[to];
+    // Setup data properties.
     if(data) {
         this.params = data.params || {};
         this.data = data.data || {};
     }
+    
+    // Find the route or use Not Found.
+    let routes = this.routes[to];
+    if(!routes) {
+        if(this.notfound) {
+            routes = this.notfound;
+            this.data.status = 404;
+        }
+        else return;
+    }
+
+    // Add the elements.
     while((this.base as Element).firstChild) (this.base as Element).removeChild((this.base as Element).firstChild as Element);
     for(const mos of routes) {
         // Add the element to the document.
@@ -29,6 +41,8 @@ export class Router {
     current: string;
     /** @internal */
     routes: Object;
+    /** @internal */
+    notfound?: Mosaic|Mosaic[];
 
     params: Object;
     data: Object;
@@ -62,6 +76,11 @@ export class Router {
         };
         if(Array.isArray(path)) path.forEach(_path => addPath(_path));
         else addPath(path);
+    }
+
+    /** Sets the component to use for a not found. */
+    setNotFound(component: Mosaic|Mosaic[]) {
+        this.notfound = Array.isArray(component) ? component : [component];
     }
 
     /** Sends the router to a particular destination. */

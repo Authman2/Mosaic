@@ -1,4 +1,4 @@
-import Mosaic from '../../dist/index';
+import Mosaic from '../../src/index';
 
 // About Page
 export default new Mosaic({
