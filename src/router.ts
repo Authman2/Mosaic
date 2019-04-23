@@ -27,8 +27,8 @@ const displayRoute = function(to, data?: { params?: Object, data?: Object }) {
         
         // Call lifecycle function on each child component.
         traverseValues(mos, child => {
+            child.router = this;
             if(child.portfolio) child.portfolio.addDependency(child);
-            if(child.router) child.router = this;
             if(child.created) child.created();
         });
     }

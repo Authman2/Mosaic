@@ -96,6 +96,7 @@ class Mosaic {
         // Call the created lifecycle function.
         traverseValues(instance, (child: Mosaic) => {
             if(child.portfolio) child.portfolio.addDependency(child);
+            if(this.router) child.router = this.router;
             if(child.created) child.created();
         });
     }

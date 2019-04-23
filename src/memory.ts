@@ -63,6 +63,7 @@ export class Memory {
                     cleanUpMosaic(oldValue as Mosaic);
                     traverseValues(newValue, (child: Mosaic) => {
                         if(child.portfolio) child.portfolio.addDependency(child);
+                        if(oldValue.router) newValue.router = oldValue.router;
                         if(child.created) child.created();
                     });
                     return true;
