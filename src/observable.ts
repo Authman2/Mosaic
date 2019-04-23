@@ -5,8 +5,7 @@ export class Observable {
         const Handler: Object = {
             get(object, name, receiver) {
                 // Make nested proxies.
-                if(object[name] && (Array.isArray(object[name]) || typeof object[name] === 'object'))
-                    return new Observable(object[name], willChange, didChange);
+                if(object[name] && Array.isArray(object[name])) return new Observable(object[name], willChange, didChange);
                 return Reflect.get(object, name, receiver);
             },
             set(object, name, value) {

@@ -2,6 +2,16 @@ import { isPrimitive, traverseValues, cleanUpMosaic, isBooleanAttribute } from "
 import Mosaic from "./index";
 import { Template } from "./template";
 
+// Helper function for repainting a Template.
+const repaintTemplate = function(element, template: Template) {
+    for(let i = 0; i < template.memories.length; i++) {
+        if(!template.values) continue;
+        let mem: Memory|any = template.memories[i];
+        let value = template.values[i];
+        mem.commit(element, value);
+    }
+}
+
 /** A Memory is used to remember where in the DOM tree a change will occur.
 * In other words, it keeps track of dynamic parts of a component. Later on,
 * you can traverse the Memories contained in a Template to figure out what
@@ -85,9 +95,8 @@ export class Memory {
             // If the value to be injected is a template, just make a clone of
             // its element and place that in there.
             else if(newValue instanceof Template) {
-                let old = '' + oldValue;
-                let _new = '' + newValue.element;
-                return old !== _new;
+                if(oldValue instanceof Template) return ''+oldValue.values !== ''+newValue.values;
+                else return true;
             }
             else if(JSON.stringify(oldValue) !== JSON.stringify(newValue)) return true;
             else return false;
@@ -98,10 +107,10 @@ export class Memory {
     /** Does the work of actually committing necessary changes to the DOM.
     * @param {Mosaic} mosaic The Mosaic component for event binding.
     * @param {Any} value The value to set on this Memory. */
-    commit(mosaic: Mosaic, value: any) {
+    commit(component: Mosaic|Element, value: any) {
         // Get the element and find the child node that is being referenced by this Memory.
         // Start from 2 because the first two indices are used for document-fragment and the node itself.
-        let element = mosaic.element as HTMLElement|Element|ChildNode;
+        let element = component instanceof Mosaic ? component.element as HTMLElement|Element|ChildNode : component;
         let child = element;
         for(let i = 2; i < this.steps.length; i++) {
             let nextStep: number = this.steps[i];
@@ -109,9 +118,9 @@ export class Memory {
         }
 
         switch(this.type) {
-            case "node": this.commitNode(mosaic, child, value); break;
-            case "attribute": this.commitAttribute(mosaic, child, value); break;
-            case "event": this.commitEvent(mosaic, child, value); break;
+            case "node": this.commitNode(component, child, value); break;
+            case "attribute": this.commitAttribute(component, child, value); break;
+            case "event": this.commitEvent(component, child, value); break;
             default:
                 // console.log('Got here for some reason: ');
                 break;
@@ -123,17 +132,18 @@ export class Memory {
     */
 
     /** Commits the changes for "node" types. */
-    commitNode(mosaic: Mosaic, child: HTMLElement | ChildNode, value: any) {
+    commitNode(component: Mosaic|Element, child: HTMLElement|ChildNode, value: any) {
         if(Array.isArray(value)) {
-            this.commitArray(child, value);
+            this.commitArray(component, child, value);
         }
         else if(value instanceof Mosaic) {
-            (value as any).parent = mosaic;
+            if(component instanceof Mosaic) (value as any).parent = component;
             child.replaceWith((value as any).element);
         }
         else if(value instanceof Template) {
-            let cloned = value.element.content.cloneNode(true).firstChild;
-            child.replaceWith(cloned!!);
+            let element = value.element.content.cloneNode(true).firstChild;
+            repaintTemplate(element, value);
+            child.replaceWith(element as ChildNode);
         }
         else {
             child.replaceWith(value);
@@ -141,7 +151,7 @@ export class Memory {
     }
 
     /** Commits the changes for "node" types where the value is an array. */
-    commitArray(child: Element|ChildNode, value: any) {
+    commitArray(component: Mosaic|Element, child: Element|ChildNode, value: any) {
         // NOTE: Now you have a reference to the old array and the new array.
         // Find a way to determine what changed between the two, i.e. which
         // ones were added, which ones were removed.
@@ -156,6 +166,11 @@ export class Memory {
             if(value[i] instanceof Mosaic) {
                 holder.appendChild(value[i].element);
                 if(value[i].created) value[i].created();
+            }
+            else if(value[i] instanceof Template) {
+                let element = value[i].element.content.cloneNode(true).firstChild;
+                repaintTemplate(element, value[i]);
+                holder.appendChild(element);
             } else {
                 holder.appendChild(value[i]);
             }
@@ -164,7 +179,7 @@ export class Memory {
     }
 
     /** Commits the changes for "attribute" types. */
-    commitAttribute(mosaic: Mosaic, child: Element|ChildNode, value: any) {
+    commitAttribute(component: Mosaic|Element, child: Element|ChildNode, value: any) {
         if(!this.attribute) return;
         let name: string = this.attribute.name;
 
@@ -178,12 +193,12 @@ export class Memory {
 
     /** Commits the changes for "event" types. Currently does not support
      * dynamically changing function attributes. */
-    commitEvent(mosaic: Mosaic, child: Element|ChildNode, value: any) {
+    commitEvent(component: Mosaic|Element, child: Element|ChildNode, value: any) {
         let name: string = this.event || "";
 
         let eventHandlers = (child as any).eventHandlers || {};
         if(eventHandlers[name]) child.removeEventListener(name.substring(2), eventHandlers[name]);
-        eventHandlers[name] = value.bind(mosaic);
+        eventHandlers[name] = value.bind(component);
 
         (child as any).eventHandlers = eventHandlers;
         child.addEventListener(name.substring(2), (child as any).eventHandlers[name]);
