@@ -185,12 +185,15 @@ const setupData = function(_data) {
     });
 }
 
-const setupTemplate = function(options) {
-    let template = this.view(this);
-    let cloned = template.element.content.cloneNode(true).firstChild;
-    this.values = template.values.slice();
+const setupTemplate = function(options: MosaicOptions) {
+    // Setup the rest of the template normally.
+    let template: Template = this.view(this);
+    this.values = (template.values || []).slice();
     this.mosaicsFirstRendered = new Array(this.values.length).fill(false);
 
+    // Take the element from the Template.
+    let cloned = template.element.content.cloneNode(true).firstChild;
+    
     // Save the template.
     if(!(this.tid in TemplateTable)) TemplateTable[this.tid] = template;
 

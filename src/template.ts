@@ -7,7 +7,7 @@ export class Template {
     strings: string[];
     element: HTMLTemplateElement;
     values?: any[];
-    memories: Object[];
+    memories: Object[] = [];
 
     /** A reusable Template for each Mosaic. When you make different instances of a
     * Mosaic, it will look at the already existing template for it. */
@@ -52,6 +52,7 @@ export class Template {
         
         let ret: Memory[] = [];
         traverse(fragment, (node: Element|any, steps) => {
+            // Otherwise, check node-type.
             switch(node.nodeType) {
                 case 1:
                     this.parseAttributes(node, steps, ret);

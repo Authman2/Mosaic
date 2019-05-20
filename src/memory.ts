@@ -40,6 +40,7 @@ export class Memory {
     * @param {Any} oldValue The old value.
     * @param {Any} newValue The new value. */
     memoryWasChanged(oldValue: any, newValue: any, initiallyRendered: boolean) {
+        console.log(oldValue, newValue);
         if(!oldValue || initiallyRendered === false) {
             return true;
         }
