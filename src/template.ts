@@ -1,5 +1,6 @@
 import { lastAttributeNameRegex, marker, nodeMarker, traverse } from "./util";
 import { Memory } from "./memory";
+import Mosaic from "./index";
 
 /** A reusable Template for each Mosaic. When you make different instances of a
 * Mosaic, it will look at the already existing template for it. */
@@ -7,7 +8,7 @@ export class Template {
     strings: string[];
     element: HTMLTemplateElement;
     values?: any[];
-    memories: Object[] = [];
+    memories: Memory[] = [];
 
     /** A reusable Template for each Mosaic. When you make different instances of a
     * Mosaic, it will look at the already existing template for it. */
@@ -68,6 +69,25 @@ export class Template {
             }
         });
         return ret;
+    }
+
+    /** Repaint the template with the newest values. */
+    repaint(element: Mosaic|any, oldValues: any[] = [], newValues: any[], initial: boolean[] = []) {
+        for(let i = 0; i < this.memories.length; i++) {
+            let mem: Memory = this.memories[i];
+
+            // Get the old and new values. If there are no old values, which
+            // will happen with Templates, 
+            let oldVal = oldValues.length === 0 ? undefined : oldValues[i];
+            let newVal = newValues[i];
+            let rendered = initial.length === 0 ? true : initial[i];
+            
+            if(mem.memoryWasChanged(oldVal, newVal, rendered)) {
+                mem.commit(element, newVal);
+            } else {
+                if(element instanceof Mosaic) element.values[i] = oldVal;
+            }
+        }
     }
 
 

@@ -106,29 +106,15 @@ class Mosaic {
         // Get the old and new values so you can compare.
         let newView = this.view(this);
         let oldValues = this.values.slice();
-        this.values = newView.values.slice();
-        
-        // Get the template for this Mosaic from the Template Table.
-        let template = TemplateTable[this.tid];
-        
-        // Go through each Memory and make changes to the node at the correct
-        // location in the DOM.
-        for(let i = 0; i < template.memories.length; i++) {
-            let mem: Memory = template.memories[i];
-                        
-            // Get the old and new values. Also, for Mosaics, send over
-            // the indicator of whether or not it has been initially rendered.
-            let oldVal = oldValues[i];
-            let newVal = this.values[i];
-            let initiallyRendered = this.mosaicsFirstRendered[i];
-            
-            // If the memory was changed, update the node.
-            if(mem.memoryWasChanged(oldVal, newVal, initiallyRendered)) mem.commit(this, newVal);
-            else this.values[i] = oldValues[i];
+        let newValues = newView.values.slice();
 
-            // Update initially rendered.
-            this.mosaicsFirstRendered[i] = true;
-        }
+        // Get the template for this Mosaic from the Template Table.
+        let template: Template = TemplateTable[this.tid];
+        template.repaint(this, oldValues, newValues, this.mosaicsFirstRendered);
+        
+        // Update the initial renderings.
+        if(this.mosaicsFirstRendered[0] === false)
+            this.mosaicsFirstRendered = new Array(this.mosaicsFirstRendered.length).fill(true);
     }
 
     /** Creates a new instance of this Mosaic and fills in the correct values
