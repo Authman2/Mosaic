@@ -2,12 +2,9 @@ import Mosaic from './index';
 import { getDOMfromID, traverseValues } from './util';
 
 // Helper function so you're not rewritting the same code multiple times.
-const displayRoute = function(to, data?: { params?: Object, data?: Object }) {
+const displayRoute = function(to, data?: Object) {
     // Setup data properties.
-    if(data) {
-        this.params = data.params || {};
-        this.data = data.data || {};
-    }
+    if(data) this.data = data || {};
     
     // Find the route or use Not Found.
     let routes = this.routes[to];
@@ -84,19 +81,9 @@ export class Router {
     }
 
     /** Sends the router to a particular destination. */
-    send(to: string, data: { params?: Object, data?: Object } = {}) {
-        // First, make sure that any necessary query params are specified.
-        let querystring = '';
-        if(data.params) {
-            querystring += '?';
-            Object.keys((data.params || {})).forEach((key, index, array) => {
-                querystring += `${key}=${(data && data.params || {})[key]}`;
-                if(index < array.length - 1) querystring += '&';
-            });
-        }
-
+    send(to: string, data: Object = {}) {
         // Send to the new page.
-        this.current = to + querystring;
+        this.current = to;
         window.history.pushState({}, this.current, window.location.origin + this.current);
 
         // At this point you know that all necessary query params are there.
@@ -108,6 +95,6 @@ export class Router {
     /** Paints the router and its routes onto the page. */
     paint() {
         if(window.location.pathname !== this.current) this.current = window.location.pathname;
-        this.send(this.current);
+        displayRoute.call(this, this.current);
     }
 }

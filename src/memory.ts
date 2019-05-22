@@ -2,16 +2,6 @@ import { isPrimitive, traverseValues, cleanUpMosaic, isBooleanAttribute } from "
 import Mosaic from "./index";
 import { Template } from "./template";
 
-// // Helper function for repainting a Template.
-// const repaintTemplate = function(element, template: Template) {
-//     for(let i = 0; i < template.memories.length; i++) {
-//         if(!template.values) continue;
-//         let mem: Memory|any = template.memories[i];
-//         let value = template.values[i];
-//         mem.commit(element, value);
-//     }
-// }
-
 /** A Memory is used to remember where in the DOM tree a change will occur.
 * In other words, it keeps track of dynamic parts of a component. Later on,
 * you can traverse the Memories contained in a Template to figure out what
@@ -40,7 +30,7 @@ export class Memory {
     * @param {Any} oldValue The old value.
     * @param {Any} newValue The new value. */
     memoryWasChanged(oldValue: any, newValue: any, initiallyRendered: boolean) {
-        console.log(oldValue, newValue);
+        // console.log(oldValue, newValue);
         if(!oldValue || initiallyRendered === false) {
             return true;
         }
@@ -144,7 +134,6 @@ export class Memory {
         else if(value instanceof Template) {
             let element = value.element.content.cloneNode(true).firstChild;
             value.repaint(element, [], value.values!!, []);
-            // repaintTemplate(element, value);
             child.replaceWith(element as ChildNode);
         }
         else {

@@ -3,7 +3,6 @@ import { findInvalidOptions } from "./validations";
 import { randomKey, getDOMfromID, isHTMLElement, traverseValues } from "./util";
 import { Observable } from "./observable";
 import { Template } from "./template";
-import { Memory } from "./memory";
 import { Router } from "./router";
 import { Portfolio } from "./portfolio";
 
@@ -16,7 +15,7 @@ class Mosaic {
     element: string|Element|any;
     data: Object;
     actions?: Object;
-    view: Function;
+    view?: Function;
     created?: Function;
     willUpdate?: Function;
     updated?: Function;
@@ -42,16 +41,13 @@ class Mosaic {
         let invalids = findInvalidOptions(options);
         if(invalids) throw new Error(invalids);
 
+        // Set the attributes on this component.
         this.tid = (options as any).tid || randomKey();
         this.element = typeof options.element === 'string' ? getDOMfromID(options.element) : options.element;
-        this.view = options.view;
-        this.actions = options.actions;
-        this.created = options.created;
-        this.willUpdate = options.willUpdate;
-        this.updated = options.updated;
-        this.willDestroy = options.willDestroy;
-        this.portfolio = options.portfolio;
-        this.delayTemplate = options.delayTemplate;
+        Object.keys(options).forEach(key => {
+            if(key === 'tid' || key === 'data' || key === 'element') return;
+            this[key] = options[key];
+        });
 
         // Make each array a proxy of its own then etup the data observer.
         this.data = setupData.call(this, options.data || {});
@@ -73,12 +69,10 @@ class Mosaic {
         // rest of the painting process.
         if(options) {
             // If you have an object, assuem it is injected data.
-            if(typeof options === 'object') {
-                let _data = Object.assign({}, this.data || {}, options || {});
-                this.data = setupData.call(this, _data);
-            } else {
+            if(typeof options === 'object')
+                this.data = setupData.call(this, Object.assign({}, this.data || {}, options || {}));
+            else
                 this.base = typeof options === 'string' ? getDOMfromID(options) : options as Element;
-            }
         }
 
         // Regular Painting Process:
@@ -104,13 +98,14 @@ class Mosaic {
     /** Forces an update (repaint of the DOM) on this component. */
     repaint() {
         // Get the old and new values so you can compare.
-        let newView = this.view(this);
+        let newView = this.view!!(this);
         let oldValues = this.values.slice();
         let newValues = newView.values.slice();
 
         // Get the template for this Mosaic from the Template Table.
         let template: Template = TemplateTable[this.tid];
         template.repaint(this, oldValues, newValues, this.mosaicsFirstRendered);
+        this.values = newValues;
         
         // Update the initial renderings.
         if(this.mosaicsFirstRendered[0] === false)
@@ -184,9 +179,8 @@ const setupTemplate = function(options: MosaicOptions) {
     if(!(this.tid in TemplateTable)) TemplateTable[this.tid] = template;
 
     // Determine if this is the entry point.
-    if(document.contains(this.element)) {
+    if(document.contains(this.element))
         this.base = (options as any).base || (typeof options.element === 'string' ? getDOMfromID(options.element) : options.element);
-    }
     this.element = cloned;
 }
 

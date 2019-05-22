@@ -120,7 +120,7 @@ export class Template {
         if(node.data === marker) {
             let mem = new Memory({
                 type: "node",
-                steps,
+                steps
             });
             ret.push(mem);
         } else {
@@ -128,7 +128,7 @@ export class Template {
             while((i = node.data.indexOf(marker, i + 1)) !== -1) {
                 let mem = new Memory({
                     type: "node",
-                    steps,
+                    steps
                 });
                 ret.push(mem);
             }
@@ -139,7 +139,7 @@ export class Template {
         if(node.textContent !== marker) return;
         let mem = new Memory({
             type: "node",
-            steps,
+            steps
         });
         ret.push(mem);
     }
