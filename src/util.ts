@@ -42,17 +42,17 @@ export const cleanUpMosaic = function(mosaic: Mosaic) {
 }
 
 /** Returns whether or not an object is an HTML element. */
-function isHTMLElement(obj: any) {
+export function isHTMLElement(obj: any) {
     return obj instanceof HTMLElement;
 }
 
 /** Produces a random key. */
-const randomKey = function(): string {
+export const randomKey = function(): string {
     return Math.random().toString(36).slice(2);
 }
 
 /** Returns a dom element from a string. */
-const getDOMfromID = function(str: string) {
+export const getDOMfromID = function(str: string) {
     if(typeof str !== 'string') return null;
     if(str.substring(0, 1) === '#') {
         let id = str.substring(1);
@@ -62,8 +62,23 @@ const getDOMfromID = function(str: string) {
     }
 }
 
-export {
-    isHTMLElement,
-    randomKey,
-    getDOMfromID
+/** Finds the differences between two arrays of keys. */
+export function getArrayDifferences(one: string[], two: string[]) {
+    let additions: Object[] = [];
+    let deletions: Object[] = [];
+    one.forEach((item, index) => {
+        const found = two.find(obj => item === obj);
+        if(!found) deletions.push({
+            item,
+            index
+        });
+    });
+    two.forEach((item, index) => {
+        const found = one.find(obj => item === obj);
+        if(!found) additions.push({
+            item,
+            index
+        });
+    });
+    return { deletions, additions, };
 }

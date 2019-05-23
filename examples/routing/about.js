@@ -6,14 +6,12 @@ export default new Mosaic({
         origin() { this.router.send('/about/origin'); },
         paramOne() {
             this.router.send(`/detail`, {
-                params: { id: '12345abcde' },
-                data: { message: 'Hi from Parameter Link 1!!' }
+                message: 'Hi from Parameter Link 1!!'
             });
         },
         paramTwo() {
             this.router.send('/detail', {
-                params: { id: '67890zyxwv' },
-                data: { message: 'Hi from Parameter Link 2!!' }
+                message: 'Hi from Parameter Link 2!!'
             });
         },
         contact() { this.router.send('/contact'); },
@@ -24,9 +22,9 @@ export default new Mosaic({
             <br/>
             <button onclick=${this.actions.origin}>Check out origin of Mosaic!</button>
             <br>
-            <button onclick=${this.actions.paramOne}>Try out Query Parameter One!</button>
+            <button onclick=${this.actions.paramOne}>Try out Data One!</button>
             <br>
-            <button onclick=${this.actions.paramTwo}>Try out Query Parameter Two!</button>
+            <button onclick=${this.actions.paramTwo}>Try out Data Two!</button>
             <br>
             <button onclick=${this.actions.contact}>Go to the Contact page</button>
             <br>

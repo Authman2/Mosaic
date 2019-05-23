@@ -72,7 +72,7 @@ export class Template {
     }
 
     /** Repaint the template with the newest values. */
-    repaint(element: Mosaic|any, oldValues: any[] = [], newValues: any[], initial: boolean[] = []) {
+    repaint(element: Mosaic|any, oldValues: any[] = [], newValues: any[], initial: boolean = true) {
         for(let i = 0; i < this.memories.length; i++) {
             let mem: Memory = this.memories[i];
 
@@ -80,13 +80,9 @@ export class Template {
             // will happen with Templates, 
             let oldVal = oldValues.length === 0 ? undefined : oldValues[i];
             let newVal = newValues[i];
-            let rendered = initial.length === 0 ? true : initial[i];
-            
-            if(mem.memoryWasChanged(oldVal, newVal, rendered)) {
-                mem.commit(element, newVal);
-            } else {
-                if(element instanceof Mosaic) element.values[i] = oldVal;
-            }
+
+            if(mem.memoryWasChanged(oldVal, newVal, initial)) mem.commit(element, oldVal, newVal);
+            else if(element instanceof Mosaic) element.values[i] = oldVal;
         }
     }
 

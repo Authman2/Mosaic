@@ -27,7 +27,7 @@ export type MosaicOptions = {
     portfolio?: Portfolio,
 
     /** The actions that can be used on this Mosaic component. */
-    actions: Object,
+    actions?: Object,
 
     /** The function to run when this component is created and injected into the DOM. */
     created?: Function,

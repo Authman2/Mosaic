@@ -1,4 +1,4 @@
-import { isPrimitive, traverseValues, cleanUpMosaic, isBooleanAttribute } from "./util";
+import { isPrimitive, traverseValues, cleanUpMosaic, isBooleanAttribute, getArrayDifferences } from "./util";
 import Mosaic from "./index";
 import { Template } from "./template";
 
@@ -31,9 +31,7 @@ export class Memory {
     * @param {Any} newValue The new value. */
     memoryWasChanged(oldValue: any, newValue: any, initiallyRendered: boolean) {
         // console.log(oldValue, newValue);
-        if(!oldValue || initiallyRendered === false) {
-            return true;
-        }
+        if(!oldValue || initiallyRendered === true) return true;
 
         // This basically checks the type that is being injected.
         if(isPrimitive(newValue)) {
@@ -98,7 +96,7 @@ export class Memory {
     /** Does the work of actually committing necessary changes to the DOM.
     * @param {Mosaic} mosaic The Mosaic component for event binding.
     * @param {Any} value The value to set on this Memory. */
-    commit(component: Mosaic|Element, value: any) {
+    commit(component: Mosaic|Element, oldValue: any, newValue: any) {
         // Get the element and find the child node that is being referenced by this Memory.
         // Start from 2 because the first two indices are used for document-fragment and the node itself.
         let element = component instanceof Mosaic ? component.element as HTMLElement|Element|ChildNode : component;
@@ -109,12 +107,10 @@ export class Memory {
         }
 
         switch(this.type) {
-            case "node": this.commitNode(component, child, value); break;
-            case "attribute": this.commitAttribute(component, child, value); break;
-            case "event": this.commitEvent(component, child, value); break;
-            default:
-                // console.log('Got here for some reason: ');
-                break;
+            case "node": this.commitNode(component, child, oldValue, newValue); break;
+            case "attribute": this.commitAttribute(component, child, oldValue, newValue); break;
+            case "event": this.commitEvent(component, child, oldValue, newValue); break;
+            default: // console.log('Got here for some reason: '); break;
         }
     }
 
@@ -123,9 +119,9 @@ export class Memory {
     */
 
     /** Commits the changes for "node" types. */
-    commitNode(component: Mosaic|Element, child: HTMLElement|ChildNode, value: any) {
+    commitNode(component: Mosaic|Element, child: HTMLElement|ChildNode, oldValue: any, value: any) {
         if(Array.isArray(value)) {
-            this.commitArray(component, child, value);
+            this.commitArray(component, child, oldValue, value);
         }
         else if(value instanceof Mosaic) {
             if(component instanceof Mosaic) (value as any).parent = component;
@@ -133,7 +129,7 @@ export class Memory {
         }
         else if(value instanceof Template) {
             let element = value.element.content.cloneNode(true).firstChild;
-            value.repaint(element, [], value.values!!, []);
+            value.repaint(element, [], value.values!!, true);
             child.replaceWith(element as ChildNode);
         }
         else {
@@ -142,35 +138,54 @@ export class Memory {
     }
 
     /** Commits the changes for "node" types where the value is an array. */
-    commitArray(component: Mosaic|Element, child: Element|ChildNode, value: any) {
-        // NOTE: Now you have a reference to the old array and the new array.
-        // Find a way to determine what changed between the two, i.e. which
-        // ones were added, which ones were removed.
-        // Once you know that, you can either insert the item into the DOM
-        // or you can find the index of the delete node.
-        // Maybe give each array item its own placeholder?
+    commitArray(component: Mosaic|Element, child: Element|ChildNode, oldValue: any[], value: any[]) {
+        console.log(oldValue);
+        console.log(value);
 
-        // For right now, just replace the entire thing and basically make a
-        // new array.
-        let holder = document.createElement('div');
-        for(let i = 0; i < value.length; i++) {
-            if(value[i] instanceof Mosaic) {
-                holder.appendChild(value[i].element);
-                if(value[i].created) value[i].created();
-            }
-            else if(value[i] instanceof Template) {
-                let element = value[i].element.content.cloneNode(true).firstChild;
-                value[i].repaint(element, [], value[i].values!!, []);
-                holder.appendChild(element);
+        // Compare the differences of the old keys and the new keys so that you
+        // can get the ones that were deleted and the ones that were added.
+        const oldKeys = oldValue.map(obj => {
+            if(obj instanceof Mosaic) {
+                if(!obj.data['key']) throw new Error('Array item does not have a "key" property on it.');
+                return obj.data['key'];
             } else {
-                holder.appendChild(value[i]);
+                return obj.element.getAttribute('key');
             }
-        }
-        child.replaceWith(holder);
+        });
+        const newKeys = value.map(obj => {
+            if(obj instanceof Mosaic) {
+                if(!obj.data['key']) throw new Error('Array item does not have a "key" property on it.');
+                return obj.data['key'];
+            } else {
+                return obj.element.getAttribute('key');
+            }
+        });
+        const diff = getArrayDifferences(oldKeys, newKeys);
+
+        // Go through the deletions and additions. For all the deleted items
+        // find that element in the dom and delete it. For the additions,
+        // append them next to the child element.
+        diff.deletions.forEach(delItem => {
+            const found = document.querySelector(`[key="${delItem['index']}"]`);
+            if(found) {
+                found.remove();
+            }
+        })
+        diff.additions.forEach((addItem, index) => {
+            const key = parseInt(addItem['index']);
+            const node = value[key];
+            node.element.setAttribute('key', addItem['index']);
+            if(child.nodeType === 8) {
+                child.replaceWith(node.element);
+            } else {
+                child.parentElement!!.insertBefore(node.element, child.nextSibling);
+            }
+        })
+        console.log(diff);
     }
 
     /** Commits the changes for "attribute" types. */
-    commitAttribute(component: Mosaic|Element, child: Element|ChildNode, value: any) {
+    commitAttribute(component: Mosaic|Element, child: Element|ChildNode, oldValue: any, value: any) {
         if(!this.attribute) return;
         let name: string = this.attribute.name;
 
@@ -184,7 +199,7 @@ export class Memory {
 
     /** Commits the changes for "event" types. Currently does not support
      * dynamically changing function attributes. */
-    commitEvent(component: Mosaic|Element, child: Element|ChildNode, value: any) {
+    commitEvent(component: Mosaic|Element, child: Element|ChildNode, oldValue: any, value: any) {
         let name: string = this.event || "";
 
         let eventHandlers = (child as any).eventHandlers || {};

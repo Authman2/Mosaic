@@ -29,7 +29,9 @@ class Mosaic {
     /** @internal */
     values: any[] = [];
     /** @internal */
-    mosaicsFirstRendered: boolean[] = [];
+    initialRender: boolean = true;
+    /** @internal */
+    barrierOn: boolean = false;
     /** @internal */
     injected?: Object;
     /** @internal */
@@ -68,7 +70,7 @@ class Mosaic {
         // Handle possible options first, then continue with the rest of the
         // rest of the painting process.
         if(options) {
-            // If you have an object, assuem it is injected data.
+            // If you have an object, assume it is injected data.
             if(typeof options === 'object')
                 this.data = setupData.call(this, Object.assign({}, this.data || {}, options || {}));
             else
@@ -104,12 +106,11 @@ class Mosaic {
 
         // Get the template for this Mosaic from the Template Table.
         let template: Template = TemplateTable[this.tid];
-        template.repaint(this, oldValues, newValues, this.mosaicsFirstRendered);
-        this.values = newValues;
+        template.repaint(this, oldValues, newValues, this.initialRender);
         
         // Update the initial renderings.
-        if(this.mosaicsFirstRendered[0] === false)
-            this.mosaicsFirstRendered = new Array(this.mosaicsFirstRendered.length).fill(true);
+        this.values = newValues;
+        this.initialRender = false;
     }
 
     /** Creates a new instance of this Mosaic and fills in the correct values
@@ -138,6 +139,15 @@ class Mosaic {
         return copy;
     }
 
+    /** Sets multiple data properties at the same time and only repaints
+    * the component once. */
+    set(data: Object) {
+        this.barrierOn = true;
+        Object.keys(data).forEach(key => this.data[key] = data[key]);
+        this.barrierOn = false;
+        this.repaint();
+    }
+
     /** Returns an HTML element that represents this component. */
     toHTML(): Element {
         this.repaint();
@@ -153,12 +163,14 @@ const setupData = function(_data) {
         // Only update the instances, not the diagrams.
         // Before you update this component, remove it as a dependency so you
         // don't get a memory leak.
+        if(this.barrierOn === true) return;
         if(!this.iid) return;
         if(this.portfolio) this.portfolio.removeDependency(this);
         if(this.willUpdate) this.willUpdate(old);
     }, () => {
         // Only update the instances, not the diagrams.
         // See if you need to re-add the dependency.
+        if(this.barrierOn === true) return;
         if(!this.iid) return;
         this.repaint();
         if(this.portfolio) this.portfolio.addDependency(this);
@@ -170,7 +182,7 @@ const setupTemplate = function(options: MosaicOptions) {
     // Setup the rest of the template normally.
     let template: Template = this.view(this);
     this.values = (template.values || []).slice();
-    this.mosaicsFirstRendered = new Array(this.values.length).fill(false);
+    this.initialRender = true;
 
     // Take the element from the Template.
     let cloned = template.element.content.cloneNode(true).firstChild;
