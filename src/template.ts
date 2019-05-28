@@ -50,19 +50,18 @@ export class Template {
     * fast changes later on. */
     memorize() {
         const fragment = this.element.content.cloneNode(true);
-        
         let ret: Memory[] = [];
         traverse(fragment, (node: Element|any, steps) => {
-            // Otherwise, check node-type.
+            // Check node-type.
             switch(node.nodeType) {
                 case 1:
-                    this.parseAttributes(node, steps, ret);
+                    ret = ret.concat(this.parseAttributes(node, steps));
                     break;
                 case 3:
-                    this.parseText(node, steps, ret);
+                    ret = ret.concat(this.parseText(node, steps));
                     break;
                 case 8:
-                    this.parseComment(node, steps, ret);
+                    ret = ret.concat(this.parseComment(node, steps));
                     break;
                 default:
                     break;
@@ -81,7 +80,7 @@ export class Template {
             let oldVal = oldValues.length === 0 ? undefined : oldValues[i];
             let newVal = newValues[i];
 
-            if(mem.memoryWasChanged(oldVal, newVal, initial)) mem.commit(element, oldVal, newVal);
+            if(mem.changed(oldVal, newVal, initial)) mem.commit(element, oldVal, newVal, initial);
             else if(element instanceof Mosaic) element.values[i] = oldVal;
         }
     }
@@ -89,8 +88,9 @@ export class Template {
 
     /* HELPERS */
 
-    parseAttributes(node: Element, steps: number[], ret: Memory[]) {
-        if(!node.hasAttributes()) return;
+    parseAttributes(node: Element, steps: number[]): Memory[] {
+        if(!node.hasAttributes()) return [];
+        let ret: Memory[] = [];
         
         // Find all of the attributes.
         const attrs = node.attributes;
@@ -110,17 +110,19 @@ export class Template {
             });
             ret.push(mem);
         }
+        return ret;
     }
 
-    parseComment(node: Comment, steps: number[], ret: Memory[]) {
+    parseComment(node: Comment, steps: number[]): Memory[] {
         if(node.data === marker) {
             let mem = new Memory({
                 type: "node",
                 steps
             });
-            ret.push(mem);
+            return [mem];
         } else {
             let i = -1;
+            let ret: Memory[] = [];
             while((i = node.data.indexOf(marker, i + 1)) !== -1) {
                 let mem = new Memory({
                     type: "node",
@@ -128,15 +130,16 @@ export class Template {
                 });
                 ret.push(mem);
             }
+            return ret;
         }
     }
 
-    parseText(node: Text, steps: number[], ret: Memory[]) {
-        if(node.textContent !== marker) return;
+    parseText(node: Text, steps: number[]): Memory[] {
+        if(node.textContent !== marker) return [];
         let mem = new Memory({
             type: "node",
             steps
         });
-        ret.push(mem);
+        return [mem];
     }
 }

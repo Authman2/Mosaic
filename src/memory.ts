@@ -19,7 +19,9 @@ export class Memory {
     * @param {String} attribute For attribute types, the name and value
     * of the DOM attribute.
     * @param {String} event For event types, the name of the event handler. */
-    constructor(options: { type: string, steps: number[], attribute?: { name: string, value: any }, event?: string }) {
+    constructor(options: { type: string, steps: number[], 
+        attribute?: { name: string, value: any }, event?: string }) {
+
         this.type = options.type;
         this.steps = options.steps;
         this.attribute = options.attribute;
@@ -28,8 +30,9 @@ export class Memory {
 
     /** Checks if the old value is different to the new value.
     * @param {Any} oldValue The old value.
-    * @param {Any} newValue The new value. */
-    memoryWasChanged(oldValue: any, newValue: any, initiallyRendered: boolean) {
+    * @param {Any} newValue The new value.
+    * @param {boolean} initiallyRendered Whether or not this is the first render. */
+    changed(oldValue: any, newValue: any, initiallyRendered: boolean) {
         // console.log(oldValue, newValue);
         if(!oldValue || initiallyRendered === true) return true;
 
@@ -67,6 +70,10 @@ export class Memory {
                     });
                     return true;
                 }
+
+                // Here you know that they are the same Mosaic and it is not
+                // changing, so just keep the same instance id.
+                newValue.iid = oldValue.iid;
                 
                 // Last thing to check is if the injected data changed.
                 let oldData = JSON.stringify((oldValue as Mosaic).injected);
@@ -75,10 +82,6 @@ export class Memory {
                     cleanUpMosaic(oldValue as Mosaic);
                     return true;
                 }
-
-                // Here you know that they are the same Mosaic and it is not
-                // changing, so just keep the same instance id.
-                newValue.iid = oldValue.iid;
                 return false;
             }
             // If the value to be injected is a template, just make a clone of
@@ -95,21 +98,27 @@ export class Memory {
 
     /** Does the work of actually committing necessary changes to the DOM.
     * @param {Mosaic} mosaic The Mosaic component for event binding.
-    * @param {Any} value The value to set on this Memory. */
-    commit(component: Mosaic|Element, oldValue: any, newValue: any) {
+    * @param {Any} oldValue The old value of this memory.
+    * @param {Any} newValue The value to set on this Memory.
+    * @param {Boolean} initial Whether or not this is the initial render. */
+    commit(component: Mosaic|Element, oldValue: any, newValue: any, initial: boolean = true) {
         // Get the element and find the child node that is being referenced by this Memory.
         // Start from 2 because the first two indices are used for document-fragment and the node itself.
-        let element = component instanceof Mosaic ? component.element as HTMLElement|Element|ChildNode : component;
+        let element = component instanceof Mosaic ? component.element as HTMLElement|ChildNode : component;
         let child = element;
         for(let i = 2; i < this.steps.length; i++) {
             let nextStep: number = this.steps[i];
             child = child.childNodes[nextStep];
         }
 
+        // Check if it's a Mosaic, in which case use the same iid.
+        if(oldValue instanceof Mosaic && newValue instanceof Mosaic) newValue.iid = oldValue.iid;
+
+        // Send changes to the DOM.
         switch(this.type) {
-            case "node": this.commitNode(component, child, oldValue, newValue); break;
-            case "attribute": this.commitAttribute(component, child, oldValue, newValue); break;
-            case "event": this.commitEvent(component, child, oldValue, newValue); break;
+            case "node": this.commitNode(component, child, oldValue, newValue, initial); break;
+            case "attribute": this.commitAttribute(component, child, oldValue, newValue, initial); break;
+            case "event": this.commitEvent(component, child, oldValue, newValue, initial); break;
             default: // console.log('Got here for some reason: '); break;
         }
     }
@@ -119,13 +128,16 @@ export class Memory {
     */
 
     /** Commits the changes for "node" types. */
-    commitNode(component: Mosaic|Element, child: HTMLElement|ChildNode, oldValue: any, value: any) {
+    commitNode(component: Mosaic|Element, child: HTMLElement|ChildNode, oldValue: any, value: any, initial: boolean) {
         if(Array.isArray(value)) {
-            this.commitArray(component, child, oldValue, value);
+            this.commitArray(component, child, oldValue, value, initial);
         }
         else if(value instanceof Mosaic) {
+            // Set the parent/child properties of the Mosaics.
             if(component instanceof Mosaic) (value as any).parent = component;
+            
             child.replaceWith((value as any).element);
+            if(value.created) value.created();
         }
         else if(value instanceof Template) {
             let element = value.element.content.cloneNode(true).firstChild;
@@ -138,54 +150,52 @@ export class Memory {
     }
 
     /** Commits the changes for "node" types where the value is an array. */
-    commitArray(component: Mosaic|Element, child: Element|ChildNode, oldValue: any[], value: any[]) {
-        console.log(oldValue);
-        console.log(value);
+    commitArray(component: Mosaic|Element, child: Element|ChildNode, oldValue: any[], value: any[], initial: boolean) {
+        // This "if" will have to be different. What if you inject an array
+        // after the initial render? Just check if the placeholder is there.
+        if(initial) {
+            // Render the entire array. This works.
+            const holder = document.createElement('span');
+            for(let i = 0; i < value.length; i++) {
+                const item = value[i];
+                if(item instanceof Mosaic) {
+                    holder.appendChild(item.element);
+                    if(item.created) item.created();
+                } else if(item instanceof Template) {
+                    let element: any = item.element.content.cloneNode(true).firstChild;
+                    item.repaint(element, [], item.values!!, true);
+                    holder.appendChild(element);
+                }
+            }
+            child.replaceWith(holder);
+        } else {
+            // Look at the additions/deletions and figure out
+            // where to inject/remove them.
+            const existingElements = child.childNodes;
 
-        // Compare the differences of the old keys and the new keys so that you
-        // can get the ones that were deleted and the ones that were added.
-        const oldKeys = oldValue.map(obj => {
-            if(obj instanceof Mosaic) {
-                if(!obj.data['key']) throw new Error('Array item does not have a "key" property on it.');
-                return obj.data['key'];
-            } else {
-                return obj.element.getAttribute('key');
-            }
-        });
-        const newKeys = value.map(obj => {
-            if(obj instanceof Mosaic) {
-                if(!obj.data['key']) throw new Error('Array item does not have a "key" property on it.');
-                return obj.data['key'];
-            } else {
-                return obj.element.getAttribute('key');
-            }
-        });
-        const diff = getArrayDifferences(oldKeys, newKeys);
-
-        // Go through the deletions and additions. For all the deleted items
-        // find that element in the dom and delete it. For the additions,
-        // append them next to the child element.
-        diff.deletions.forEach(delItem => {
-            const found = document.querySelector(`[key="${delItem['index']}"]`);
-            if(found) {
-                found.remove();
-            }
-        })
-        diff.additions.forEach((addItem, index) => {
-            const key = parseInt(addItem['index']);
-            const node = value[key];
-            node.element.setAttribute('key', addItem['index']);
-            if(child.nodeType === 8) {
-                child.replaceWith(node.element);
-            } else {
-                child.parentElement!!.insertBefore(node.element, child.nextSibling);
-            }
-        })
-        console.log(diff);
+            // Compare the differences of the old keys and the new keys so that you
+            // can get the ones that were deleted and the ones that were added.
+            const oldKeys = oldValue.map(obj => {
+                if(obj instanceof Mosaic) {
+                    if(!obj.data['key']) throw new Error('Array item does not have a "key" property on it.');
+                    return obj.data['key'];
+                } else return obj.element.getAttribute('key');
+            });
+            const newKeys = value.map(obj => {
+                if(obj instanceof Mosaic) {
+                    if(!obj.data['key']) throw new Error('Array item does not have a "key" property on it.');
+                    return obj.data['key'];
+                } else return obj.element.getAttribute('key');
+            });
+            const diff = getArrayDifferences(oldKeys, newKeys); // this is getting the wrong delete index...
+            // console.log(oldValue);
+            // console.log(value);
+            // console.log(diff);
+        }
     }
 
     /** Commits the changes for "attribute" types. */
-    commitAttribute(component: Mosaic|Element, child: Element|ChildNode, oldValue: any, value: any) {
+    commitAttribute(component: Mosaic|Element, child: Element|ChildNode, oldValue: any, value: any, initial: boolean) {
         if(!this.attribute) return;
         let name: string = this.attribute.name;
 
@@ -199,7 +209,7 @@ export class Memory {
 
     /** Commits the changes for "event" types. Currently does not support
      * dynamically changing function attributes. */
-    commitEvent(component: Mosaic|Element, child: Element|ChildNode, oldValue: any, value: any) {
+    commitEvent(component: Mosaic|Element, child: Element|ChildNode, oldValue: any, value: any, initial: boolean) {
         let name: string = this.event || "";
 
         let eventHandlers = (child as any).eventHandlers || {};

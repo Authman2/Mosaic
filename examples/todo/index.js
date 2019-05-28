@@ -3,8 +3,8 @@ import Mosaic from '../../src/index';
 const TodoItem = new Mosaic({
     view() {
         const { title, deleteTodo } = this.data;
-        return html`<div class='todo-item' onclick="${deleteTodo}">
-            <p>${ title }</p>
+        return html`<div class='todo-item' onclick=${deleteTodo}>
+            <p>${title}</p>
         </div>`
     }
 });
@@ -12,7 +12,8 @@ const TodoItem = new Mosaic({
 const app = new Mosaic({
     element: '#root',
     data: {
-        todos: ['Click the "Add Todo" button to add another todo item!', 'Click on a todo item to delete it.']
+        todos: ['Click the "Add Todo" button to add another todo item!', 
+        'Click on a todo item to delete it.']
     },
     addTodo(e) {
         // If you are using a keyboard, make sure it is the enter key.
@@ -36,8 +37,7 @@ const app = new Mosaic({
                 this.data.todos.map((title, index) => {
                     return TodoItem.new({
                         title,
-                        key: `${index}`,
-                        deleteTodo: this.deleteTodo.bind(this, index)
+                        deleteTodo: () => this.deleteTodo(index)
                     });
                 })
             }

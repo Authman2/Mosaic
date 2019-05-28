@@ -37,6 +37,11 @@ const app = new Mosaic({
             favoriteFood: 'Sandwich'
         }
     },
+    created() {
+        setTimeout(() => {
+            this.data.person1 = { ...this.data.person1, age: 50 };
+        }, 3000);
+    },
     view: self => html`<div class='main'>
         <h1>Here are descriptions of people:</h1>
         ${ Person.new({ person: self.data.person1 }) }

@@ -64,21 +64,25 @@ export const getDOMfromID = function(str: string) {
 
 /** Finds the differences between two arrays of keys. */
 export function getArrayDifferences(one: string[], two: string[]) {
-    let additions: Object[] = [];
-    let deletions: Object[] = [];
+    let additions: number[] = [];
+    let deletions: number[] = [];
+    let sameSize: string|any[] = one.slice();
+    
+    // Have the same size as the old one, but set deleted ones to undefined.
+    for(let i = 0; i < one.length; i++) {
+        const item = sameSize[i];
+        const found = two.find(obj => item === obj); // the new one is not there anymore
+        if(!found) sameSize[i] = undefined;
+    }
+    console.log(one, sameSize);
     one.forEach((item, index) => {
+        // console.log('deleting: ', item, index);
         const found = two.find(obj => item === obj);
-        if(!found) deletions.push({
-            item,
-            index
-        });
+        if(!found) deletions.push(index);
     });
     two.forEach((item, index) => {
         const found = one.find(obj => item === obj);
-        if(!found) additions.push({
-            item,
-            index
-        });
+        if(!found) additions.push(index);
     });
-    return { deletions, additions, };
+    return { deletions, additions };
 }
