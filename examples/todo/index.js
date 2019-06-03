@@ -1,4 +1,32 @@
 import Mosaic from '../../src/index';
+import { Observable } from '../../src/observable';
+import { ARRAY_DELETE_PLACEHOLDER } from '../../src/util';
+
+// const arr = ['this', 'is', 'a', 'test', 'array'];
+// arr.splice = function(index, number) {
+//     const cpy = [...this];
+//     cpy[index] = ARRAY_DELETE_PLACEHOLDER;
+//     return cpy;
+//     // return Array.prototype.splice.call(this, index, number);
+// }
+// console.log(arr);
+// console.log(arr.splice(2,1));
+// return;
+
+const arr = new Observable([1,2,3,4,5], () => {}, () => {});
+console.log(arr);
+arr.splice(2,2);
+console.log(arr);
+
+// setTimeout(() => {
+//     arr.push(10);
+//     console.log(arr);
+// }, 3000);
+return;
+
+
+
+
 
 const TodoItem = new Mosaic({
     view() {
@@ -35,10 +63,7 @@ const app = new Mosaic({
             <br>
             ${
                 this.data.todos.map((title, index) => {
-                    return TodoItem.new({
-                        title,
-                        deleteTodo: () => this.deleteTodo(index)
-                    });
+                    return TodoItem.new({ title, deleteTodo: () => this.deleteTodo(index) });
                 })
             }
         </div>`

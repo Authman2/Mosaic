@@ -93,22 +93,17 @@ export class Template {
         let ret: Memory[] = [];
         
         // Find all of the attributes.
-        const attrs = node.attributes;
-        for(let i = 0; i < attrs.length; i++) {
-            let attributeName = attrs[i].name;
-            let attributeValue = attrs[i].value;
-            if(attributeValue.indexOf(marker) < 0) continue;
+        for(let i = 0; i < node.attributes.length; i++) {
+            const name = node.attributes[i].name;
+            const value = node.attributes[i].value;
+            if(value.indexOf(marker) < 0 && value.indexOf(nodeMarker) < 0) continue;
             
-            let mem = new Memory({
-                type: attributeName.startsWith('on') ? "event" : "attribute",
+            ret.push(new Memory({
+                type: name.startsWith('on') ? 'event' : 'attribute',
                 steps,
-                attribute: {
-                    name: attributeName,
-                    value: attributeValue
-                },
-                event: attributeName
-            });
-            ret.push(mem);
+                attribute: { name, value },
+                event: name
+            }));
         }
         return ret;
     }

@@ -1,6 +1,13 @@
-import { isPrimitive, traverseValues, cleanUpMosaic, isBooleanAttribute, getArrayDifferences } from "./util";
+import { isPrimitive, traverseValues, cleanUpMosaic, isBooleanAttribute, getArrayDifferences, marker, nodeMarker } from "./util";
 import Mosaic from "./index";
 import { Template } from "./template";
+
+type MemoryOptions = {
+    type: string;
+    steps: number[];
+    attribute?: { name: string, value: any };
+    event?: string;
+}
 
 /** A Memory is used to remember where in the DOM tree a change will occur.
 * In other words, it keeps track of dynamic parts of a component. Later on,
@@ -19,9 +26,7 @@ export class Memory {
     * @param {String} attribute For attribute types, the name and value
     * of the DOM attribute.
     * @param {String} event For event types, the name of the event handler. */
-    constructor(options: { type: string, steps: number[], 
-        attribute?: { name: string, value: any }, event?: string }) {
-
+    constructor(options: MemoryOptions) {
         this.type = options.type;
         this.steps = options.steps;
         this.attribute = options.attribute;
@@ -44,6 +49,7 @@ export class Memory {
             return ('' + oldValue) === ('' + newValue);
         }
         else if(Array.isArray(newValue)) {
+            console.log('Array Changes: ', oldValue, newValue);
             return true; // for right now, always assume that arrays will be dirty.
         }
         else if(typeof newValue === 'object') {
@@ -151,59 +157,32 @@ export class Memory {
 
     /** Commits the changes for "node" types where the value is an array. */
     commitArray(component: Mosaic|Element, child: Element|ChildNode, oldValue: any[], value: any[], initial: boolean) {
-        // This "if" will have to be different. What if you inject an array
-        // after the initial render? Just check if the placeholder is there.
-        if(initial) {
-            // Render the entire array. This works.
-            const holder = document.createElement('span');
-            for(let i = 0; i < value.length; i++) {
-                const item = value[i];
-                if(item instanceof Mosaic) {
-                    holder.appendChild(item.element);
-                    if(item.created) item.created();
-                } else if(item instanceof Template) {
-                    let element: any = item.element.content.cloneNode(true).firstChild;
-                    item.repaint(element, [], item.values!!, true);
-                    holder.appendChild(element);
-                }
+        // Render the entire array. This works.
+        const holder = document.createElement('span');
+        for(let i = 0; i < value.length; i++) {
+            const item = value[i];
+            if(item instanceof Mosaic) {
+                holder.appendChild(item.element);
+                if(item.created) item.created();
+            } else if(item instanceof Template) {
+                let element: any = item.element.content.cloneNode(true).firstChild;
+                item.repaint(element, [], item.values!!, true);
+                holder.appendChild(element);
             }
-            child.replaceWith(holder);
-        } else {
-            // Look at the additions/deletions and figure out
-            // where to inject/remove them.
-            const existingElements = child.childNodes;
-
-            // Compare the differences of the old keys and the new keys so that you
-            // can get the ones that were deleted and the ones that were added.
-            const oldKeys = oldValue.map(obj => {
-                if(obj instanceof Mosaic) {
-                    if(!obj.data['key']) throw new Error('Array item does not have a "key" property on it.');
-                    return obj.data['key'];
-                } else return obj.element.getAttribute('key');
-            });
-            const newKeys = value.map(obj => {
-                if(obj instanceof Mosaic) {
-                    if(!obj.data['key']) throw new Error('Array item does not have a "key" property on it.');
-                    return obj.data['key'];
-                } else return obj.element.getAttribute('key');
-            });
-            const diff = getArrayDifferences(oldKeys, newKeys); // this is getting the wrong delete index...
-            // console.log(oldValue);
-            // console.log(value);
-            // console.log(diff);
         }
+        child.replaceWith(holder);
     }
 
     /** Commits the changes for "attribute" types. */
-    commitAttribute(component: Mosaic|Element, child: Element|ChildNode, oldValue: any, value: any, initial: boolean) {
+    commitAttribute(component: Mosaic|Element, child: Element|ChildNode, oldValue: any, newValue: any, initial: boolean) {
         if(!this.attribute) return;
-        let name: string = this.attribute.name;
 
+        let { name } = this.attribute;
         if(isBooleanAttribute(name)) {
-            if(value === true) (child as Element).setAttribute(name, 'true');
+            if(newValue === true) (child as Element).setAttribute(name, 'true');
             else (child as Element).removeAttribute(name);
         } else {
-            (child as Element).setAttribute(name, value);
+            (child as Element).setAttribute(name, newValue);
         }
     }
 
