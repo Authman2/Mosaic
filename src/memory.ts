@@ -49,7 +49,8 @@ export class Memory {
             return ('' + oldValue) === ('' + newValue);
         }
         else if(Array.isArray(newValue)) {
-            console.log('Array Changes: ', oldValue, newValue);
+            console.log('Old Array: ', oldValue);
+            console.log('New Array: ', newValue);
             return true; // for right now, always assume that arrays will be dirty.
         }
         else if(typeof newValue === 'object') {

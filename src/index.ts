@@ -79,8 +79,8 @@ class Mosaic {
 
         // Regular Painting Process:
         if(!this.base || !isHTMLElement(this.base)) {
-            throw new Error(`This Mosaic could not be painted because its element property is either not set
-            or is not a valid HTML element.`);
+            throw new Error(`This Mosaic could not be painted because its 
+            element property is either not set or is not a valid HTML element.`);
         }
         while(this.base.firstChild) this.base.removeChild(this.base.firstChild);
     
@@ -159,7 +159,7 @@ class Mosaic {
 /** HELPERS */
 
 const setupData = function(_data) {
-    return new Observable(_data, (old) => {
+    return new Observable(_data, old => {
         // Only update the instances, not the diagrams.
         // Before you update this component, remove it as a dependency so you
         // don't get a memory leak.
@@ -167,7 +167,14 @@ const setupData = function(_data) {
         if(!this.iid) return;
         if(this.portfolio) this.portfolio.removeDependency(this);
         if(this.willUpdate) this.willUpdate(old);
-    }, () => {
+    }, (object, __, changes) => {
+        // object.changes = { something: true };
+        // console.dir('Array: ', object);
+        // console.log('%c CHANGES: ', 'color:mediumseagreen', changes);
+        // console.log('%c THIS: ', 'color:mediumseagreen', this);
+        // console.log();
+        // console.log();
+
         // Only update the instances, not the diagrams.
         // See if you need to re-add the dependency.
         if(this.barrierOn === true) return;
@@ -184,6 +191,12 @@ const setupTemplate = function(options: MosaicOptions) {
     this.values = (template.values || []).slice();
     this.initialRender = true;
 
+    // Setup the template content only once.
+    const element = document.createElement('template');
+    element.innerHTML = template.constructHTML();
+    template.element = element;
+    template.memories = template.memorize();
+
     // Take the element from the Template.
     let cloned = template.element.content.cloneNode(true).firstChild;
     
@@ -191,8 +204,11 @@ const setupTemplate = function(options: MosaicOptions) {
     if(!(this.tid in TemplateTable)) TemplateTable[this.tid] = template;
 
     // Determine if this is the entry point.
-    if(document.contains(this.element))
-        this.base = (options as any).base || (typeof options.element === 'string' ? getDOMfromID(options.element) : options.element);
+    if(document.contains(this.element)) {
+        this.base = (options as any).base || (typeof options.element === 'string'
+            ? getDOMfromID(options.element)
+            : options.element);
+    }
     this.element = cloned;
 }
 

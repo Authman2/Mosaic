@@ -15,12 +15,7 @@ export class Template {
     constructor(strings: string[], ...values: any[]) {
         this.strings = strings;
         this.values = values[0];
-
-        const template = document.createElement('template');
-        template.innerHTML = this.constructHTML();
-        this.element = template;
-
-        this.memories = this.memorize();
+        this.element = document.createElement('template');
     }
 
     /** Adds placeholders in the innerHTML string. */
@@ -76,10 +71,21 @@ export class Template {
             let mem: Memory = this.memories[i];
 
             // Get the old and new values. If there are no old values, which
-            // will happen with Templates, 
+            // will happen with Templates, then just render the new ones.
             let oldVal = oldValues.length === 0 ? undefined : oldValues[i];
             let newVal = newValues[i];
 
+            // If the new value is an array, make sure you update its
+            // prototype functions so that it can keep a record of its
+            // changes.
+            if(Array.isArray(newVal)) {
+                newVal.splice = function(start: number, deleteCount?: number|undefined, ...items): any[] {
+                    newVal.changes = { gotChanges: true };
+                    return Array.prototype.splice.call(newVal, start, deleteCount || 0, items);
+                }
+            }
+
+            // Commit the changes.
             if(mem.changed(oldVal, newVal, initial)) mem.commit(element, oldVal, newVal, initial);
             else if(element instanceof Mosaic) element.values[i] = oldVal;
         }

@@ -4,25 +4,35 @@ import { ARRAY_DELETE_PLACEHOLDER } from '../../src/util';
 
 // const arr = ['this', 'is', 'a', 'test', 'array'];
 // arr.splice = function(index, number) {
-//     const cpy = [...this];
-//     cpy[index] = ARRAY_DELETE_PLACEHOLDER;
-//     return cpy;
-//     // return Array.prototype.splice.call(this, index, number);
+//     this.changes = {
+//         deletedAt: index,
+//         deleteCount: number
+//     };
+//     return Array.prototype.splice.call(this, index, number);
 // }
 // console.log(arr);
-// console.log(arr.splice(2,1));
+
+// arr.splice(2,1);
+// const changes1 = arr.changes;
+
+// setTimeout(() => {
+//     arr.splice(0,2);
+//     const changes2 = arr.changes;
+//     console.log(arr);
+//     console.log(changes1, changes2);
+// }, 2000);
 // return;
 
-const arr = new Observable([1,2,3,4,5], () => {}, () => {});
-console.log(arr);
-arr.splice(2,2);
-console.log(arr);
+// const arr = new Observable([1,2,3,4,5], () => {}, () => {});
+// console.log(arr);
+// arr.splice(2,2);
+// console.log(arr);
 
 // setTimeout(() => {
 //     arr.push(10);
 //     console.log(arr);
 // }, 3000);
-return;
+// return;
 
 
 
@@ -45,7 +55,7 @@ const app = new Mosaic({
     },
     addTodo(e) {
         // If you are using a keyboard, make sure it is the enter key.
-        if(e && e.keyCode) { if(e.keyCode !== 13) { return; } }
+        if(e && e.keyCode) { if(e.keyCode !== 13) return }
         
         let value = document.getElementById('inp').value;
         document.getElementById('inp').value = '';
