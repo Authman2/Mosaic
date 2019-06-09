@@ -3,11 +3,9 @@ import { getDOMfromID, traverseValues } from './util';
 
 // Helper function so you're not rewritting the same code multiple times.
 const displayRoute = function(to, data?: Object) {
-    // Setup data properties.
-    if(data) this.data = data || {};
-    
-    // Find the route or use Not Found.
     let routes = this.routes[to];
+    
+    if(data) this.data = data || {};
     if(!routes) {
         if(this.notfound) {
             routes = this.notfound;
@@ -19,10 +17,7 @@ const displayRoute = function(to, data?: Object) {
     // Add the elements.
     while((this.base as Element).firstChild) (this.base as Element).removeChild((this.base as Element).firstChild as Element);
     for(const mos of routes) {
-        // Add the element to the document.
         (this.base as Element).appendChild(mos.element);
-        
-        // Call lifecycle function on each child component.
         traverseValues(mos, child => {
             child.router = this;
             if(child.portfolio) child.portfolio.addDependency(child);
@@ -41,22 +36,17 @@ export class Router {
     /** @internal */
     notfound?: Mosaic|Mosaic[];
 
-    params: Object;
     data: Object;
 
     constructor(public base: string|Element) {
         this.routes = {};
-        this.params = {};
         this.data = {};
         this.current = '/';
 
         this.base = (typeof base === 'string' ? getDOMfromID(base) : base) || document.body;
         window.onpopstate = () => {
             let oldURL = window.location.pathname;
-            displayRoute.call(this, oldURL, {
-                params: this.params,
-                data: this.data
-            });
+            displayRoute.call(this, oldURL, { data: this.data });
             oldURL += window.location.search;
         }
     }
