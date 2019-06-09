@@ -154,13 +154,11 @@ class Mosaic {
         return (this.element as Element);
     }
 
-    /** A function for efficient rendering of arrays. */
-    static array(items: any[], key: (object) => string, 
-        map: (object, index) => Mosaic|Template): KeyedArray {
+    /** A function for efficient rendering of arrays. Takes the initial array,
+    * a key function, and a map function as parameters. */
+    static list(items: any[], key: (object) => string, map: (object, index) => Mosaic|Template): KeyedArray {
         const keys = items.map(itm => key(itm));
         const mapped = items.map((itm, index) => map(itm, index));
-
-
         const ret = { items, keys, mapped };
         return ret;
     }

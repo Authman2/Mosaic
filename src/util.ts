@@ -22,7 +22,7 @@ export type KeyedArray = {
     mapped: any[]
 };
 export function isKeyedArray(object: Object): boolean {
-    if(!object) return false;
+    if(!object || typeof object !== 'object') return false;
     if(!object.hasOwnProperty('items') || !Array.isArray(object['items'])) return false;
     if(!object.hasOwnProperty('keys') || !Array.isArray(object['keys'])) return false;
     if(!object.hasOwnProperty('mapped') || !Array.isArray(object['mapped'])) return false;
@@ -79,11 +79,11 @@ export const getDOMfromID = function(str: string) {
 /** Finds the differences between two arrays of keys. */
 export function getArrayDifferences(one: string[], two: string[]) {
     let additions: { key: string, index: number }[] = [];
-    let deletions: string[] = [];
+    let deletions: { key: string, index: number }[] = [];
     
     one.forEach((item, index) => {
         const found = two.find(obj => item === obj);
-        if(!found) deletions.push(item);
+        if(!found) deletions.push({ key: item, index });
     });
     two.forEach((item, index) => {
         const found = one.find(obj => item === obj);

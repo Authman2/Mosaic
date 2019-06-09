@@ -1,4 +1,7 @@
-import { isPrimitive, traverseValues, cleanUpMosaic, isBooleanAttribute, isKeyedArray, KeyedArray, getArrayDifferences, insertAfter } from "./util";
+import {
+    isPrimitive, traverseValues, cleanUpMosaic, isBooleanAttribute, 
+    isKeyedArray, KeyedArray, getArrayDifferences, insertAfter
+} from "./util";
 import Mosaic from "./index";
 import { Template } from "./template";
 
@@ -49,12 +52,10 @@ export class Memory {
             return ('' + oldValue) === ('' + newValue);
         }
         else if(Array.isArray(newValue)) {
-            return true; // for right now, always assume that arrays will be dirty.
+            return ''+oldValue !== ''+newValue;
         }
         else if(isKeyedArray(newValue)) {
-            console.log('Old: ', ''+oldValue.keys);
-            console.log('New: ', ''+newValue.keys);
-            return true;
+            return (''+oldValue.keys) !== (''+newValue.keys);
         }
         else if(typeof newValue === 'object') {
             // Check for when a Mosaic changes. Only consider it a change when:
@@ -185,17 +186,16 @@ export class Memory {
     commitKeyedArray(component: Mosaic|Element, child: Element|ChildNode, 
         oldValue: KeyedArray, value: KeyedArray, initial: boolean) {
         // 1.) Deconstruct the keyed arrays.
-        const oldItems = oldValue.items;
+        // const oldItems = oldValue.items;
         const oldKeys = oldValue.keys;
         const oldMapped = oldValue.mapped;
 
-        const newItems = value.items;
+        // const newItems = value.items;
         const newKeys = value.keys;
         const newMapped = value.mapped;
 
         // 2.) If it is the initial render, then just place the entire array.
-        // NOTE: This is a bad check since "initial" does not account for repainted
-        // arrays; find a different way to check later on.
+        // IMPORTANT: This is a bad check since "initial" does not account for repainted arrays; find a different way to check later on.
         if(initial === true) {
             let reference = child;
             const injectFunction = rep => {
@@ -235,7 +235,8 @@ export class Memory {
             const { deletions, additions } = differences;
             
             // For each deletion, find the DOM node with that key and remove it.
-            deletions.forEach(key => {
+            deletions.forEach(object => {
+                const { key } = object;
                 const domNode = document.querySelector(`[key='${key}']`);
                 if(domNode) domNode.remove();
             });
@@ -251,9 +252,9 @@ export class Memory {
 
                 // Start from the "child" node, then go to its next sibling as
                 // many times as it takes to get to the index.
-                let siblings: ChildNode|null = child;
+                let siblings: Node|ChildNode|null = child;
                 for(let i = 0; i < index; i++) 
-                    siblings = siblings === null ? null : siblings.nextSibling;
+                    siblings = (!siblings ? null : siblings.nextSibling);
                 
                 // If the insert index is greater than the old array length,
                 // append it. Otherwise replace it.

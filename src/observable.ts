@@ -20,11 +20,7 @@ export class Observable {
                 // Did update.
                 if(didChange) didChange(object, old);
                 return Reflect.set(object, name, value, receiver);
-            },
-            // deleteProperty(object, name) {
-            //     console.log('Deleted: ', object, name);
-            //     return Reflect.deleteProperty(object, name);
-            // }
+            }
         };
         return new Proxy(observingObject, Handler);
     }
