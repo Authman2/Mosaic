@@ -236,8 +236,13 @@ export class Memory {
             additions.forEach(object => {
                 const { key, index } = object;
                 const newMappedItem = newMapped[index];
-                newMappedItem.element.setAttribute('key', key);
                 setParent(newMappedItem, component);
+                
+                // Get the correct element if it's a Mosaic or Template.
+                let element = newMappedItem.element;
+                if(newMappedItem instanceof Template)
+                    element = newMappedItem.constructAndRepaint();
+                element.setAttribute('key', key);
 
                 // Start from the "child" node, then go to its next sibling as
                 // many times as it takes to get to the index.
@@ -249,10 +254,10 @@ export class Memory {
                 // append it. Otherwise replace it.
                 if(index >= oldMapped.length) {
                     // append
-                    if(siblings) insertAfter(newMappedItem.element, siblings.previousSibling);
+                    if(siblings) insertAfter(element, siblings.previousSibling);
                 } else {
                     // replace
-                    if(siblings) insertAfter(newMappedItem.element, siblings.previousSibling);
+                    if(siblings) insertAfter(element, siblings.previousSibling);
                 }
                 
                 // Call the lifecycle function if it's a Mosaic.
