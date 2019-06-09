@@ -1,6 +1,6 @@
 import {
     isPrimitive, traverseValues, cleanUpMosaic, isBooleanAttribute, 
-    isKeyedArray, KeyedArray, getArrayDifferences, insertAfter
+    isKeyedArray, KeyedArray, getArrayDifferences, insertAfter, setParent
 } from "./util";
 import Mosaic from "./index";
 import { Template } from "./template";
@@ -140,43 +140,36 @@ export class Memory {
 
     /** Commits the changes for "node" types. */
     commitNode(component: Mosaic|Element, child: HTMLElement|ChildNode, oldValue: any, value: any, initial: boolean) {
-        if(Array.isArray(value)) {
+        if(Array.isArray(value))
             this.commitArray(component, child, oldValue, value, initial);
-        }
-        else if(isKeyedArray(value)) {
+        else if(isKeyedArray(value))
             this.commitKeyedArray(component, child, oldValue, value, initial);
-        }
         else if(value instanceof Mosaic) {
             // Set the parent/child properties of the Mosaics.
             if(component instanceof Mosaic) (value as any).parent = component;
-            
             child.replaceWith((value as any).element);
             if(value.created) value.created();
         }
         else if(value instanceof Template) {
-            let element = value.element.content.cloneNode(true).firstChild;
-            value.repaint(element, [], value.values!!, true);
+            const element = value.constructAndRepaint();
             child.replaceWith(element as ChildNode);
         }
-        else {
-            child.replaceWith(value);
-        }
+        else child.replaceWith(value);
     }
 
     /** Commits the changes for "node" types where the value is an array. */
-    commitArray(component: Mosaic|Element, child: Element|ChildNode, 
-        oldValue: any[], value: any[], initial: boolean) {
+    commitArray(component: Mosaic|Element, child: Element|ChildNode, __: any[], value: any[], ___: boolean) {
         // Render the entire array. This works.
         const holder = document.createElement('span');
         for(let i = 0; i < value.length; i++) {
             const item = value[i];
             if(item instanceof Mosaic) {
+                setParent(item, component);
                 holder.appendChild(item.element);
                 if(item.created) item.created();
             } else if(item instanceof Template) {
-                let element: any = item.element.content.cloneNode(true).firstChild;
-                item.repaint(element, [], item.values!!, true);
-                holder.appendChild(element);
+                const element = item.constructAndRepaint();
+                holder.appendChild(element as any);
             }
         }
         child.replaceWith(holder);
@@ -184,27 +177,23 @@ export class Memory {
 
     /** Commits changes for a keyed array, doing efficient updating instead of a full rerender. */
     commitKeyedArray(component: Mosaic|Element, child: Element|ChildNode, 
-        oldValue: KeyedArray, value: KeyedArray, initial: boolean) {
+            oldValue: KeyedArray, value: KeyedArray, initial: boolean) {
         // 1.) Deconstruct the keyed arrays.
-        // const oldItems = oldValue.items;
         const oldKeys = oldValue.keys;
         const oldMapped = oldValue.mapped;
-
-        // const newItems = value.items;
         const newKeys = value.keys;
         const newMapped = value.mapped;
 
-        // 2.) If it is the initial render, then just place the entire array.
-        // IMPORTANT: This is a bad check since "initial" does not account for repainted arrays; find a different way to check later on.
-        if(initial === true) {
+        // 2.) If it is the initial render or there is no old array, then 
+        // just place the entire array.
+        if(initial === true || !oldMapped) {
             let reference = child;
             const injectFunction = rep => {
                 if(reference.nodeType === 8) {
                     reference.replaceWith(rep);
                     reference = rep;
                 } else {
-                    const n = insertAfter(rep, reference);
-                    reference = n;
+                    reference = insertAfter(rep, reference);
                 }
             }
 
@@ -215,13 +204,13 @@ export class Memory {
 
                 if(item instanceof Mosaic) {
                     item.element.setAttribute('key', key);
+                    setParent(item, component);
                     injectFunction(item.element);
                     if(item.created) item.created();
                 } else if(item instanceof Template) {
-                    let element: any = item.element.content.cloneNode(true).firstChild;
-                    element.setAttribute('key', key);
-                    item.repaint(element, [], item.values!!, true);
-                    injectFunction(item.element);
+                    const element = item.constructAndRepaint();
+                    (element as any).setAttribute('key', key);
+                    injectFunction(element);
                 }
             }
         }
@@ -231,8 +220,7 @@ export class Memory {
         // with those keys and perform some action on them.
         else {
             // Find the differences between the two arrays by their keys.
-            const differences = getArrayDifferences(oldKeys, newKeys);
-            const { deletions, additions } = differences;
+            const { deletions, additions } = getArrayDifferences(oldKeys, newKeys);
             
             // For each deletion, find the DOM node with that key and remove it.
             deletions.forEach(object => {
@@ -249,6 +237,7 @@ export class Memory {
                 const { key, index } = object;
                 const newMappedItem = newMapped[index];
                 newMappedItem.element.setAttribute('key', key);
+                setParent(newMappedItem, component);
 
                 // Start from the "child" node, then go to its next sibling as
                 // many times as it takes to get to the index.
@@ -273,7 +262,7 @@ export class Memory {
     }
 
     /** Commits the changes for "attribute" types. */
-    commitAttribute(component: Mosaic|Element, child: Element|ChildNode, oldValue: any, newValue: any, initial: boolean) {
+    commitAttribute(_: Mosaic|Element, child: Element|ChildNode, __: any, newValue: any, ___: boolean) {
         if(!this.attribute) return;
 
         let { name } = this.attribute;
@@ -287,7 +276,7 @@ export class Memory {
 
     /** Commits the changes for "event" types. Currently does not support
      * dynamically changing function attributes. */
-    commitEvent(component: Mosaic|Element, child: Element|ChildNode, oldValue: any, value: any, initial: boolean) {
+    commitEvent(component: Mosaic|Element, child: Element|ChildNode, _: any, value: any, __: boolean) {
         let name: string = this.event || "";
 
         let eventHandlers = (child as any).eventHandlers || {};

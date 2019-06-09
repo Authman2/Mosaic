@@ -98,3 +98,9 @@ export function insertAfter(newNode, referenceNode) {
     referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
     return newNode;
 }
+
+/** Sets the "parent" property on a Mosaic. Mostly just a helper function
+* to make the code easier to read. */
+export function setParent(on: any, parent: any) {
+    if(parent instanceof Mosaic) on.parent = parent;
+}

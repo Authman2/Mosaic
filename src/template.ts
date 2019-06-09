@@ -18,6 +18,16 @@ export class Template {
         this.element = document.createElement('template');
     }
 
+    /** Constructs the HTML template and repaints on the fly. Used for
+    * standalone Templates that need to be rendered. */
+    constructAndRepaint() {
+        this.element.innerHTML = this.constructHTML();
+        this.memories = this.memorize();
+        let ele = this.element.content.cloneNode(true).firstChild;
+        this.repaint(ele, [], this.values!!, true);
+        return ele;
+    }
+
     /** Adds placeholders in the innerHTML string. */
     constructHTML() {
         let ret = '';

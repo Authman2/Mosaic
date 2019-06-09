@@ -1,32 +1,35 @@
 import Mosaic from '../../src/index';
 
+const generateTodoKey = () => Math.random().toString(36).slice(2);
+
 const TodoItem = new Mosaic({
     view() {
-        const { item, deleteTodo } = this.data;
+        const { title, deleteTodo } = this.data;
         return html`<div class='todo-item' onclick=${deleteTodo}>
-            <p>${item && item.title}</p>
+            <p>${title}</p>
         </div>`
     }
 });
 
-new Mosaic({
+const app = new Mosaic({
     element: '#root',
     data: {
         todos: [
-            { title: 'Click the "Add Todo" button to add another todo item!', id: 'first' }, 
-            { title: 'Click on a todo item to delete it.', id: 'second'}
+            { title: 'Click the "Add Todo" button to add another todo item!', key: generateTodoKey() }, 
+            { title: 'Click on a todo item to delete it.', key: generateTodoKey() }
         ]
     },
     addTodo(e) {
         if(e && e.keyCode && e.keyCode !== 13) return;
         
+        let key = generateTodoKey();
         let title = document.getElementById('inp').value;
         document.getElementById('inp').value = '';
 
-        this.data.todos.push({ title, id: Math.random().toString(36).slice(2) });
+        this.data.todos.push({ title, key });
     },
-    deleteTodo(id) {
-        this.data.todos = this.data.todos.filter(todo => todo.id !== id);
+    deleteTodo(key) {
+        this.data.todos = this.data.todos.filter(todo => todo.key !== key);
     },
     view() {
         const { todos } = this.data;
@@ -34,12 +37,14 @@ new Mosaic({
 
         return html`<div class='app'>
             <h1 class='app-title'>Mosaic Todo List</h1>
-            <input id='inp' type='text' placeholder='New Todo' onkeypress="${addTodo}"/>
-            <button onclick="${addTodo}">Add Todo</button>
+            <input id='inp' type='text' placeholder='New Todo' onkeypress=${addTodo}/>
+            <button onclick=${addTodo}>Add Todo</button>
             <br>
-            ${Mosaic.list(todos, item => item.id, item => {
-                return TodoItem.new({ item, deleteTodo: () => deleteTodo.call(this, item.id) });
-            })}
+            ${Mosaic.list(todos, item => item.key, item => TodoItem.new({
+                title: item.title,
+                deleteTodo: () => deleteTodo.call(this, item.key)
+            }))}
         </div>`
     }
-}).paint();
+})
+app.paint();
