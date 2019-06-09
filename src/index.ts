@@ -1,6 +1,6 @@
 import { MosaicOptions } from "./mosaic-options";
 import { findInvalidOptions } from "./validations";
-import { randomKey, getDOMfromID, isHTMLElement, traverseValues } from "./util";
+import { KeyedArray, randomKey, getDOMfromID, isHTMLElement, traverseValues } from "./util";
 import { Observable } from "./observable";
 import { Template } from "./template";
 import { Router } from "./router";
@@ -153,8 +153,18 @@ class Mosaic {
         this.repaint();
         return (this.element as Element);
     }
-}
 
+    /** A function for efficient rendering of arrays. */
+    static array(items: any[], key: (object) => string, 
+        map: (object, index) => Mosaic|Template): KeyedArray {
+        const keys = items.map(itm => key(itm));
+        const mapped = items.map((itm, index) => map(itm, index));
+
+
+        const ret = { items, keys, mapped };
+        return ret;
+    }
+}
 
 /** HELPERS */
 
@@ -167,14 +177,7 @@ const setupData = function(_data) {
         if(!this.iid) return;
         if(this.portfolio) this.portfolio.removeDependency(this);
         if(this.willUpdate) this.willUpdate(old);
-    }, (object, __, changes) => {
-        // object.changes = { something: true };
-        // console.dir('Array: ', object);
-        // console.log('%c CHANGES: ', 'color:mediumseagreen', changes);
-        // console.log('%c THIS: ', 'color:mediumseagreen', this);
-        // console.log();
-        // console.log();
-
+    }, () => {
         // Only update the instances, not the diagrams.
         // See if you need to re-add the dependency.
         if(this.barrierOn === true) return;

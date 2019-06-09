@@ -75,16 +75,6 @@ export class Template {
             let oldVal = oldValues.length === 0 ? undefined : oldValues[i];
             let newVal = newValues[i];
 
-            // If the new value is an array, make sure you update its
-            // prototype functions so that it can keep a record of its
-            // changes.
-            if(Array.isArray(newVal)) {
-                newVal.splice = function(start: number, deleteCount?: number|undefined, ...items): any[] {
-                    newVal.changes = { gotChanges: true };
-                    return Array.prototype.splice.call(newVal, start, deleteCount || 0, items);
-                }
-            }
-
             // Commit the changes.
             if(mem.changed(oldVal, newVal, initial)) mem.commit(element, oldVal, newVal, initial);
             else if(element instanceof Mosaic) element.values[i] = oldVal;

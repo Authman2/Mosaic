@@ -23,15 +23,13 @@ import { ARRAY_DELETE_PLACEHOLDER } from '../../src/util';
 // }, 2000);
 // return;
 
-// const arr = new Observable([1,2,3,4,5], () => {}, () => {});
-// console.log(arr);
-// arr.splice(2,2);
-// console.log(arr);
-
-// setTimeout(() => {
-//     arr.push(10);
-//     console.log(arr);
-// }, 3000);
+// const _data = {
+//     arr: [1,2,3,4,5]
+// }
+// const data = new Observable(_data, () => {}, () => {
+//     console.log(data);
+// });
+// data.arr.splice(2,2);
 // return;
 
 
@@ -40,9 +38,9 @@ import { ARRAY_DELETE_PLACEHOLDER } from '../../src/util';
 
 const TodoItem = new Mosaic({
     view() {
-        const { title, deleteTodo } = this.data;
+        const { item, deleteTodo } = this.data;
         return html`<div class='todo-item' onclick=${deleteTodo}>
-            <p>${title}</p>
+            <p>${(item && item.title) || ""}</p>
         </div>`
     }
 });
@@ -50,32 +48,35 @@ const TodoItem = new Mosaic({
 const app = new Mosaic({
     element: '#root',
     data: {
-        todos: ['Click the "Add Todo" button to add another todo item!', 
-        'Click on a todo item to delete it.']
+        todos: [
+            { title: 'Click the "Add Todo" button to add another todo item!', id: 'first' }, 
+            { title: 'Click on a todo item to delete it.', id: 'second'}
+        ]
     },
     addTodo(e) {
         // If you are using a keyboard, make sure it is the enter key.
         if(e && e.keyCode) { if(e.keyCode !== 13) return }
         
-        let value = document.getElementById('inp').value;
+        let title = document.getElementById('inp').value;
         document.getElementById('inp').value = '';
 
-        this.data.todos.push(value);
+        this.data.todos.push({ title, id: Math.random().toString(36).slice(2) });
+        // this.data.todos.splice(1, 0, { title, id: Math.random().toString(36).slice(2) });
     },
     deleteTodo(todoIndex) {
         this.data.todos.splice(todoIndex, 1);
     },
     view() {
+        const { todos } = this.data;
+
         return html`<div class='app'>
             <h1 class='app-title'>Mosaic Todo List</h1>
             <input id='inp' type='text' placeholder='New Todo' onkeypress="${this.addTodo}"/>
             <button onclick="${this.addTodo}">Add Todo</button>
             <br>
-            ${
-                this.data.todos.map((title, index) => {
-                    return TodoItem.new({ title, deleteTodo: () => this.deleteTodo(index) });
-                })
-            }
+            ${Mosaic.array(todos, item => item.id, (item, index) => {
+                return TodoItem.new({ item, deleteTodo: () => this.deleteTodo(index) });
+            })}
         </div>`
     }
 });

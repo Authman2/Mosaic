@@ -1,52 +1,30 @@
-import { ARRAY_DELETE_PLACEHOLDER } from "./util";
-
 /** Basically an object that can perform a certain function when a property changes. 
 * @param {Object} observingObject The object to look for changes in.. */
 export class Observable {
     constructor(observingObject: Object|any[], willChange: Function, didChange: Function) {
-        // let aboutToSplice: boolean = false;
-
         const Handler: Object = {
             get(object, name, receiver) {
-                // Check for array functions so you can intercept them.
-                // if(name === 'splice') aboutToSplice = true;
-                
                 // Make nested proxies.
                 if(object[name] && Array.isArray(object[name])) {
                     return new Observable(object[name], willChange, didChange);
                 } return Reflect.get(object, name, receiver);
             },
-            set(object, name, value) {
-                // Keep track of the changes (only used for arrays).
-                // let changes: Object|undefined = undefined;
-
+            set(object, name, value, receiver) {
                 // About to update.
                 let old = Object.assign({}, observingObject);
                 if(willChange) willChange(old);
                 
                 // Make changes and track array functions.
-                // if(aboutToSplice === true) {
-                //     object[name] = value;
-                //     // For splicing, make the change, then add a property to
-                //     // that array object so that it knows where the changes are.
-                //     changes = {
-                //         startIndex: parseInt(name) || object.length - 1,
-                //         spotReplacement: value,
-                //         removeRemainder: name === 'length'
-                //     };
-                //     // console.log(object);
-                //     // console.log(`Array: ${object}, Name: ${name}, Value: ${value}`);
-                // } else {
-                    object[name] = value;
-                // }
+                object[name] = value;
 
-                // Reset the class properties.
-                // aboutToSplice = false;
-                
                 // Did update.
                 if(didChange) didChange(object, old);
-                return true;
-            }
+                return Reflect.set(object, name, value, receiver);
+            },
+            // deleteProperty(object, name) {
+            //     console.log('Deleted: ', object, name);
+            //     return Reflect.deleteProperty(object, name);
+            // }
         };
         return new Proxy(observingObject, Handler);
     }

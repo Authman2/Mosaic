@@ -1,4 +1,4 @@
-import { isPrimitive, traverseValues, cleanUpMosaic, isBooleanAttribute, getArrayDifferences, marker, nodeMarker } from "./util";
+import { isPrimitive, traverseValues, cleanUpMosaic, isBooleanAttribute, isKeyedArray, KeyedArray, getArrayDifferences, insertAfter } from "./util";
 import Mosaic from "./index";
 import { Template } from "./template";
 
@@ -49,9 +49,12 @@ export class Memory {
             return ('' + oldValue) === ('' + newValue);
         }
         else if(Array.isArray(newValue)) {
-            console.log('Old Array: ', oldValue);
-            console.log('New Array: ', newValue);
             return true; // for right now, always assume that arrays will be dirty.
+        }
+        else if(isKeyedArray(newValue)) {
+            console.log('Old: ', ''+oldValue.keys);
+            console.log('New: ', ''+newValue.keys);
+            return true;
         }
         else if(typeof newValue === 'object') {
             // Check for when a Mosaic changes. Only consider it a change when:
@@ -139,6 +142,9 @@ export class Memory {
         if(Array.isArray(value)) {
             this.commitArray(component, child, oldValue, value, initial);
         }
+        else if(isKeyedArray(value)) {
+            this.commitKeyedArray(component, child, oldValue, value, initial);
+        }
         else if(value instanceof Mosaic) {
             // Set the parent/child properties of the Mosaics.
             if(component instanceof Mosaic) (value as any).parent = component;
@@ -157,7 +163,8 @@ export class Memory {
     }
 
     /** Commits the changes for "node" types where the value is an array. */
-    commitArray(component: Mosaic|Element, child: Element|ChildNode, oldValue: any[], value: any[], initial: boolean) {
+    commitArray(component: Mosaic|Element, child: Element|ChildNode, 
+        oldValue: any[], value: any[], initial: boolean) {
         // Render the entire array. This works.
         const holder = document.createElement('span');
         for(let i = 0; i < value.length; i++) {
@@ -172,6 +179,96 @@ export class Memory {
             }
         }
         child.replaceWith(holder);
+    }
+
+    /** Commits changes for a keyed array, doing efficient updating instead of a full rerender. */
+    commitKeyedArray(component: Mosaic|Element, child: Element|ChildNode, 
+        oldValue: KeyedArray, value: KeyedArray, initial: boolean) {
+        // 1.) Deconstruct the keyed arrays.
+        const oldItems = oldValue.items;
+        const oldKeys = oldValue.keys;
+        const oldMapped = oldValue.mapped;
+
+        const newItems = value.items;
+        const newKeys = value.keys;
+        const newMapped = value.mapped;
+
+        // 2.) If it is the initial render, then just place the entire array.
+        // NOTE: This is a bad check since "initial" does not account for repainted
+        // arrays; find a different way to check later on.
+        if(initial === true) {
+            let reference = child;
+            const injectFunction = rep => {
+                if(reference.nodeType === 8) {
+                    reference.replaceWith(rep);
+                    reference = rep;
+                } else {
+                    const n = insertAfter(rep, reference);
+                    reference = n;
+                }
+            }
+
+            // Add each element to the DOM and be sure to give it an ID.
+            for(let i = 0; i < newMapped.length; i++) {
+                const item = newMapped[i];
+                const key = newKeys[i];
+
+                if(item instanceof Mosaic) {
+                    item.element.setAttribute('key', key);
+                    injectFunction(item.element);
+                    if(item.created) item.created();
+                } else if(item instanceof Template) {
+                    let element: any = item.element.content.cloneNode(true).firstChild;
+                    element.setAttribute('key', key);
+                    item.repaint(element, [], item.values!!, true);
+                    injectFunction(item.element);
+                }
+            }
+        }
+        
+        // 3.) If it is not the initial render, then you need to look for
+        // deletions and additions. Once you have those, look for the items
+        // with those keys and perform some action on them.
+        else {
+            // Find the differences between the two arrays by their keys.
+            const differences = getArrayDifferences(oldKeys, newKeys);
+            const { deletions, additions } = differences;
+            
+            // For each deletion, find the DOM node with that key and remove it.
+            deletions.forEach(key => {
+                const domNode = document.querySelector(`[key='${key}']`);
+                if(domNode) domNode.remove();
+            });
+
+            // For each addition, look at the index that it was inserted at and
+            // also look at the new mapped value associated with it. Then take
+            // the new mapped item, give it the key, and insert it into the dom
+            // at that index.
+            additions.forEach(object => {
+                const { key, index } = object;
+                const newMappedItem = newMapped[index];
+                newMappedItem.element.setAttribute('key', key);
+
+                // Start from the "child" node, then go to its next sibling as
+                // many times as it takes to get to the index.
+                let siblings: ChildNode|null = child;
+                for(let i = 0; i < index; i++) 
+                    siblings = siblings === null ? null : siblings.nextSibling;
+                
+                // If the insert index is greater than the old array length,
+                // append it. Otherwise replace it.
+                if(index >= oldMapped.length) {
+                    // append
+                    if(siblings) insertAfter(newMappedItem.element, siblings.previousSibling);
+                } else {
+                    // replace
+                    if(siblings) insertAfter(newMappedItem.element, siblings.previousSibling);
+                }
+                
+                // Call the lifecycle function if it's a Mosaic.
+                if(newMappedItem.created) newMappedItem.created();
+            });
+        }
     }
 
     /** Commits the changes for "attribute" types. */

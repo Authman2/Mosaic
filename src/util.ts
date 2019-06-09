@@ -3,7 +3,6 @@ import Mosaic from "./index";
 export const marker = `{{m-${String(Math.random()).slice(2)}}}`;
 export const nodeMarker = `<!--${marker}-->`;
 export const lastAttributeNameRegex = /([ \x09\x0a\x0c\x0d])([^\0-\x1F\x7F-\x9F \x09\x0a\x0c\x0d"'>=/]+)([ \x09\x0a\x0c\x0d]*=[ \x09\x0a\x0c\x0d]*(?:[^ \x09\x0a\x0c\x0d"'`<>=]*|"[^"]*|'[^']*))$/;
-export const ARRAY_DELETE_PLACEHOLDER = { array_delete_placeholder: true };
 
 export const isPrimitive = (value: any) => {
     return (typeof value === 'string' || typeof value === 'boolean' || typeof value === 'number' || typeof value === 'bigint');
@@ -14,6 +13,20 @@ export const isBooleanAttribute = (name: string) => {
     noshade|novalidate|nowrap|open|readonly|required|reversed|scoped|scrolling|seamless|selected|sortable|spellcheck|translate`;
     let regex = new RegExp(str);
     return regex.test(name);
+}
+
+/** A keyed array type. */
+export type KeyedArray = {
+    items: any[],
+    keys: any[],
+    mapped: any[]
+};
+export function isKeyedArray(object: Object): boolean {
+    if(!object) return false;
+    if(!object.hasOwnProperty('items') || !Array.isArray(object['items'])) return false;
+    if(!object.hasOwnProperty('keys') || !Array.isArray(object['keys'])) return false;
+    if(!object.hasOwnProperty('mapped') || !Array.isArray(object['mapped'])) return false;
+    return true;
 }
 
 /** Traverses a DOM tree and performs a certain action on each node. It also
@@ -65,25 +78,23 @@ export const getDOMfromID = function(str: string) {
 
 /** Finds the differences between two arrays of keys. */
 export function getArrayDifferences(one: string[], two: string[]) {
-    let additions: number[] = [];
-    let deletions: number[] = [];
-    let sameSize: string|any[] = one.slice();
+    let additions: { key: string, index: number }[] = [];
+    let deletions: string[] = [];
     
-    // Have the same size as the old one, but set deleted ones to undefined.
-    for(let i = 0; i < one.length; i++) {
-        const item = sameSize[i];
-        const found = two.find(obj => item === obj); // the new one is not there anymore
-        if(!found) sameSize[i] = undefined;
-    }
-    console.log(one, sameSize);
     one.forEach((item, index) => {
-        // console.log('deleting: ', item, index);
         const found = two.find(obj => item === obj);
-        if(!found) deletions.push(index);
+        if(!found) deletions.push(item);
     });
     two.forEach((item, index) => {
         const found = one.find(obj => item === obj);
-        if(!found) additions.push(index);
+        if(!found) additions.push({ key: item, index });
     });
     return { deletions, additions };
+}
+
+/** Helper function for inserting a node AFTER a reference node since it doesn't
+* already exist in JavaScript. */
+export function insertAfter(newNode, referenceNode) {
+    referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+    return newNode;
 }
