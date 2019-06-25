@@ -11,7 +11,7 @@ const portfolio = new Portfolio({
             break;
         case 'celebrate':
             data.message = additional.message;
-            console.log(data.message);
+            console.log(portfolio);
             break;
         default: break;
     }

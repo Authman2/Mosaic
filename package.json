@@ -4,7 +4,7 @@
   "description": "A front-end JavaScript library for creating user interfaces",
   "main": "dist/index.js",
   "scripts": {
-    "test": "parcel -p 3000 examples/todo/index.html --out-dir example-dist",
+    "test": "parcel -p 3000 examples/portfolio/index.html --out-dir example-dist",
     "clean": "rm -rf .cache dist example-dist ts-build",
     "move-declarations": "cp ts-build/index.d.ts dist/index.d.ts && cp ts-build/mosaic-options.d.ts dist/mosaic-options.d.ts && cp ts-build/router.d.ts dist/router.d.ts && cp ts-build/portfolio.d.ts dist/portfolio.d.ts",
     "build": "tsc && parcel build ts-build/index.js --no-source-maps --out-dir dist --global Mosaic && npm run move-declarations && rm -f dist/index.js.map",

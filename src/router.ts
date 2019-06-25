@@ -18,11 +18,11 @@ const displayRoute = function(to, data?: Object) {
     while((this.base as Element).firstChild) (this.base as Element).removeChild((this.base as Element).firstChild as Element);
     for(const mos of routes) {
         (this.base as Element).appendChild(mos.element);
-        traverseValues(mos, child => {
-            child.router = this;
-            if(child.portfolio) child.portfolio.addDependency(child);
-            if(child.created) child.created();
-        });
+        // traverseValues(mos, child => {
+        //     child.router = this;
+        //     if(child.portfolio) child.portfolio.addDependency(child);
+        //     if(child.created) child.created();
+        // });
     }
 }
 

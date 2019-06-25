@@ -82,7 +82,7 @@ class Mosaic {
             throw new Error(`This Mosaic could not be painted because its 
             element property is either not set or is not a valid HTML element.`);
         }
-        while(this.base.firstChild) this.base.removeChild(this.base.firstChild);
+        this.base.innerHTML = '';
     
         // Create a new version of this base Mosaic. This will also cause it to
         // be repainted with the placeholders filled in.
@@ -90,11 +90,11 @@ class Mosaic {
         (instance.base as Element).appendChild(instance.element as Element);
     
         // Call the created lifecycle function.
-        traverseValues(instance, (child: Mosaic) => {
-            if(child.portfolio) child.portfolio.addDependency(child);
-            if(this.router) child.router = this.router;
-            if(child.created) child.created();
-        });
+        // traverseValues(instance, (child: Mosaic) => {
+        //     if(child.portfolio) child.portfolio.addDependency(child);
+        //     if(this.router) child.router = this.router;
+        //     if(child.created) child.created();
+        // });
     }
 
     /** Forces an update (repaint of the DOM) on this component. */
@@ -119,20 +119,17 @@ class Mosaic {
     * @returns A new instance of this Mosaic. */
     new(additionalData: Object = {}): Mosaic {
         // Copy the options.
-        let _options = Object.assign({}, this.options);
+        let _options = Object.assign({}, this.options, { tid: this.tid });
         _options.data = Object.assign({}, this.data, additionalData);
-        (_options as any).tid = this.tid;
-
         let copy = new Mosaic(_options);
         copy.iid = randomKey();
-        copy.values = this.values.slice();
         copy.injected = additionalData;
-        if(this.base) copy.base = this.base;
 
         // If the template was delayed, try creating it now. This should
         // only be done for the first instance of the Mosaic, and then
         // afterwards the template should already be there.
-        if(_options.delayTemplate === true) setupTemplate.call(copy, _options);
+        if(_options.delayTemplate === true || !TemplateTable[copy.tid])
+            setupTemplate.call(copy, _options);
 
         // Repaint with the new values.
         copy.repaint();
@@ -148,19 +145,13 @@ class Mosaic {
         this.repaint();
     }
 
-    /** Returns an HTML element that represents this component. */
-    toHTML(): Element {
-        this.repaint();
-        return (this.element as Element);
-    }
-
     /** A function for efficient rendering of arrays. Takes the initial array,
     * a key function, and a map function as parameters. */
-    static list(items: any[], key: (object) => string, map: (object, index) => Mosaic|Template): KeyedArray {
+    static list(items: any[], key: (object) => string, 
+            map: (object, index) => Mosaic|Template|any): KeyedArray {
         const keys = items.map(itm => key(itm));
         const mapped = items.map((itm, index) => map(itm, index));
-        const ret = { items, keys, mapped };
-        return ret;
+        return { items, keys, mapped };
     }
 }
 
@@ -193,9 +184,7 @@ const setupTemplate = function(options: MosaicOptions) {
     this.initialRender = true;
 
     // Setup the template content only once.
-    const element = document.createElement('template');
-    element.innerHTML = template.constructHTML();
-    template.element = element;
+    template.element.innerHTML = template.constructHTML();
     template.memories = template.memorize();
 
     // Take the element from the Template.

@@ -74,11 +74,11 @@ export class Memory {
                     // Destroy the old component.
                     // Create the new component and its children.
                     cleanUpMosaic(oldValue as Mosaic);
-                    traverseValues(newValue, (child: Mosaic) => {
-                        if(child.portfolio) child.portfolio.addDependency(child);
-                        if(oldValue.router) newValue.router = oldValue.router;
-                        if(child.created) child.created();
-                    });
+                    // traverseValues(newValue, (child: Mosaic) => {
+                    //     if(child.portfolio) child.portfolio.addDependency(child);
+                    //     if(oldValue.router) newValue.router = oldValue.router;
+                    //     if(child.created) child.created();
+                    // });
                     return true;
                 }
 
@@ -160,6 +160,7 @@ export class Memory {
     /** Commits the changes for "node" types where the value is an array. */
     commitArray(component: Mosaic|Element, child: Element|ChildNode, __: any[], value: any[], ___: boolean) {
         // Render the entire array. This works.
+        // Maybe use a template with innerHTML and then clone for faster performance?
         const holder = document.createElement('span');
         for(let i = 0; i < value.length; i++) {
             const item = value[i];

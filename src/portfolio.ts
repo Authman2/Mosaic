@@ -48,10 +48,6 @@ export class Portfolio {
         if(!this.action) throw new Error(`You must define an action in the Portfolio 
             constructor before dispatching events.`);
 
-        // Trigger the events.
-        if(Array.isArray(event)) event.forEach(eve => this.action(eve, this.data, additional));
-        else this.action(event, this.data, additional);
-
         // Update all of the dependencies.
         let removals: string[] = [];
         for(let key of Object.keys(this.dependencies)) {
