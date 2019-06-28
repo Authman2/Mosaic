@@ -117,7 +117,47 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"../src/index.ts":[function(require,module,exports) {
+})({"../src/util.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+exports.randomKey = function () {
+  return Math.random().toString(36).slice(2);
+};
+
+function insertAfter(newNode, referenceNode) {
+  referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+  return newNode;
+}
+
+exports.insertAfter = insertAfter;
+},{}],"../src/observable.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+function Observable(target, willUpdate, didUpdate) {
+  return new Proxy(target, {
+    get: function get(target, name, receiver) {
+      if (target[name] && Array.isArray(target[name])) return Observable(target[name], willUpdate, didUpdate);
+      return Reflect.get(target, name, receiver);
+    },
+    set: function set(target, name, value, receiver) {
+      if (willUpdate) willUpdate(Object.assign({}, target));
+      target[name] = value;
+      if (didUpdate) didUpdate(target);
+      return Reflect.set(target, name, value, receiver);
+    }
+  });
+}
+
+exports.default = Observable;
+},{}],"../src/index.ts":[function(require,module,exports) {
 "use strict";
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
@@ -146,65 +186,115 @@ function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || func
 
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
 
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+var util_1 = require("./util");
+
+var observable_1 = __importDefault(require("./observable"));
+
+var setupData = function setupData(target) {
+  var _this = this;
+
+  this.data = observable_1.default(target, function (old) {
+    console.log('About to update');
+  }, function () {
+    _this.repaint();
+
+    console.log('Updated!');
+  });
+};
+
 function Mosaic(options) {
-  customElements.define(options['name'],
+  customElements.define(options.name,
   /*#__PURE__*/
   function (_HTMLElement) {
     _inherits(_class, _HTMLElement);
 
     function _class() {
-      var _this;
+      var _this2;
 
       _classCallCheck(this, _class);
 
-      _this = _possibleConstructorReturn(this, _getPrototypeOf(_class).call(this));
+      _this2 = _possibleConstructorReturn(this, _getPrototypeOf(_class).call(this));
+      _this2.tid = '';
+      _this2.name = '';
 
-      for (var i = 0; i < _this.attributes.length; i++) {
-        var _this$attributes$i = _this.attributes[i],
-            name = _this$attributes$i.name,
-            value = _this$attributes$i.value;
-        options['data'][name] = value;
+      for (var i = 0; i < _this2.attributes.length; i++) {
+        var _this2$attributes$i = _this2.attributes[i],
+            name = _this2$attributes$i.name,
+            value = _this2$attributes$i.value;
+        options.data[name] = value;
 
-        _this.removeAttribute(name);
+        _this2.removeAttribute(name);
       }
 
       var opts = Object.keys(options);
 
       for (var _i = 0; _i < opts.length; _i++) {
         var key = opts[_i];
-        _this[key] = options[key];
+        if (key === 'data') setupData.call(_assertThisInitialized(_this2), options[key]);else _this2[key] = options[key];
       }
 
-      return _this;
+      _this2.tid = util_1.randomKey();
+      return _this2;
     }
 
     _createClass(_class, [{
       key: "connectedCallback",
       value: function connectedCallback() {
-        var view = options['view']();
-        this.innerHTML = view;
+        if (this.view) {
+          var view = this.view();
+          this.innerHTML = view;
+        }
+
+        if (this.created) this.created();
       }
     }, {
       key: "paint",
       value: function paint() {
-        var view = this['view']();
-        this.innerHTML = "".concat(view);
-        this['element'].replaceWith(this);
+        if (this.view) {
+          var view = this.view();
+          this.innerHTML = view;
+        }
+
+        if (this.element && typeof this.element !== 'string') this.element.replaceWith(this);
+      }
+    }, {
+      key: "repaint",
+      value: function repaint() {
+        if (this.view) {
+          var view = this.view();
+          this.innerHTML = view;
+        }
       }
     }]);
 
     return _class;
   }(_wrapNativeSuper(HTMLElement)));
-  var component = document.createElement(options['name']);
+  var component = document.createElement(options.name);
   return component;
 }
 
 exports.default = Mosaic;
-},{}],"index.js":[function(require,module,exports) {
+
+window.html = function (strings) {
+  for (var _len = arguments.length, values = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+    values[_key - 1] = arguments[_key];
+  }
+
+  return new Template(strings, values);
+};
+
+window.Mosaic = Mosaic;
+},{"./util":"../src/util.ts","./observable":"../src/observable.ts"}],"index.js":[function(require,module,exports) {
 "use strict";
 
 var _index = _interopRequireDefault(require("../src/index"));
@@ -217,7 +307,6 @@ new _index.default({
     title: "Something"
   },
   view: function view() {
-    console.log('Im a header!! ', this);
     return "<h1>My Header!!!! ".concat(this.data.title, "</h1>");
   }
 });
@@ -227,8 +316,16 @@ var app = new _index.default({
   data: {
     count: 5
   },
+  created: function created() {
+    var _this = this;
+
+    setTimeout(function () {
+      _this.data.count = 10;
+      console.dir(_this);
+    }, 3000);
+  },
   view: function view() {
-    return "<div>\n            <h1>Working!!!</h1>\n            <h2>The current count is: ".concat(this.data.count, "</h2>\n            <my-header title=\"First title!\"></my-header>\n            <my-header title=\"whoa look another title!\"></my-header>\n            <my-header title=\"and another different title!!\"></my-header>\n            <my-header title=\"This is insanely cool :o\"></my-header>\n        </div>");
+    return "<div>\n            <h1>Working!!!</h1>\n            <h2>The current count is: ".concat(this.data.count, "</h2>\n            <my-header title=\"First title!\"></my-header>\n            <my-header title=\"whoa look another title!\"></my-header>\n            <my-header title=\"and another different title!!\"></my-header>\n            <my-header title=\"This is insanely cool :o\"></my-header>\n        </div>\n        \n        <p>And down here? Oh yeah, we don't have to have single rooted elements anymore :)</p>\n        ");
   }
 });
 app.paint();
@@ -260,7 +357,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49820" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "64007" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

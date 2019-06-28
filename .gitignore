@@ -1,7 +1,7 @@
 node_modules/
 .cache/
 dist/
-example-dist/
+dist-examples/
 ts-build/
 package-lock.json
 .DS_Store
