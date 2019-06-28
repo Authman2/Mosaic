@@ -1,0 +1,2 @@
+# Examples
+This folder contains a single project that uses all of Mosaic's main features. To run the test, clone this folder onto your computer and run npm install then npm test. At that point, you can open up your web browser and click through the options.
