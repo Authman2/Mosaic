@@ -6,33 +6,35 @@ new Mosaic({
         title: "Something"
     },
     view() {
-        return `<h1>My Header!!!! ${this.data.title}</h1>`;
+        return html`<h1>My Header!!!! ${this.data.title}</h1>`;
     }
 });
 const app = new Mosaic({
     name: 'my-app',
     element: document.getElementById('root'),
     data: {
-        count: 5
+        count: 5,
+        title: 'Mosaic'
     },
     created() {
         setTimeout(() => {
-            this.data.count = 10;
+            // this.data.count = 10;
+            this.data.title = "Mosaic App";
             console.dir(this);
         }, 3000);
     },
     view() {
-        return `<div>
+        return html`<div>
             <h1>Working!!!</h1>
-            <h2>The current count is: ${this.data.count}</h2>
+            <h2 class="${this.data.title}">The current count is: ${this.data.count}</h2>
             <my-header title="First title!"></my-header>
+            <my-header title="${this.data.title}"></my-header>
             <my-header title="whoa look another title!"></my-header>
             <my-header title="and another different title!!"></my-header>
             <my-header title="This is insanely cool :o"></my-header>
         </div>
         
-        <p>And down here? Oh yeah, we don't have to have single rooted elements anymore :)</p>
-        `;
+        <p>And down here? Oh yeah, we don't have to have single rooted elements anymore :)</p>`;
     }
 });
 app.paint();

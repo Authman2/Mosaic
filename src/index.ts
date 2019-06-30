@@ -1,5 +1,6 @@
 import { MosaicOptions } from "./options";
 import { randomKey } from "./util";
+import { buildHTML, memorize } from "./parser";
 import Observable from "./observable";
 
 
@@ -11,6 +12,20 @@ const setupData = function(target: Object) {
         this.repaint();
         console.log('Updated!');
     });
+}
+
+// Define the template. This means creating a <template> tag
+// and adding it directly to the document body with a tid.
+const setupTemplate = function() {
+    // Call the view function once to get the T.T.L.
+    const { strings, values } = this.view();
+
+    const temp = document.createElement('template');
+    temp.id = this.tid;
+    temp.innerHTML = buildHTML(strings);
+    (temp as any).memories = memorize(document.importNode(temp, true));
+    document.body.appendChild(temp);
+    console.dir(temp);
 }
 
 
@@ -27,12 +42,18 @@ export default function Mosaic(options: MosaicOptions) {
         willDestory?: Function;
         delayTemplate?: boolean;
         element?: string|Element|Node;
+        values: any[] = [];
+
+
+        /* SETUP AND LIFECYCLE. */
 
         // Setup necessary info for a new instance and possibly a template.
         constructor() {
             super();
 
-            // Get all the attributes and put them into data.
+            // Any attribute on a custom element tag should be
+            // counted as insertion of data, so get it's value
+            // and add it as a data property.
             for(let i = 0; i < this.attributes.length; i++) {
                 const { name, value } = this.attributes[i];
                 options.data[name] = value;
@@ -47,34 +68,32 @@ export default function Mosaic(options: MosaicOptions) {
                 else this[key] = options[key];
             }
             this.tid = randomKey();
+
+            // Finish setting up the template for this new component type.
+            setupTemplate.call(this);
         }
 
-        // When the component enters the DOM.
-        connectedCallback() {
-            if(this.view) {
-                let view = this.view();
-                this.innerHTML = view;
-            }
 
-            // Run the lifecycle function.
-            if(this.created) this.created();
-        }
 
-        /** Paints the component onto the page. */
+
+        /* MOSAIC PROPERTIES. */
+
+        /** Paints the Mosaic onto the page. */
         paint() {
-            if(this.view) {
-                let view = this.view();
-                this.innerHTML = view;
-            }
-            if(this.element && typeof this.element !== 'string') this.element.replaceWith(this);
+            this.repaint(); // remove this later.
         }
 
-        /** Repaints this component instance to reflect the current state. */
+        /** Goes through the dynamic content of the component and updates
+        * the parts that have changed. */
         repaint() {
-            if(this.view) {
-                let view = this.view();
-                this.innerHTML = view;
-            }
+            // Find the template so you can get the memories.
+            const template = document.getElementById(this.tid);
+
+            // Get the old values, and run the view function again
+            // to get the most recent values.
+            let newValues = (this.view && this.view()) || this.values.slice();
+
+            // Go through and compare values.
         }
     });
 
@@ -89,5 +108,5 @@ declare global {
         Mosaic: typeof Mosaic;
     }
 }
-window.html = (strings, ...values): Template => new Template(strings, values);
+window.html = (strings, ...values): Object => ({ strings, values });
 window.Mosaic = Mosaic;

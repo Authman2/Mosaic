@@ -123,6 +123,9 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.marker = "{{m-".concat(String(Math.random()).slice(2), "}}");
+exports.nodeMarker = "<!--".concat(exports.marker, "-->");
+exports.lastAttributeNameRegex = /([ \x09\x0a\x0c\x0d])([^\0-\x1F\x7F-\x9F \x09\x0a\x0c\x0d"'>=/]+)([ \x09\x0a\x0c\x0d]*=[ \x09\x0a\x0c\x0d]*(?:[^ \x09\x0a\x0c\x0d"'`<>=]*|"[^"]*|'[^']*))$/;
 
 exports.randomKey = function () {
   return Math.random().toString(36).slice(2);
@@ -134,7 +137,148 @@ function insertAfter(newNode, referenceNode) {
 }
 
 exports.insertAfter = insertAfter;
-},{}],"../src/observable.ts":[function(require,module,exports) {
+
+function traverse($node, action) {
+  var steps = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [0];
+  if (action) action($node, steps);
+  var children = $node.childNodes;
+
+  for (var i = 0; i < children.length; i++) {
+    traverse(children[i], action, steps.concat(i));
+  }
+}
+
+exports.traverse = traverse;
+},{}],"../src/memory.ts":[function(require,module,exports) {
+"use strict";
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var Memory = function Memory(config) {
+  _classCallCheck(this, Memory);
+
+  this.config = config;
+};
+
+exports.default = Memory;
+},{}],"../src/parser.ts":[function(require,module,exports) {
+"use strict";
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var util_1 = require("./util");
+
+var memory_1 = __importDefault(require("./memory"));
+
+function buildHTML(strings) {
+  var ret = '';
+
+  for (var i = 0; i < strings.length - 1; i++) {
+    var str = strings[i].trim();
+    if (strings[i].startsWith(' ')) str = " ".concat(str);
+    if (strings[i].endsWith(' ')) str += ' ';
+    var matched = util_1.lastAttributeNameRegex.exec(str);
+
+    if (matched) {
+      var attrPlaceholder = str.substring(0, matched.index) + matched[1] + matched[2] + matched[3];
+      ret += attrPlaceholder + util_1.marker;
+    } else ret += str + util_1.nodeMarker;
+  }
+
+  return ret + strings[strings.length - 1];
+}
+
+exports.buildHTML = buildHTML;
+
+function memorize(fragment) {
+  var ret = [];
+  util_1.traverse(fragment.content, function (node, steps) {
+    switch (node.nodeType) {
+      case 1:
+        ret = ret.concat(parseAttributes(node, steps));
+        break;
+
+      case 3:
+        ret = ret.concat(parseComment(node, steps));
+        break;
+
+      case 8:
+        ret = ret.concat(parseText(node, steps));
+        break;
+
+      default:
+        break;
+    }
+  });
+  return ret;
+}
+
+exports.memorize = memorize;
+
+function parseAttributes(node, steps) {
+  if (!node.attributes) return [];
+  var ret = [];
+
+  for (var i = 0; i < node.attributes.length; i++) {
+    var _node$attributes$i = node.attributes[i],
+        name = _node$attributes$i.name,
+        value = _node$attributes$i.value;
+    if (value.indexOf(util_1.marker) < 0 && value.indexOf(util_1.nodeMarker) < 0) continue;
+    var defined = customElements.get(node.nodeName.toLowerCase()) !== undefined;
+    ret.push(new memory_1.default({
+      type: 'attribute',
+      steps: steps,
+      attribute: name,
+      isEvent: name.startsWith('on'),
+      isComponentAttribute: defined
+    }));
+  }
+
+  return ret;
+}
+
+function parseComment(node, steps) {
+  if (node.data === util_1.marker) {
+    return [new memory_1.default({
+      type: "node",
+      steps: steps
+    })];
+  } else {
+    var i = -1;
+    var ret = [];
+
+    while ((i = node.data.indexOf(util_1.marker, i + 1)) !== -1) {
+      var mem = new memory_1.default({
+        type: "node",
+        steps: steps
+      });
+      ret.push(mem);
+    }
+
+    return ret;
+  }
+}
+
+function parseText(node, steps) {
+  if (node.textContent !== util_1.marker) return [];
+  return [new memory_1.default({
+    type: "node",
+    steps: steps
+  })];
+}
+},{"./util":"../src/util.ts","./memory":"../src/memory.ts"}],"../src/observable.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -198,6 +342,8 @@ Object.defineProperty(exports, "__esModule", {
 
 var util_1 = require("./util");
 
+var parser_1 = require("./parser");
+
 var observable_1 = __importDefault(require("./observable"));
 
 var setupData = function setupData(target) {
@@ -210,6 +356,19 @@ var setupData = function setupData(target) {
 
     console.log('Updated!');
   });
+};
+
+var setupTemplate = function setupTemplate() {
+  var _this$view = this.view(),
+      strings = _this$view.strings,
+      values = _this$view.values;
+
+  var temp = document.createElement('template');
+  temp.id = this.tid;
+  temp.innerHTML = parser_1.buildHTML(strings);
+  temp.memories = parser_1.memorize(document.importNode(temp, true));
+  document.body.appendChild(temp);
+  console.dir(temp);
 };
 
 function Mosaic(options) {
@@ -226,6 +385,7 @@ function Mosaic(options) {
       _this2 = _possibleConstructorReturn(this, _getPrototypeOf(_class).call(this));
       _this2.tid = '';
       _this2.name = '';
+      _this2.values = [];
 
       for (var i = 0; i < _this2.attributes.length; i++) {
         var _this2$attributes$i = _this2.attributes[i],
@@ -244,36 +404,20 @@ function Mosaic(options) {
       }
 
       _this2.tid = util_1.randomKey();
+      setupTemplate.call(_assertThisInitialized(_this2));
       return _this2;
     }
 
     _createClass(_class, [{
-      key: "connectedCallback",
-      value: function connectedCallback() {
-        if (this.view) {
-          var view = this.view();
-          this.innerHTML = view;
-        }
-
-        if (this.created) this.created();
-      }
-    }, {
       key: "paint",
       value: function paint() {
-        if (this.view) {
-          var view = this.view();
-          this.innerHTML = view;
-        }
-
-        if (this.element && typeof this.element !== 'string') this.element.replaceWith(this);
+        this.repaint();
       }
     }, {
       key: "repaint",
       value: function repaint() {
-        if (this.view) {
-          var view = this.view();
-          this.innerHTML = view;
-        }
+        var template = document.getElementById(this.tid);
+        var newValues = this.view && this.view() || this.values.slice();
       }
     }]);
 
@@ -290,16 +434,41 @@ window.html = function (strings) {
     values[_key - 1] = arguments[_key];
   }
 
-  return new Template(strings, values);
+  return {
+    strings: strings,
+    values: values
+  };
 };
 
 window.Mosaic = Mosaic;
-},{"./util":"../src/util.ts","./observable":"../src/observable.ts"}],"index.js":[function(require,module,exports) {
+},{"./util":"../src/util.ts","./parser":"../src/parser.ts","./observable":"../src/observable.ts"}],"index.js":[function(require,module,exports) {
 "use strict";
 
 var _index = _interopRequireDefault(require("../src/index"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _templateObject2() {
+  var data = _taggedTemplateLiteral(["<div>\n            <h1>Working!!!</h1>\n            <h2 class=\"", "\">The current count is: ", "</h2>\n            <my-header title=\"First title!\"></my-header>\n            <my-header title=\"", "\"></my-header>\n            <my-header title=\"whoa look another title!\"></my-header>\n            <my-header title=\"and another different title!!\"></my-header>\n            <my-header title=\"This is insanely cool :o\"></my-header>\n        </div>\n        \n        <p>And down here? Oh yeah, we don't have to have single rooted elements anymore :)</p>"]);
+
+  _templateObject2 = function _templateObject2() {
+    return data;
+  };
+
+  return data;
+}
+
+function _templateObject() {
+  var data = _taggedTemplateLiteral(["<h1>My Header!!!! ", "</h1>"]);
+
+  _templateObject = function _templateObject() {
+    return data;
+  };
+
+  return data;
+}
+
+function _taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(0); } return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
 
 new _index.default({
   name: 'my-header',
@@ -307,25 +476,27 @@ new _index.default({
     title: "Something"
   },
   view: function view() {
-    return "<h1>My Header!!!! ".concat(this.data.title, "</h1>");
+    return html(_templateObject(), this.data.title);
   }
 });
 var app = new _index.default({
   name: 'my-app',
   element: document.getElementById('root'),
   data: {
-    count: 5
+    count: 5,
+    title: 'Mosaic'
   },
   created: function created() {
     var _this = this;
 
     setTimeout(function () {
-      _this.data.count = 10;
+      // this.data.count = 10;
+      _this.data.title = "Mosaic App";
       console.dir(_this);
     }, 3000);
   },
   view: function view() {
-    return "<div>\n            <h1>Working!!!</h1>\n            <h2>The current count is: ".concat(this.data.count, "</h2>\n            <my-header title=\"First title!\"></my-header>\n            <my-header title=\"whoa look another title!\"></my-header>\n            <my-header title=\"and another different title!!\"></my-header>\n            <my-header title=\"This is insanely cool :o\"></my-header>\n        </div>\n        \n        <p>And down here? Oh yeah, we don't have to have single rooted elements anymore :)</p>\n        ");
+    return html(_templateObject2(), this.data.title, this.data.count, this.data.title);
   }
 });
 app.paint();
@@ -357,7 +528,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "64007" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56996" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
