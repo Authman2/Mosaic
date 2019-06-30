@@ -18,9 +18,13 @@ const app = new Mosaic({
     },
     created() {
         setTimeout(() => {
-            // this.data.count = 10;
             this.data.title = "Mosaic App";
+            console.log('Updated!');
             console.dir(this);
+
+            setTimeout(() => {
+                this.data.count = 10;
+            }, 3000);
         }, 3000);
     },
     view() {
@@ -30,11 +34,14 @@ const app = new Mosaic({
             <my-header title="First title!"></my-header>
             <my-header title="${this.data.title}"></my-header>
             <my-header title="whoa look another title!"></my-header>
-            <my-header title="and another different title!!"></my-header>
+            <my-header title="and another different title!!">
+                Here is more dynamic content: ${this.data.title}
+            </my-header>
             <my-header title="This is insanely cool :o"></my-header>
         </div>
         
-        <p>And down here? Oh yeah, we don't have to have single rooted elements anymore :)</p>`;
+        <p>And down here? Oh yeah, we don't have to have single rooted elements anymore :)</p>
+        <p>${this.data.title}</p>`;
     }
 });
 app.paint();

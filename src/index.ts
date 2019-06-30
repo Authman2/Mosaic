@@ -1,7 +1,8 @@
 import { MosaicOptions } from "./options";
-import { randomKey } from "./util";
+import { randomKey, changed } from "./util";
 import { buildHTML, memorize } from "./parser";
 import Observable from "./observable";
+import Memory from "./memory";
 
 
 // Setup the data property.
@@ -10,7 +11,6 @@ const setupData = function(target: Object) {
         console.log('About to update');
     }, () => {
         this.repaint();
-        console.log('Updated!');
     });
 }
 
@@ -25,11 +25,12 @@ const setupTemplate = function() {
     temp.innerHTML = buildHTML(strings);
     (temp as any).memories = memorize(document.importNode(temp, true));
     document.body.appendChild(temp);
-    console.dir(temp);
 }
 
 
 export default function Mosaic(options: MosaicOptions) {
+    const tid = randomKey();
+
     // Create a custom element and return an instance of it.
     customElements.define(options.name, class extends HTMLElement {
         tid: string = '';
@@ -41,8 +42,9 @@ export default function Mosaic(options: MosaicOptions) {
         willUpdate?: Function;
         willDestory?: Function;
         delayTemplate?: boolean;
-        element?: string|Element|Node;
+        element?: string|HTMLElement|Node;
         values: any[] = [];
+        base?: string|HTMLElement|Node;
 
 
         /* SETUP AND LIFECYCLE. */
@@ -67,20 +69,34 @@ export default function Mosaic(options: MosaicOptions) {
                 if(key === 'data') setupData.call(this, options[key]);
                 else this[key] = options[key];
             }
-            this.tid = randomKey();
 
             // Finish setting up the template for this new component type.
-            setupTemplate.call(this);
+            this.tid = tid;
+            if(!document.getElementById(tid)) setupTemplate.call(this);
         }
 
+        connectedCallback() {
+            if(this.created) this.created();
+        }
 
 
 
         /* MOSAIC PROPERTIES. */
 
-        /** Paints the Mosaic onto the page. */
+        /** Paints the Mosaic onto the web page. */
         paint() {
-            this.repaint(); // remove this later.
+            // Get the template that was created by the constructor and set
+            // this active element to that template, but with placeholders
+            // filled in by the "repaint" function.
+            const template = document.getElementById(this.tid)!!;
+            const cloned = document.importNode(template, true);
+            const element = (cloned as HTMLTemplateElement).content;
+            this.appendChild(element);
+            this.repaint();
+
+            // When you're done repainting with the most recent values,
+            // inject this component into its base element.
+            (this.element as Element).appendChild(this);
         }
 
         /** Goes through the dynamic content of the component and updates
@@ -88,12 +104,23 @@ export default function Mosaic(options: MosaicOptions) {
         repaint() {
             // Find the template so you can get the memories.
             const template = document.getElementById(this.tid);
+            const memories = (template as any).memories;
+            // console.log(template);
 
             // Get the old values, and run the view function again
             // to get the most recent values.
-            let newValues = (this.view && this.view()) || this.values.slice();
+            let newValues = (this.view && this.view()).values || this.values.slice();
 
             // Go through and compare values.
+            for(let i = 0; i < memories.length; i++) {
+                let mem: Memory = memories[i];
+                // console.log(mem);
+                
+                let oldv = this.values[i];
+                let newv = newValues[i];
+
+                if(changed(oldv, newv)) mem.commit(this, oldv, newv);
+            }
         }
     });
 

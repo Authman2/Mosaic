@@ -54,20 +54,21 @@ function parseAttributes(node: Element, steps: number[]): Memory[] {
             type: 'attribute',
             steps,
             attribute: name,
+            isComponentType: defined,
             isEvent: name.startsWith('on'),
-            isComponentAttribute: defined
         }));
     }
     return ret;
 }
 function parseComment(node: Comment, steps: number[]): Memory[] {
+    const defined = customElements.get(node.nodeName.toLowerCase()) !== undefined;
     if(node.data === marker) {
-        return [new Memory({ type: "node", steps })];
+        return [new Memory({ type: "node", steps, isComponentType: defined })];
     } else {
         let i = -1;
         let ret: Memory[] = [];
         while((i = node.data.indexOf(marker, i + 1)) !== -1) {
-            let mem = new Memory({ type: "node", steps });
+            let mem = new Memory({ type: "node", steps, isComponentType: defined });
             ret.push(mem);
         }
         return ret;
@@ -75,5 +76,13 @@ function parseComment(node: Comment, steps: number[]): Memory[] {
 }
 function parseText(node: Text, steps: number[]): Memory[] {
     if(node.textContent !== marker) return [];
-    return [new Memory({ type: "node", steps })];
+    let defined = customElements.get(node.nodeName.toLowerCase()) !== undefined;
+    let defined2 = false;
+    if(node.parentElement)
+        defined2 = customElements.get(node.parentElement.nodeName.toLowerCase()) !== undefined;
+    return [new Memory({
+        type: "node",
+        steps,
+        isComponentType: defined || defined2
+    })];
 }

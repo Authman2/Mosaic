@@ -131,6 +131,19 @@ exports.randomKey = function () {
   return Math.random().toString(36).slice(2);
 };
 
+function isPrimitive(value) {
+  return typeof value === 'string' || typeof value === 'boolean' || typeof value === 'number' || typeof value === 'bigint';
+}
+
+exports.isPrimitive = isPrimitive;
+;
+
+exports.isBooleanAttribute = function (name) {
+  var str = "async|autocomplete|autofocus|autoplay|border|challenge|checked|compact|\n    contenteditable|controlsdefault|defer|disabled|formNoValidate|frameborder|hidden|\n    indeterminate|ismap|loop|multiple|muted|nohref|noresizenoshade|novalidate|nowrap|\n    open|readonly|required|reversed|scoped|scrolling|seamless|selected|sortable|spell\n    check|translate";
+  var regex = new RegExp(str);
+  return regex.test(name);
+};
+
 function insertAfter(newNode, referenceNode) {
   referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
   return newNode;
@@ -139,7 +152,7 @@ function insertAfter(newNode, referenceNode) {
 exports.insertAfter = insertAfter;
 
 function traverse($node, action) {
-  var steps = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [0];
+  var steps = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
   if (action) action($node, steps);
   var children = $node.childNodes;
 
@@ -149,20 +162,81 @@ function traverse($node, action) {
 }
 
 exports.traverse = traverse;
+
+function changed(oldv, newv) {
+  if (!oldv) return true;
+
+  if (isPrimitive(newv)) {
+    return oldv !== newv;
+  } else if (typeof newv === 'function') {
+    return '' + oldv !== '' + newv;
+  } else if (Array.isArray(newv)) {
+    return '' + oldv !== '' + newv;
+  }
+
+  return false;
+}
+
+exports.changed = changed;
 },{}],"../src/memory.ts":[function(require,module,exports) {
 "use strict";
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var Memory = function Memory(config) {
-  _classCallCheck(this, Memory);
+var Memory =
+/*#__PURE__*/
+function () {
+  function Memory(config) {
+    _classCallCheck(this, Memory);
 
-  this.config = config;
-};
+    this.config = config;
+  }
+
+  _createClass(Memory, [{
+    key: "step",
+    value: function step(component) {
+      var element = component;
+      var child = element;
+
+      for (var i = 0; i < this.config.steps.length; i++) {
+        var nextStep = this.config.steps[i];
+        child = child.childNodes[nextStep];
+      }
+
+      return child;
+    }
+  }, {
+    key: "commit",
+    value: function commit(component, oldValue, newValue) {
+      var element = this.step(component);
+      console.log(component, element);
+
+      switch (this.config.type) {
+        case 'node':
+          this.commitNode(element, oldValue, newValue);
+          break;
+
+        default:
+          break;
+      }
+    }
+  }, {
+    key: "commitNode",
+    value: function commitNode(element, oldValue, newValue) {
+      element.replaceWith(newValue);
+    }
+  }]);
+
+  return Memory;
+}();
 
 exports.default = Memory;
 },{}],"../src/parser.ts":[function(require,module,exports) {
@@ -241,8 +315,8 @@ function parseAttributes(node, steps) {
       type: 'attribute',
       steps: steps,
       attribute: name,
-      isEvent: name.startsWith('on'),
-      isComponentAttribute: defined
+      isComponentType: defined,
+      isEvent: name.startsWith('on')
     }));
   }
 
@@ -250,10 +324,13 @@ function parseAttributes(node, steps) {
 }
 
 function parseComment(node, steps) {
+  var defined = customElements.get(node.nodeName.toLowerCase()) !== undefined;
+
   if (node.data === util_1.marker) {
     return [new memory_1.default({
       type: "node",
-      steps: steps
+      steps: steps,
+      isComponentType: defined
     })];
   } else {
     var i = -1;
@@ -262,7 +339,8 @@ function parseComment(node, steps) {
     while ((i = node.data.indexOf(util_1.marker, i + 1)) !== -1) {
       var mem = new memory_1.default({
         type: "node",
-        steps: steps
+        steps: steps,
+        isComponentType: defined
       });
       ret.push(mem);
     }
@@ -273,9 +351,13 @@ function parseComment(node, steps) {
 
 function parseText(node, steps) {
   if (node.textContent !== util_1.marker) return [];
+  var defined = customElements.get(node.nodeName.toLowerCase()) !== undefined;
+  var defined2 = false;
+  if (node.parentElement) defined2 = customElements.get(node.parentElement.nodeName.toLowerCase()) !== undefined;
   return [new memory_1.default({
     type: "node",
-    steps: steps
+    steps: steps,
+    isComponentType: defined || defined2
   })];
 }
 },{"./util":"../src/util.ts","./memory":"../src/memory.ts"}],"../src/observable.ts":[function(require,module,exports) {
@@ -353,8 +435,6 @@ var setupData = function setupData(target) {
     console.log('About to update');
   }, function () {
     _this.repaint();
-
-    console.log('Updated!');
   });
 };
 
@@ -368,10 +448,10 @@ var setupTemplate = function setupTemplate() {
   temp.innerHTML = parser_1.buildHTML(strings);
   temp.memories = parser_1.memorize(document.importNode(temp, true));
   document.body.appendChild(temp);
-  console.dir(temp);
 };
 
 function Mosaic(options) {
+  var tid = util_1.randomKey();
   customElements.define(options.name,
   /*#__PURE__*/
   function (_HTMLElement) {
@@ -403,21 +483,39 @@ function Mosaic(options) {
         if (key === 'data') setupData.call(_assertThisInitialized(_this2), options[key]);else _this2[key] = options[key];
       }
 
-      _this2.tid = util_1.randomKey();
-      setupTemplate.call(_assertThisInitialized(_this2));
+      _this2.tid = tid;
+      if (!document.getElementById(tid)) setupTemplate.call(_assertThisInitialized(_this2));
       return _this2;
     }
 
     _createClass(_class, [{
+      key: "connectedCallback",
+      value: function connectedCallback() {
+        if (this.created) this.created();
+      }
+    }, {
       key: "paint",
       value: function paint() {
+        var template = document.getElementById(this.tid);
+        var cloned = document.importNode(template, true);
+        var element = cloned.content;
+        this.appendChild(element);
         this.repaint();
+        this.element.appendChild(this);
       }
     }, {
       key: "repaint",
       value: function repaint() {
         var template = document.getElementById(this.tid);
-        var newValues = this.view && this.view() || this.values.slice();
+        var memories = template.memories;
+        var newValues = (this.view && this.view()).values || this.values.slice();
+
+        for (var i = 0; i < memories.length; i++) {
+          var mem = memories[i];
+          var oldv = this.values[i];
+          var newv = newValues[i];
+          if (util_1.changed(oldv, newv)) mem.commit(this, oldv, newv);
+        }
       }
     }]);
 
@@ -449,7 +547,7 @@ var _index = _interopRequireDefault(require("../src/index"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _templateObject2() {
-  var data = _taggedTemplateLiteral(["<div>\n            <h1>Working!!!</h1>\n            <h2 class=\"", "\">The current count is: ", "</h2>\n            <my-header title=\"First title!\"></my-header>\n            <my-header title=\"", "\"></my-header>\n            <my-header title=\"whoa look another title!\"></my-header>\n            <my-header title=\"and another different title!!\"></my-header>\n            <my-header title=\"This is insanely cool :o\"></my-header>\n        </div>\n        \n        <p>And down here? Oh yeah, we don't have to have single rooted elements anymore :)</p>"]);
+  var data = _taggedTemplateLiteral(["<div>\n            <h1>Working!!!</h1>\n            <h2 class=\"", "\">The current count is: ", "</h2>\n            <my-header title=\"First title!\"></my-header>\n            <my-header title=\"", "\"></my-header>\n            <my-header title=\"whoa look another title!\"></my-header>\n            <my-header title=\"and another different title!!\">\n                Here is more dynamic content: ", "\n            </my-header>\n            <my-header title=\"This is insanely cool :o\"></my-header>\n        </div>\n        \n        <p>And down here? Oh yeah, we don't have to have single rooted elements anymore :)</p>\n        <p>", "</p>"]);
 
   _templateObject2 = function _templateObject2() {
     return data;
@@ -490,13 +588,16 @@ var app = new _index.default({
     var _this = this;
 
     setTimeout(function () {
-      // this.data.count = 10;
       _this.data.title = "Mosaic App";
+      console.log('Updated!');
       console.dir(_this);
+      setTimeout(function () {
+        _this.data.count = 10;
+      }, 3000);
     }, 3000);
   },
   view: function view() {
-    return html(_templateObject2(), this.data.title, this.data.count, this.data.title);
+    return html(_templateObject2(), this.data.title, this.data.count, this.data.title, this.data.title, this.data.title);
   }
 });
 app.paint();
@@ -528,7 +629,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56996" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49877" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
