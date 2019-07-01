@@ -44,19 +44,25 @@ export function memorize(fragment: HTMLTemplateElement) {
 function parseAttributes(node: Element, steps: number[]): Memory[] {
     if(!node.attributes) return [];
     let ret: Memory[] = [];
+    const defined = customElements.get(node.nodeName.toLowerCase()) !== undefined;
         
     for(let i = 0; i < node.attributes.length; i++) {
         const { name, value } = node.attributes[i];
         if(value.indexOf(marker) < 0 && value.indexOf(nodeMarker) < 0) continue;
         
-        const defined = customElements.get(node.nodeName.toLowerCase()) !== undefined;
-        ret.push(new Memory({
-            type: 'attribute',
-            steps,
-            attribute: name,
-            isComponentType: defined,
-            isEvent: name.startsWith('on'),
-        }));
+        // Go through the split up attribute values array and see where exactly
+        // the dynamic parts are.
+        const split = (name === 'style' ? value.split(';') : value.split(' '))
+            .filter(str => str.length > 0);
+        for(let j = 0; j < split.length; j++) {
+            ret.push(new Memory({
+                type: 'attribute',
+                steps,
+                attribute: { name, index: j },
+                isComponentType: defined,
+                isEvent: name.startsWith('on'),
+            }));
+        }
     }
     return ret;
 }

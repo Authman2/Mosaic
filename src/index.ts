@@ -7,7 +7,8 @@ import Memory from "./memory";
 
 // Setup the data property.
 const setupData = function(target: Object) {
-    this.data = Observable(target, old => {
+    const targ = Object.assign({}, target);
+    this.data = Observable(targ, old => {
         if(this.willUpdate) this.willUpdate(old);
     }, () => {
         this.repaint();
@@ -59,21 +60,11 @@ export default function Mosaic(options: MosaicOptions) {
         constructor() {
             super();
 
-            // Any attribute on a custom element tag should be
-            // counted as insertion of data, so get it's value
-            // and add it as a data property.
-            for(let i = 0; i < this.attributes.length; i++) {
-                const { name, value } = this.attributes[i];
-                options.data[name] = value;
-                this.removeAttribute(name);
-            }
-
             // Set all the properties from the options on this component.
             const opts = Object.keys(options);
             for(let i = 0; i < opts.length; i++) {
                 let key = opts[i];
-                if(key === 'data') setupData.call(this, options[key]);
-                else if(key === 'element') setupBase.call(this, options[key]);
+                if(key === 'element') setupBase.call(this, options[key]);
                 else this[key] = options[key];
             }
 
@@ -90,6 +81,19 @@ export default function Mosaic(options: MosaicOptions) {
         }
 
         connectedCallback() {
+            // Any attribute on a custom element tag should be
+            // counted as insertion of data, so get it's value
+            // and add it as a data property.
+            for(let i = 0; i < this.attributes.length; i++) {
+                const { name, value } = this.attributes[i];
+                console.log(name, value);
+                options.data[name] = value;
+                // this.removeAttribute(name);
+            }
+
+            // At this point, it is safe to create Observable data.
+            if(options.data) setupData.call(this, options.data);
+
             // Attach the cloned template to this element then repaint it.
             const template = document.getElementById(this.tid) as HTMLTemplateElement;
             const cloned = document.importNode(template.content, true);
@@ -120,7 +124,7 @@ export default function Mosaic(options: MosaicOptions) {
             // to get the most recent values.
             if(!this.view) return;
             let newValues = this.view().values;
-            console.log(this.values, newValues);
+            // console.log(this.values, newValues);
 
             // Go through and compare values.
             for(let i = 0; i < memories.length; i++) {

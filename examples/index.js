@@ -10,7 +10,7 @@ new Mosaic({
     created() {
         setInterval(() => {
             this.data.count = Math.floor(Math.random() * 100);
-        }, 2000);
+        }, 5000);
     },
     view() {
         const { text, count } = this.data;
@@ -25,12 +25,13 @@ new Mosaic({
 new Mosaic({
     name: 'my-app',
     element: 'root',
+    data: { className: 'header' },
     view() {
         return html`
-            <header>Welcome to Mosaic!</header>
+            <header class='label ${this.data.className} ${'something'}'>Welcome to Mosaic!</header>
             <p>A declarative, front-end JavaScript library for building user interfaces!</p>
             
-            <my-label text="First Counter"></my-label>
+            <my-label text="${10}"></my-label>
             <my-label text="Second Counter"></my-label>
             <my-label text="Third Counter"></my-label>
         `;

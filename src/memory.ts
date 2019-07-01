@@ -1,10 +1,10 @@
-import { isPrimitive } from './util';
+import { isPrimitive, isBooleanAttribute, marker } from './util';
 
 /** Config options for a memory. */
 interface MemoryOptions {
     type: string;
     steps: number[];
-    attribute?: string;
+    attribute?: { name: string, index?: number };
     isEvent?: boolean;
     isComponentType?: boolean;
 }
@@ -33,6 +33,7 @@ export default class Memory {
 
         switch(this.config.type) {
             case 'node': this.commitNode(element, oldValue, newValue); break;
+            case 'attribute': this.commitAttribute(element, oldValue, newValue); break;
             default: break;
         }
     }
@@ -44,6 +45,27 @@ export default class Memory {
 
     /** Applies attribtue and event listener changes. */
     commitAttribute(element: HTMLElement|ChildNode, oldValue: any, newValue: any) {
+        const { attribute } = this.config;
+        if(!attribute) return;
+        const { name, index } = attribute;
 
+        if(this.config.isEvent === true) {
+            // Add/remove an event listener.
+        } else {
+            // Format the part of the attribute string corresponding to this memory.
+            const attr = (element as Element).attributes.getNamedItem(name);
+            if(!attr) return;
+            
+            // Set the value at the attribute index.
+            const value = attr.value;
+            const values = (name === 'style' ? value.split(';') : value.split(' ')).filter(s => {
+                return s.length > 0;
+            });
+            values[index || 0] = newValue;
+
+            // Set the new attribute string.
+            const newAttributeValue = name === 'style' ? values.join(';') : values.join(' '); 
+            (element as Element).setAttribute(name, newAttributeValue);
+        }
     }
 }
