@@ -1,47 +1,38 @@
 import Mosaic from "../src/index";
 
+// Reusable label component.
 new Mosaic({
-    name: 'my-header',
+    name: 'my-label',
     data: {
-        title: "Something"
-    },
-    view() {
-        return html`<h1>My Header!!!! ${this.data.title}</h1>`;
-    }
-});
-const app = new Mosaic({
-    name: 'my-app',
-    element: document.getElementById('root'),
-    data: {
-        count: 5,
-        title: 'Mosaic'
+        text: '',
+        count: 0,
     },
     created() {
-        setTimeout(() => {
-            this.data.title = "Mosaic App";
-            console.log('Updated!');
-            console.dir(this);
-
-            setTimeout(() => {
-                this.data.count = 10;
-            }, 3000);
-        }, 3000);
+        setInterval(() => {
+            this.data.count = Math.floor(Math.random() * 100);
+        }, 2000);
     },
     view() {
-        return html`<div>
-            <h1>Working!!!</h1>
-            <h2 class="${this.data.title}">The current count is: ${this.data.count}</h2>
-            <my-header title="First title!"></my-header>
-            <my-header title="${this.data.title}"></my-header>
-            <my-header title="whoa look another title!"></my-header>
-            <my-header title="and another different title!!">
-                Here is more dynamic content: ${this.data.title}
-            </my-header>
-            <my-header title="This is insanely cool :o"></my-header>
-        </div>
-        
-        <p>And down here? Oh yeah, we don't have to have single rooted elements anymore :)</p>
-        <p>${this.data.title}</p>`;
+        const { text, count } = this.data;
+        return html`
+            <h3>Label: ${text}</h3>
+            <h3>Count: ${count}</h3>
+        `
     }
 });
-app.paint();
+
+// Main app component.
+new Mosaic({
+    name: 'my-app',
+    element: 'root',
+    view() {
+        return html`
+            <header>Welcome to Mosaic!</header>
+            <p>A declarative, front-end JavaScript library for building user interfaces!</p>
+            
+            <my-label text="First Counter"></my-label>
+            <my-label text="Second Counter"></my-label>
+            <my-label text="Third Counter"></my-label>
+        `;
+    }
+}).paint();

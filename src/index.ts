@@ -8,18 +8,24 @@ import Memory from "./memory";
 // Setup the data property.
 const setupData = function(target: Object) {
     this.data = Observable(target, old => {
-        console.log('About to update');
+        if(this.willUpdate) this.willUpdate(old);
     }, () => {
         this.repaint();
+        if(this.updated) this.updated;
     });
+}
+
+// Sets up the base element property.
+const setupBase = function(ele: string|any) {
+    if(typeof ele === 'string') this['element'] = document.getElementById(ele);
+    else this['element'] = ele;
 }
 
 // Define the template. This means creating a <template> tag
 // and adding it directly to the document body with a tid.
 const setupTemplate = function() {
-    // Call the view function once to get the T.T.L.
+    if(!this.view) return;
     const { strings, values } = this.view();
-
     const temp = document.createElement('template');
     temp.id = this.tid;
     temp.innerHTML = buildHTML(strings);
@@ -44,7 +50,7 @@ export default function Mosaic(options: MosaicOptions) {
         delayTemplate?: boolean;
         element?: string|HTMLElement|Node;
         values: any[] = [];
-        base?: string|HTMLElement|Node;
+        descendants: DocumentFragment = document.createDocumentFragment();
 
 
         /* SETUP AND LIFECYCLE. */
@@ -67,7 +73,15 @@ export default function Mosaic(options: MosaicOptions) {
             for(let i = 0; i < opts.length; i++) {
                 let key = opts[i];
                 if(key === 'data') setupData.call(this, options[key]);
+                else if(key === 'element') setupBase.call(this, options[key]);
                 else this[key] = options[key];
+            }
+
+            // Check if there are any child nodes at the time this is created.
+            if(this.childNodes.length > 0) {
+                const children = Array.from(this.childNodes);
+                this.descendants.append(...children);
+                Array.from(this.childNodes).forEach(node => node.remove());
             }
 
             // Finish setting up the template for this new component type.
@@ -76,6 +90,13 @@ export default function Mosaic(options: MosaicOptions) {
         }
 
         connectedCallback() {
+            // Attach the cloned template to this element then repaint it.
+            const template = document.getElementById(this.tid) as HTMLTemplateElement;
+            const cloned = document.importNode(template.content, true);
+            this.appendChild(cloned);
+            this.repaint();
+
+            // Run the lifecycle function.
             if(this.created) this.created();
         }
 
@@ -85,17 +106,6 @@ export default function Mosaic(options: MosaicOptions) {
 
         /** Paints the Mosaic onto the web page. */
         paint() {
-            // Get the template that was created by the constructor and set
-            // this active element to that template, but with placeholders
-            // filled in by the "repaint" function.
-            const template = document.getElementById(this.tid)!!;
-            const cloned = document.importNode(template, true);
-            const element = (cloned as HTMLTemplateElement).content;
-            this.appendChild(element);
-            this.repaint();
-
-            // When you're done repainting with the most recent values,
-            // inject this component into its base element.
             (this.element as Element).appendChild(this);
         }
 
@@ -105,22 +115,24 @@ export default function Mosaic(options: MosaicOptions) {
             // Find the template so you can get the memories.
             const template = document.getElementById(this.tid);
             const memories = (template as any).memories;
-            // console.log(template);
 
             // Get the old values, and run the view function again
             // to get the most recent values.
-            let newValues = (this.view && this.view()).values || this.values.slice();
+            if(!this.view) return;
+            let newValues = this.view().values;
+            console.log(this.values, newValues);
 
             // Go through and compare values.
             for(let i = 0; i < memories.length; i++) {
                 let mem: Memory = memories[i];
-                // console.log(mem);
                 
                 let oldv = this.values[i];
                 let newv = newValues[i];
-
                 if(changed(oldv, newv)) mem.commit(this, oldv, newv);
             }
+
+            // Set the new values for the next update.
+            this.values = newValues;
         }
     });
 

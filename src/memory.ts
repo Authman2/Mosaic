@@ -29,7 +29,7 @@ export default class Memory {
     /** Applies the changes to the appropriate DOM nodes when data changes. */
     commit(component: Object, oldValue: any, newValue: any) {
         const element = this.step(component);
-        console.log(component, element);
+        // console.log(component, element);
 
         switch(this.config.type) {
             case 'node': this.commitNode(element, oldValue, newValue); break;
@@ -40,6 +40,10 @@ export default class Memory {
     /** Applies changes to memories of type "node." */
     commitNode(element: HTMLElement|ChildNode, oldValue: any, newValue: any) {
         element.replaceWith(newValue);
-        // console.log(element);
+    }
+
+    /** Applies attribtue and event listener changes. */
+    commitAttribute(element: HTMLElement|ChildNode, oldValue: any, newValue: any) {
+
     }
 }

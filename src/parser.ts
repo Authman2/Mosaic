@@ -80,6 +80,7 @@ function parseText(node: Text, steps: number[]): Memory[] {
     let defined2 = false;
     if(node.parentElement)
         defined2 = customElements.get(node.parentElement.nodeName.toLowerCase()) !== undefined;
+    
     return [new Memory({
         type: "node",
         steps,
