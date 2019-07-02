@@ -4,23 +4,46 @@ import Memory from "./memory";
 /** Takes the strings of a tagged template literal and 
 * turns it into a full html string. */
 export function buildHTML(strings) {
-    let ret = '';
-    for(let i = 0; i < strings.length - 1; i++) {
-        // Format the string to account for spaces.
-        let str = strings[i].trim();
-        if(strings[i].startsWith(' ')) str = ` ${str}`;
-        if(strings[i].endsWith(' ')) str += ' ';
+    let html = '';
+    let isCommentBinding = false;
+    const length = strings.length - 1;
 
-        const matched = lastAttributeNameRegex.exec(str);
-        // Attribute.
-        if(matched) {
-            let attrPlaceholder = str.substring(0, matched.index) + matched[1] + matched[2] + matched[3];
-            ret += attrPlaceholder + marker;
-        } 
-        // Node
-        else ret += str + nodeMarker;
+    for(let i = 0; i < length; i++) {
+        const str = strings[i];
+        const commentOpen = str.lastIndexOf('<!--');
+
+        isCommentBinding = (commentOpen > -1 || isCommentBinding) 
+        && str.indexOf('-->', commentOpen + 1) === -1;
+
+        const attributeMatch = lastAttributeNameRegex.exec(str);
+        if(attributeMatch === null) {
+            // Node.
+            html += str + (isCommentBinding ? nodeMarker : nodeMarker);
+        } else {
+            // Attribute.
+            html += str.substring(0, attributeMatch.index) + attributeMatch[1] +
+                attributeMatch[2] + attributeMatch[3] + nodeMarker;
+        }
     }
-    return ret + strings[strings.length - 1];
+    html += strings[length];
+    return html;
+    // let ret = '';
+    // for(let i = 0; i < strings.length - 1; i++) {
+    //     // Format the string to account for spaces.
+    //     let str = strings[i].trim();
+    //     if(strings[i].startsWith(' ')) str = ` ${str}`;
+    //     if(strings[i].endsWith(' ')) str += ' ';
+
+    //     const matched = lastAttributeNameRegex.exec(str);
+    //     // Attribute.
+    //     if(matched) {
+    //         let attrPlaceholder = str.substring(0, matched.index) + matched[1] + matched[2] + matched[3];
+    //         ret += attrPlaceholder + marker;
+    //     } 
+    //     // Node
+    //     else ret += str + nodeMarker;
+    // }
+    // return ret + strings[strings.length - 1];
 }
 
 
@@ -45,23 +68,28 @@ function parseAttributes(node: Element, steps: number[]): Memory[] {
     if(!node.attributes) return [];
     let ret: Memory[] = [];
     const defined = customElements.get(node.nodeName.toLowerCase()) !== undefined;
-        
+    
+    const regex = new RegExp(`[a-z|A-Z| ]*${marker}[a-z|A-Z| ]*`, 'g');
+    const regex2 = new RegExp(`[a-z|A-Z| ]*${nodeMarker}[a-z|A-Z| ]*`, 'g');
     for(let i = 0; i < node.attributes.length; i++) {
         const { name, value } = node.attributes[i];
-        if(value.indexOf(marker) < 0 && value.indexOf(nodeMarker) < 0) continue;
+        if(!regex.test(value) && !regex2.test(value)) continue;
         
-        // Go through the split up attribute values array and see where exactly
-        // the dynamic parts are.
+        // Split the value to see where the dynamic parts in the string are.
         const split = (name === 'style' ? value.split(';') : value.split(' '))
             .filter(str => str.length > 0);
         for(let j = 0; j < split.length; j++) {
-            ret.push(new Memory({
-                type: 'attribute',
-                steps,
-                attribute: { name, index: j },
-                isComponentType: defined,
-                isEvent: name.startsWith('on'),
-            }));
+            const item = split[j];
+            const isDynamic = item === nodeMarker || item === marker;
+            if(isDynamic) {
+                ret.push(new Memory({
+                    type: 'attribute',
+                    steps,
+                    isComponentType: defined,
+                    isEvent: name.startsWith('on'),
+                    attribute: { name },
+                }));
+            }
         }
     }
     return ret;

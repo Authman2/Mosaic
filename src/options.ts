@@ -10,3 +10,12 @@ export interface MosaicOptions {
     delayTemplate: boolean;
     element: string|Element;
 }
+
+/** Config options for a memory. */
+export interface MemoryOptions {
+    type: string;
+    steps: number[];
+    attribute?: { name: string };
+    isEvent?: boolean;
+    isComponentType?: boolean;
+}

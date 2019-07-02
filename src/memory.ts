@@ -1,13 +1,5 @@
-import { isPrimitive, isBooleanAttribute, marker } from './util';
-
-/** Config options for a memory. */
-interface MemoryOptions {
-    type: string;
-    steps: number[];
-    attribute?: { name: string, index?: number };
-    isEvent?: boolean;
-    isComponentType?: boolean;
-}
+import { isPrimitive, isBooleanAttribute, marker, nodeMarker } from './util';
+import { MemoryOptions } from './options';
 
 /** Represents a piece of dynamic content in the markup. */
 export default class Memory {
@@ -45,27 +37,30 @@ export default class Memory {
 
     /** Applies attribtue and event listener changes. */
     commitAttribute(element: HTMLElement|ChildNode, oldValue: any, newValue: any) {
-        const { attribute } = this.config;
-        if(!attribute) return;
-        const { name, index } = attribute;
+        if(!this.config.attribute) return;
+        const { name } = this.config.attribute;
 
         if(this.config.isEvent === true) {
-            // Add/remove an event listener.
+            // parse event listener.
         } else {
-            // Format the part of the attribute string corresponding to this memory.
             const attr = (element as Element).attributes.getNamedItem(name);
             if(!attr) return;
-            
-            // Set the value at the attribute index.
-            const value = attr.value;
-            const values = (name === 'style' ? value.split(';') : value.split(' ')).filter(s => {
-                return s.length > 0;
-            });
-            values[index || 0] = newValue;
 
-            // Set the new attribute string.
-            const newAttributeValue = name === 'style' ? values.join(';') : values.join(' '); 
-            (element as Element).setAttribute(name, newAttributeValue);
+            // Get the current value of the attribute. The value will
+            // be updated on each memory.
+            const attrVal = attr.value;
+
+            // Replace the first instance of the marker with the new value.
+            // Then be sure to set the attribute value to this newly replaced
+            // string so that on the next dynamic attribute it goes to the next
+            // position to replace.
+            const newAttrVal = attrVal.replace(nodeMarker, newValue);
+            (element as Element).setAttribute(name, newAttrVal);
+
+            // If this is a Mosaic component, set the attribute as a data
+            // property and force a repaint.
+            if(this.config.isComponentType === true)
+                (element as any).data[name] = newAttrVal;
         }
     }
 }

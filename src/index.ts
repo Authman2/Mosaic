@@ -1,5 +1,5 @@
 import { MosaicOptions } from "./options";
-import { randomKey, changed } from "./util";
+import { randomKey, changed, marker, nodeMarker } from "./util";
 import { buildHTML, memorize } from "./parser";
 import Observable from "./observable";
 import Memory from "./memory";
@@ -9,10 +9,12 @@ import Memory from "./memory";
 const setupData = function(target: Object) {
     const targ = Object.assign({}, target);
     this.data = Observable(targ, old => {
+        if(this.barrierOn === true) return;
         if(this.willUpdate) this.willUpdate(old);
     }, () => {
+        if(this.barrierOn === true) return;
         this.repaint();
-        if(this.updated) this.updated;
+        if(this.updated) this.updated();
     });
 }
 
@@ -51,6 +53,7 @@ export default function Mosaic(options: MosaicOptions) {
         delayTemplate?: boolean;
         element?: string|HTMLElement|Node;
         values: any[] = [];
+        barrierOn: boolean = false;
         descendants: DocumentFragment = document.createDocumentFragment();
 
 
@@ -68,11 +71,13 @@ export default function Mosaic(options: MosaicOptions) {
                 else this[key] = options[key];
             }
 
-            // Check if there are any child nodes at the time this is created.
+            // Check if there are any child nodes at the time this is created,
+            // then store them for later so the dev can use it if needed.
             if(this.childNodes.length > 0) {
                 const children = Array.from(this.childNodes);
                 this.descendants.append(...children);
-                Array.from(this.childNodes).forEach(node => node.remove());
+                for(let i = 0; i < Array.from(this.childNodes).length; i++)
+                    Array.from(this.childNodes)[i].remove();
             }
 
             // Finish setting up the template for this new component type.
@@ -86,9 +91,7 @@ export default function Mosaic(options: MosaicOptions) {
             // and add it as a data property.
             for(let i = 0; i < this.attributes.length; i++) {
                 const { name, value } = this.attributes[i];
-                console.log(name, value);
                 options.data[name] = value;
-                // this.removeAttribute(name);
             }
 
             // At this point, it is safe to create Observable data.
@@ -124,7 +127,6 @@ export default function Mosaic(options: MosaicOptions) {
             // to get the most recent values.
             if(!this.view) return;
             let newValues = this.view().values;
-            // console.log(this.values, newValues);
 
             // Go through and compare values.
             for(let i = 0; i < memories.length; i++) {
@@ -137,6 +139,20 @@ export default function Mosaic(options: MosaicOptions) {
 
             // Set the new values for the next update.
             this.values = newValues;
+        }
+
+        /** Sets multiple data properties at once, then updates. */
+        set(data: Object) {
+            if(!this.data) setupData.call(this, data);
+            else {
+                this.barrierOn = true;
+                const keys = Object.keys(data);
+                for(let i = 0; i < keys.length; i++) {
+                    this.data[keys[i]] = data[keys[i]];
+                }
+                this.barrierOn = false;
+            }
+            this.repaint();
         }
     });
 

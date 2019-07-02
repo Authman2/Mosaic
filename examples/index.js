@@ -8,9 +8,12 @@ new Mosaic({
         count: 0,
     },
     created() {
-        setInterval(() => {
-            this.data.count = Math.floor(Math.random() * 100);
-        }, 5000);
+        // setInterval(() => {
+        //     this.data.count = Math.floor(Math.random() * 100);
+        // }, 5000);
+    },
+    updated() {
+        console.log('Updated');
     },
     view() {
         const { text, count } = this.data;
@@ -28,12 +31,14 @@ new Mosaic({
     data: { className: 'header' },
     view() {
         return html`
-            <header class='label ${this.data.className} ${'something'}'>Welcome to Mosaic!</header>
+            <header class='label ${this.data.className} ${'something'} ${2}'>Welcome to Mosaic!</header>
             <p>A declarative, front-end JavaScript library for building user interfaces!</p>
             
-            <my-label text="${10}"></my-label>
-            <my-label text="Second Counter"></my-label>
-            <my-label text="Third Counter"></my-label>
+            <my-label text="${10}" count='${5}'></my-label>
+            <my-label text="Second Counter" count='${10}'></my-label>
+            <my-label text="Third Counter" count='${15}'></my-label>
+
+            <my-label text="Now for a another label!" count='${99}'></my-label>
         `;
     }
 }).paint();
