@@ -39,6 +39,7 @@ const setupTemplate = function() {
 
 export default function Mosaic(options: MosaicOptions) {
     const tid = randomKey();
+    const defaultData = Object.assign({}, options.data);
 
     // Create a custom element and return an instance of it.
     customElements.define(options.name, class extends HTMLElement {
@@ -97,6 +98,21 @@ export default function Mosaic(options: MosaicOptions) {
             // At this point, it is safe to create Observable data.
             if(options.data) setupData.call(this, options.data);
 
+            // Go through the data properties and just replace the placeholders
+            // (if there are any) with their default values.
+            if(this.data) {
+                let dataKeys = Object.keys(this.data);
+                this.barrierOn = true;
+                for(let i = 0; i < dataKeys.length; i++) {
+                    let key = dataKeys[i];
+                    if(this.data[key] === nodeMarker ||
+                        this.data[key] === marker) {
+                        this.data[key] = defaultData[key];
+                    }
+                }
+                this.barrierOn = false;
+            }
+            
             // Attach the cloned template to this element then repaint it.
             const template = document.getElementById(this.tid) as HTMLTemplateElement;
             const cloned = document.importNode(template.content, true);

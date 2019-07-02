@@ -36,9 +36,8 @@ new Mosaic({
             
             <my-label text="${10}" count='${5}'></my-label>
             <my-label text="Second Counter" count='${10}'></my-label>
-            <my-label text="Third Counter" count='${15}'></my-label>
-
-            <my-label text="Now for a another label!" count='${99}'></my-label>
+            <my-label text="Third Counter"></my-label>
+            <my-label text="Now for a another label!"></my-label>
         `;
     }
 }).paint();
