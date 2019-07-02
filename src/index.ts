@@ -27,6 +27,14 @@ const setupTemplate = function() {
     temp.id = this.tid;
     temp.innerHTML = buildHTML(strings);
     (temp as any).memories = memorize(document.importNode(temp, true));
+    (temp as any).repaint = function(element: any, oldValues: any[], newValues: any[]) {
+        for(let i = 0; i < this.memories.length; i++) {
+            let mem: Memory = this.memories[i];
+            let oldv = oldValues[i];
+            let newv = newValues[i];
+            if(changed(oldv, newv)) mem.commit(element, oldv, newv);
+        }
+    }
     document.body.appendChild(temp);
 }
 
@@ -140,20 +148,23 @@ export default function Mosaic(options: MosaicOptions) {
         repaint() {
             // Find the template so you can get the memories.
             const template = document.getElementById(this.tid);
-            const memories = (template as any).memories;
+            // const memories = (template as any).memories;
 
-            // Get the old values, and run the view function again
-            // to get the most recent values.
+            // // Get the old values, and run the view function again
+            // // to get the most recent values.
+            // if(!this.view) return;
+            // let newValues = this.view().values;
+
+            // // Go through and compare values.
+            // for(let i = 0; i < memories.length; i++) {
+            //     let mem: Memory = memories[i];
+            //     let oldv = this.values[i];
+            //     let newv = newValues[i];
+            //     if(changed(oldv, newv)) mem.commit(this, oldv, newv);
+            // }
             if(!this.view) return;
             let newValues = this.view().values;
-
-            // Go through and compare values.
-            for(let i = 0; i < memories.length; i++) {
-                let mem: Memory = memories[i];
-                let oldv = this.values[i];
-                let newv = newValues[i];
-                if(changed(oldv, newv)) mem.commit(this, oldv, newv);
-            }
+            (template as any).repaint(this, this.values, newValues);
 
             // Set the new values for the next update.
             this.values = newValues;

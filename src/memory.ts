@@ -1,5 +1,6 @@
-import { isPrimitive, isBooleanAttribute, marker, nodeMarker } from './util';
+import { isPrimitive, isBooleanAttribute, marker, nodeMarker, changed } from './util';
 import { MemoryOptions } from './options';
+import { buildHTML, memorize } from './parser';
 
 /** Represents a piece of dynamic content in the markup. */
 export default class Memory {
@@ -32,7 +33,29 @@ export default class Memory {
 
     /** Applies changes to memories of type "node." */
     commitNode(element: HTMLElement|ChildNode, oldValue: any, newValue: any) {
-        element.replaceWith(newValue);
+        // html function.
+        if(typeof newValue === 'object') {
+            if(newValue.hasOwnProperty('strings')) {
+                // Construct the template, copy it, repaint it, then insert.
+                const temp = document.createElement('template');
+                temp.innerHTML = buildHTML(newValue.strings);
+                (temp as any).memories = memorize(document.importNode(temp, true));
+                (temp as any).repaint = function(element: any, oldValues: any[], newValues: any[]) {
+                    for(let i = 0; i < this.memories.length; i++) {
+                        let mem: Memory = this.memories[i];
+                        let oldv = oldValues[i];
+                        let newv = newValues[i];
+                        if(changed(oldv, newv)) mem.commit(element, oldv, newv);
+                    }
+                }
+                
+                const cloned = document.importNode(temp.content, true);
+                (temp as any).repaint(cloned, [], newValue.values);
+                element.replaceWith(cloned);
+            }
+        } else {
+            element.replaceWith(newValue);
+        }
     }
 
     /** Applies attribtue and event listener changes. */
@@ -45,6 +68,7 @@ export default class Memory {
         let setValue = newValue;
         if(typeof newValue === 'object') setValue = JSON.stringify(newValue);
         else if(typeof newValue === 'function') {
+            // Remove the attribute so it doesn't get called while parsing.
             setValue = newValue as Function;
             (element as Element).removeAttribute(name);
         } else setValue = newValue;

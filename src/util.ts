@@ -53,5 +53,8 @@ export function changed(oldv: any, newv: any) {
     else if(Array.isArray(newv)) {
         return (''+oldv) !== (''+newv);
     }
+    else if(typeof newv === 'object') {
+        console.log(oldv, newv);
+    }
     return false;
 }
