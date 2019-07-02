@@ -9,6 +9,7 @@ export interface MosaicOptions {
     willDestory: Function;
     delayTemplate: boolean;
     element: string|Element;
+    readonly descendants: DocumentFragment;
 }
 
 /** Config options for a memory. */

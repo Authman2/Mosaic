@@ -18,12 +18,6 @@ const setupData = function(target: Object) {
     });
 }
 
-// Sets up the base element property.
-const setupBase = function(ele: string|any) {
-    if(typeof ele === 'string') this['element'] = document.getElementById(ele);
-    else this['element'] = ele;
-}
-
 // Define the template. This means creating a <template> tag
 // and adding it directly to the document body with a tid.
 const setupTemplate = function() {
@@ -40,6 +34,8 @@ const setupTemplate = function() {
 export default function Mosaic(options: MosaicOptions) {
     const tid = randomKey();
     const defaultData = Object.assign({}, options.data);
+    if(options.descendants)
+        throw new Error('"Descendants" is a readonly property of Mosaics.');
 
     // Create a custom element and return an instance of it.
     customElements.define(options.name, class extends HTMLElement {
@@ -49,13 +45,12 @@ export default function Mosaic(options: MosaicOptions) {
         view?: Function;
         created?: Function;
         updated?: Function;
+        values: any[] = [];
         willUpdate?: Function;
         willDestory?: Function;
         delayTemplate?: boolean;
-        element?: string|HTMLElement|Node;
-        values: any[] = [];
         barrierOn: boolean = false;
-        descendants: DocumentFragment = document.createDocumentFragment();
+        readonly descendants: DocumentFragment = document.createDocumentFragment();
 
 
         /* SETUP AND LIFECYCLE. */
@@ -68,7 +63,7 @@ export default function Mosaic(options: MosaicOptions) {
             const opts = Object.keys(options);
             for(let i = 0; i < opts.length; i++) {
                 let key = opts[i];
-                if(key === 'element') setupBase.call(this, options[key]);
+                if(key === 'element') continue;
                 else this[key] = options[key];
             }
 
@@ -83,10 +78,15 @@ export default function Mosaic(options: MosaicOptions) {
 
             // Finish setting up the template for this new component type.
             this.tid = tid;
-            if(!document.getElementById(tid)) setupTemplate.call(this);
+            if(!document.getElementById(tid) && !this.delayTemplate)
+                setupTemplate.call(this);
         }
 
         connectedCallback() {
+            // See if you have to repaint the template.
+            if(this.delayTemplate === true && !document.getElementById(tid))
+                setupTemplate.call(this);
+
             // Any attribute on a custom element tag should be
             // counted as insertion of data, so get it's value
             // and add it as a data property.
@@ -95,22 +95,20 @@ export default function Mosaic(options: MosaicOptions) {
                 options.data[name] = value;
             }
 
-            // At this point, it is safe to create Observable data.
-            if(options.data) setupData.call(this, options.data);
-
             // Go through the data properties and just replace the placeholders
             // (if there are any) with their default values.
-            if(this.data) {
-                let dataKeys = Object.keys(this.data);
-                this.barrierOn = true;
+            if(options.data) {
+                let dataKeys = Object.keys(options.data);
                 for(let i = 0; i < dataKeys.length; i++) {
                     const key = dataKeys[i];
-                    const current = this.data[key];
+                    const current = options.data[key];
                     if(current === nodeMarker || current === marker)
-                        this.data[key] = defaultData[key];
+                        options.data[key] = defaultData[key];
                 }
-                this.barrierOn = false;
             }
+
+            // At this point, it is safe to create Observable data.
+            if(options.data) setupData.call(this, options.data);
             
             // Attach the cloned template to this element then repaint it.
             const template = document.getElementById(this.tid) as HTMLTemplateElement;
@@ -128,7 +126,13 @@ export default function Mosaic(options: MosaicOptions) {
 
         /** Paints the Mosaic onto the web page. */
         paint() {
-            (this.element as Element).appendChild(this);
+            const element = typeof options.element === 'string' ?
+                document.getElementById(options.element)
+                : options.element;
+            if(!element) throw new Error(`Could not find the base element
+                with ${options.element}.`);
+
+            element.appendChild(this);
         }
 
         /** Goes through the dynamic content of the component and updates
@@ -146,7 +150,6 @@ export default function Mosaic(options: MosaicOptions) {
             // Go through and compare values.
             for(let i = 0; i < memories.length; i++) {
                 let mem: Memory = memories[i];
-                
                 let oldv = this.values[i];
                 let newv = newValues[i];
                 if(changed(oldv, newv)) mem.commit(this, oldv, newv);
@@ -162,9 +165,8 @@ export default function Mosaic(options: MosaicOptions) {
             else {
                 this.barrierOn = true;
                 const keys = Object.keys(data);
-                for(let i = 0; i < keys.length; i++) {
+                for(let i = 0; i < keys.length; i++)
                     this.data[keys[i]] = data[keys[i]];
-                }
                 this.barrierOn = false;
             }
             this.repaint();

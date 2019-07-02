@@ -44,15 +44,26 @@ export default class Memory {
         // parse them a certain way before setting the value.
         let setValue = newValue;
         if(typeof newValue === 'object') setValue = JSON.stringify(newValue);
-        else setValue = newValue;
+        else if(typeof newValue === 'function') {
+            setValue = newValue as Function;
+            (element as Element).removeAttribute(name);
+        } else setValue = newValue;
 
         if(this.config.isEvent === true) {
-            // parse event listener.
+            // Parse event listener.
+            this.commitEvent(element, name, oldValue, newValue);
         } else {
             // Get the current value of the attribute. The value will
             // be updated on each memory.
             const attr = (element as Element).attributes.getNamedItem(name);
-            if(!attr) return;
+            if(!attr) {
+                // Because of the way functions are defined, we have to check
+                // here to see if it is a Mosaic component and needs the event.
+                if(this.config.isComponentType === true)
+                    if(typeof setValue === 'function')
+                        return (element as any).data[name] = setValue.bind(element);
+                return;
+            }
             const attrVal = attr.value;
 
             // Replace the first instance of the marker with the new value.
@@ -66,6 +77,8 @@ export default class Memory {
             // property and force a repaint. Then set the data property 
             // depending on the type.
             if(this.config.isComponentType === true) {
+                // Function is above ^.
+
                 // Object.
                 try { return (element as any).data[name] = JSON.parse(newAttrVal); }
                 catch(_) {}
@@ -78,5 +91,19 @@ export default class Memory {
                 return (element as any).data[name] = newAttrVal;
             }
         }
+    }
+
+    /** Applies event changes such as adding/removing listeners. */
+    commitEvent(element: HTMLElement|ChildNode, name: string, oldValue: any, newValue: any) {
+        const events = (element as any).eventHandlers || {};
+        const short = name.substring(2);
+        if(events[name])
+            (element as Element).removeEventListener(short, events[name]);
+
+        events[name] = newValue.bind(element);
+        (element as any).eventHandlers = events;
+        (element as Element).addEventListener(short, (element as any).eventHandlers[name]);
+
+        (element as Element).removeAttribute(name);
     }
 }
