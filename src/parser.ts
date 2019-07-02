@@ -81,6 +81,8 @@ function parseAttributes(node: Element, steps: number[]): Memory[] {
         for(let j = 0; j < split.length; j++) {
             const item = split[j];
             const isDynamic = item === nodeMarker || item === marker;
+
+            // Make sure you only add memories for dynamic attributes.
             if(isDynamic) {
                 ret.push(new Memory({
                     type: 'attribute',

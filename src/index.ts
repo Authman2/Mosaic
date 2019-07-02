@@ -104,11 +104,10 @@ export default function Mosaic(options: MosaicOptions) {
                 let dataKeys = Object.keys(this.data);
                 this.barrierOn = true;
                 for(let i = 0; i < dataKeys.length; i++) {
-                    let key = dataKeys[i];
-                    if(this.data[key] === nodeMarker ||
-                        this.data[key] === marker) {
+                    const key = dataKeys[i];
+                    const current = this.data[key];
+                    if(current === nodeMarker || current === marker)
                         this.data[key] = defaultData[key];
-                    }
                 }
                 this.barrierOn = false;
             }

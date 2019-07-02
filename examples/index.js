@@ -8,12 +8,9 @@ new Mosaic({
         count: 0,
     },
     created() {
-        // setInterval(() => {
-        //     this.data.count = Math.floor(Math.random() * 100);
-        // }, 5000);
-    },
-    updated() {
-        console.log('Updated');
+        setInterval(() => {
+            this.data.count = Math.floor(Math.random() * 100);
+        }, 2000);
     },
     view() {
         const { text, count } = this.data;
