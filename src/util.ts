@@ -54,7 +54,28 @@ export function changed(oldv: any, newv: any) {
         return (''+oldv) !== (''+newv);
     }
     else if(typeof newv === 'object') {
-        console.log(oldv, newv);
+        // The old object is a template.
+        if(oldv.hasOwnProperty('strings')) {
+            // There is no new value, so definitely changed.
+            if(!newv) {
+                return true;
+            }
+            // If the new value is not a template, then it changed.
+            else if(typeof newv === 'object' && !newv.hasOwnProperty('strings')) {
+                return true;
+            }
+            // If the new value is a template, but a different one.
+            else if(''+oldv.values !== ''+newv.values) {
+                return true;
+            }
+
+            // Otherwise, there is no difference.
+            return false;
+        }
+        // Just a regular JS object.
+        else {
+            return !Object.is(oldv, newv);
+        }
     }
     return false;
 }

@@ -34,25 +34,25 @@ export default class Memory {
     /** Applies changes to memories of type "node." */
     commitNode(element: HTMLElement|ChildNode, oldValue: any, newValue: any) {
         // html function.
-        if(typeof newValue === 'object') {
-            if(newValue.hasOwnProperty('strings')) {
-                // Construct the template, copy it, repaint it, then insert.
-                const temp = document.createElement('template');
-                temp.innerHTML = buildHTML(newValue.strings);
-                (temp as any).memories = memorize(document.importNode(temp, true));
-                (temp as any).repaint = function(element: any, oldValues: any[], newValues: any[]) {
-                    for(let i = 0; i < this.memories.length; i++) {
-                        let mem: Memory = this.memories[i];
-                        let oldv = oldValues[i];
-                        let newv = newValues[i];
-                        if(changed(oldv, newv)) mem.commit(element, oldv, newv);
-                    }
+        if(typeof newValue === 'object' && newValue.hasOwnProperty('strings')) {
+            // Construct the template, copy it, repaint it, then insert.
+            const temp = document.createElement('template');
+            temp.innerHTML = buildHTML(newValue.strings);
+            (temp as any).memories = memorize(document.importNode(temp, true));
+            (temp as any).repaint = function(element: any, oldValues: any[], newValues: any[]) {
+                for(let i = 0; i < this.memories.length; i++) {
+                    let mem: Memory = this.memories[i];
+                    let oldv = oldValues[i];
+                    let newv = newValues[i];
+                    if(changed(oldv, newv)) mem.commit(element, oldv, newv);
                 }
-                
-                const cloned = document.importNode(temp.content, true);
-                (temp as any).repaint(cloned, [], newValue.values);
-                element.replaceWith(cloned);
             }
+            
+            const cloned = document.importNode(temp.content, true);
+            (temp as any).repaint(cloned, [], newValue.values);
+            element.replaceWith(cloned);
+            
+        // Primitives and other DOM nodes.
         } else {
             element.replaceWith(newValue);
         }
