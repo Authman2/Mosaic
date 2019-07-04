@@ -16,12 +16,12 @@ export function isPrimitive(value: any) {
 
 /** Returns whether an attribute is a boolean attribute. */
 export const isBooleanAttribute = (name: string) => {
-    let str = `async|autocomplete|autofocus|autoplay|border|challenge|checked|compact|
-    contenteditable|controlsdefault|defer|disabled|formNoValidate|frameborder|hidden|
-    indeterminate|ismap|loop|multiple|muted|nohref|noresizenoshade|novalidate|nowrap|
-    open|readonly|required|reversed|scoped|scrolling|seamless|selected|sortable|spell
-    check|translate`;
-    let regex = new RegExp(str);
+    let str = `async|autocomplete|autofocus|autoplay|border|challenge|checked|compact|`;
+    str += `contenteditable|controlsdefault|defer|disabled|formNoValidate|frameborder|hidden|`;
+    str += `indeterminate|ismap|loop|multiple|muted|nohref|noresizenoshade|novalidate|nowrap|`;
+    str += `open|readonly|required|reversed|scoped|scrolling|seamless|selected|sortable|spell|`;
+    str += `check|translate`;
+    let regex = new RegExp(str, 'gi');
     return regex.test(name);
 }
 

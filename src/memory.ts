@@ -1,4 +1,4 @@
-import { nodeMarker, renderTemplate, insertAfter, difference } from './util';
+import { nodeMarker, renderTemplate, insertAfter, difference, isBooleanAttribute } from './util';
 import { MemoryOptions } from './options';
 
 /** Represents a piece of dynamic content in the markup. */
@@ -75,6 +75,11 @@ export default class Memory {
             // be updated on each memory.
             const attr = (element as Element).attributes.getNamedItem(name);
             if(!attr) {
+                // Check if there is no attribute name, but it's a 
+                // boolean attribute, in which case you wanna add the attribute.
+                if(isBooleanAttribute(name) && setValue === true)
+                    (element as Element).setAttribute(name, 'true');
+
                 // Because of the way functions are defined, we have to check
                 // here to see if it is a Mosaic component and needs the event.
                 if(this.config.isComponentType === true)
@@ -90,6 +95,12 @@ export default class Memory {
             // position to replace.
             const newAttrVal = attrVal.replace(nodeMarker, setValue);
             (element as Element).setAttribute(name, newAttrVal);
+            
+            // Set the boolean attribute. Mostly only used for "false" here.
+            if(isBooleanAttribute(name)) {
+                if(!setValue) (element as Element).removeAttribute(name);
+                else (element as Element).setAttribute(name, 'true');
+            }
 
             // If this is a Mosaic component, set the attribute as a data
             // property and force a repaint. Then set the data property 

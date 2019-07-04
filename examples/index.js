@@ -51,13 +51,7 @@ new Mosaic({
         return html`
             <header class='label ${this.data.className} ${'something'} ${2}'>Welcome to Mosaic!</header>
             <p>A declarative, front-end JavaScript library for building user interfaces!</p>
-            
-            ${
-                this.data.condition === true ?
-                html`<my-label text='Condition is working!!'></my-label>`
-                :
-                ''
-            }
+            <div contenteditable='${this.data.condition}'></div>
 
             <my-label text="${10}" count='${5}' click='${this.printLabel}'></my-label>
             <my-label text="Second Counter" count='${10}'></my-label>
