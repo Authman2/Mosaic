@@ -6,7 +6,7 @@ export interface MosaicOptions {
     created: Function;
     updated: Function;
     willUpdate: Function;
-    willDestory: Function;
+    willDestroy: Function;
     delayTemplate: boolean;
     element: string|Element;
     readonly descendants: DocumentFragment;

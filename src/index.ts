@@ -58,7 +58,7 @@ export default function Mosaic(options: MosaicOptions) {
         updated?: Function;
         barrierOn: boolean;
         willUpdate?: Function;
-        willDestory?: Function;
+        willDestroy?: Function;
         delayTemplate?: boolean;
         readonly descendants: DocumentFragment;
 
@@ -86,8 +86,7 @@ export default function Mosaic(options: MosaicOptions) {
             if(this.childNodes.length > 0) {
                 const children = Array.from(this.childNodes);
                 this.descendants.append(...children);
-                for(let i = 0; i < Array.from(this.childNodes).length; i++)
-                    Array.from(this.childNodes)[i].remove();
+                this.innerHTML = '';
             }
 
             // Finish setting up the template for this new component type.
@@ -132,6 +131,11 @@ export default function Mosaic(options: MosaicOptions) {
 
             // Run the lifecycle function.
             if(this.created) this.created();
+        }
+
+        disconnectedCallback() {
+            // Clean up resources and run lifecycle function.
+            if(this.willDestroy) this.willDestroy();
         }
 
 
