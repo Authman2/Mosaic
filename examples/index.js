@@ -28,14 +28,19 @@ new Mosaic({
     element: 'root',
     data: {
         className: 'header',
-        condition: true
+        foods: [{ name: 'turkey' },{ name: 'cake' },
+            { name: 'ice cream' },{ name: 'kale' },
+            { name: 'soup' },{ name: 'burger' },
+            { name: 'rice' },{ name: 'pasta' }]
     },
     printLabel() {
         console.log(this);
     },
     created() {
-        setInterval(() => {
-            this.data.condition = !this.data.condition;
+        setTimeout(() => {
+            this.data.foods.splice(1, 3);
+            this.data.foods.splice(1, 0, { name: 'water' });
+            this.data.foods.push({ name: 'eba' });
         }, 5000);
     },
     view() {
@@ -48,13 +53,9 @@ new Mosaic({
             <my-label text="Third Counter"></my-label>
             <my-label text="Now for a another label!" click='${this.printLabel}'></my-label>
 
-            <br><br>
-            ${ this.data.condition === true ?
-                html`<div>
-                    <my-label text="working!!!"></my-label>
-                    <h1>Something else!!</h1>
-                </div>`
-                : "this is the false condition" }
+            ${Mosaic.list(this.data.foods, obj => obj.name, obj => {
+                return html`<my-label text='${obj.name}'></my-label>`
+            })}
         `;
     }
 }).paint();

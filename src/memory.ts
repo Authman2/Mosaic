@@ -1,6 +1,5 @@
-import { isPrimitive, isBooleanAttribute, marker, nodeMarker, changed } from './util';
+import { nodeMarker, renderTemplate, insertAfter, difference } from './util';
 import { MemoryOptions } from './options';
-import { buildHTML, memorize } from './parser';
 
 /** Represents a piece of dynamic content in the markup. */
 export default class Memory {
@@ -34,26 +33,21 @@ export default class Memory {
     /** Applies changes to memories of type "node." */
     commitNode(element: HTMLElement|ChildNode, oldValue: any, newValue: any) {
         // html function.
-        if(typeof newValue === 'object' && newValue.hasOwnProperty('strings')) {
-            // Construct the template, copy it, repaint it, then insert.
-            const temp = document.createElement('template');
-            temp.innerHTML = buildHTML(newValue.strings);
-            (temp as any).memories = memorize(document.importNode(temp, true));
-            (temp as any).repaint = function(element: any, oldValues: any[], newValues: any[]) {
-                for(let i = 0; i < this.memories.length; i++) {
-                    let mem: Memory = this.memories[i];
-                    let oldv = oldValues[i];
-                    let newv = newValues[i];
-                    if(changed(oldv, newv)) mem.commit(element, oldv, newv);
-                }
-            }
-            
-            const cloned = document.importNode(temp.content, true);
-            (temp as any).repaint(cloned, [], newValue.values);
-            element.replaceWith(cloned);
-            
+        if(typeof newValue === 'object' && newValue.__isTemplate) {
+            const cloned = renderTemplate(newValue);
+            element.replaceWith(cloned); 
+        }
+        // Array.
+        else if(typeof newValue === 'object' && newValue.__isKeyedArray) {
+            this.commitArray(element, oldValue, newValue);
+        }
+        else if(Array.isArray(newValue)) {
+            // Don't bother rendering regular arrays. Force the developer
+            // to use the more efficient one with specific keys.
+            throw new Error(`Please do not use direct arrays in the view function as it is inefficient. Use the "Mosaic.list" function instead.`);
+        }
         // Primitives and other DOM nodes.
-        } else {
+        else {
             element.replaceWith(newValue);
         }
     }
@@ -63,20 +57,20 @@ export default class Memory {
         if(!this.config.attribute) return;
         const { name } = this.config.attribute;
 
-        // Certain data types on Mosaic components will require that you
-        // parse them a certain way before setting the value.
-        let setValue = newValue;
-        if(typeof newValue === 'object') setValue = JSON.stringify(newValue);
-        else if(typeof newValue === 'function') {
-            // Remove the attribute so it doesn't get called while parsing.
-            setValue = newValue as Function;
-            (element as Element).removeAttribute(name);
-        } else setValue = newValue;
-
         if(this.config.isEvent === true) {
             // Parse event listener.
             this.commitEvent(element, name, oldValue, newValue);
         } else {
+            // Certain data types on Mosaic components will require that you
+            // parse them a certain way before setting the value.
+            let setValue = newValue;
+            if(typeof newValue === 'object') setValue = JSON.stringify(newValue);
+            else if(typeof newValue === 'function') {
+                // Remove the attribute so it doesn't get called while parsing.
+                setValue = newValue as Function;
+                (element as Element).removeAttribute(name);
+            } else setValue = newValue;
+
             // Get the current value of the attribute. The value will
             // be updated on each memory.
             const attr = (element as Element).attributes.getNamedItem(name);
@@ -101,8 +95,6 @@ export default class Memory {
             // property and force a repaint. Then set the data property 
             // depending on the type.
             if(this.config.isComponentType === true) {
-                // Function is above ^.
-
                 // Object.
                 try { return (element as any).data[name] = JSON.parse(newAttrVal); }
                 catch(_) {}
@@ -129,5 +121,55 @@ export default class Memory {
         (element as Element).addEventListener(short, (element as any).eventHandlers[name]);
 
         (element as Element).removeAttribute(name);
+    }
+
+    /** Helper function for applying changes to arrays. */
+    commitArray(element: HTMLElement|ChildNode, oldValue: any, newValue: any) {
+        // First render, everything is new.
+        if(!oldValue || oldValue.length === 0) {
+            const frag = document.createDocumentFragment();
+            const mapped = newValue.items.map((obj, index) => {
+                return renderTemplate(obj, newValue.keys[index]);
+            });
+            frag.append(...mapped);
+            element.replaceWith(frag);
+        }
+        // Make efficient patches.
+        else {
+            let oldKeys = oldValue.keys;
+            let newKeys = newValue.keys;
+            let oldItems = oldValue.items;
+            let newItems = newValue.items;
+            const { additions, deletions } = difference(oldKeys, newKeys);
+
+            // For each addition, find the correct insertion index and insert
+            // the node at that position.
+            for(let i = 0; i < additions.length; i++) {
+                // Get the old index for where you need to correctly insert.
+                const { key, index } = additions[i];
+                const oldIndex = index - (additions.length + i);
+
+                // Render the new item and find the old item too.
+                const newNode = renderTemplate(newItems[index], key);
+                const oldItem = oldItems[oldIndex];
+
+                // Once you have found the old item, look for the node in the
+                // DOM and insert the element before that.
+                if(oldItem) {
+                    const oldKey = oldKeys[oldIndex];
+                    const oldNode = document.querySelector(`[key='${oldKey}']`);
+                    insertAfter(newNode, oldNode);
+                } else {
+                    insertAfter(newNode, element);
+                }
+            }
+
+            // For deleting, just look for the node with the key and remove it.
+            for(let i = 0; i < deletions.length; i++) {
+                const { key } = deletions[i];
+                const found = document.querySelector(`[key='${key}']`);
+                if(found) found.remove();
+            }
+        }
     }
 }

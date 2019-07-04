@@ -20,3 +20,10 @@ export interface MemoryOptions {
     isEvent?: boolean;
     isComponentType?: boolean;
 }
+
+/** A custom type for efficient arrays. */
+export interface KeyedArray {
+    keys: Function;
+    items: Function;
+    __isKeyedArray: boolean;
+}

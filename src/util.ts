@@ -1,3 +1,6 @@
+import { buildHTML, memorize } from "./parser";
+import Memory from "./memory";
+
 // The placeholders in the HTML.
 export const marker = `{{m-${String(Math.random()).slice(2)}}}`;
 export const nodeMarker = `<!--${marker}-->`;
@@ -37,45 +40,78 @@ export function traverse($node: Node|HTMLElement|ChildNode, action: Function, st
     }
 }
 
+/** Renders an HTML element from a template. */
+export function renderTemplate(value: any, key?: string) {
+    // Construct the template, copy it, repaint it, then insert.
+    const temp = document.createElement('template');
+    temp.innerHTML = buildHTML(value.strings);
+    (temp as any).memories = memorize(document.importNode(temp, true));
+    (temp as any).repaint = function(element: any, oldValues: any[], newValues: any[]) {
+        for(let i = 0; i < this.memories.length; i++) {
+            let mem: Memory = this.memories[i];
+            let oldv = oldValues[i];
+            let newv = newValues[i];
+            if(changed(oldv, newv)) mem.commit(element, oldv, newv);
+        }
+    }
+    
+    const cloned = document.importNode(temp.content, true);
+    (temp as any).repaint(cloned, [], value.values);
+    if(key) (cloned.firstChild!! as Element).setAttribute('key', key);
+    return cloned;
+}
+
 /** Compares two values are returns false if they are the same and 
 * true if they are different (i.e. they changed). */
 export function changed(oldv: any, newv: any) {
     // If no old value, then it is the first render so it did change.
+    // Or if there is an old value and no new value, then it changed.
     if(!oldv) return true;
+    if(oldv && !newv) return true;
 
     // Compare by type.
-    if(isPrimitive(newv)) {
-        return oldv !== newv;
-    }
-    else if(typeof newv === 'function') {
-        return (''+oldv) !== (''+newv);
-    }
-    else if(Array.isArray(newv)) {
-        return (''+oldv) !== (''+newv);
-    }
+    if(isPrimitive(newv)) return oldv !== newv;
+    else if(typeof newv === 'function') return (''+oldv) !== (''+newv);
+    else if(Array.isArray(newv)) return (''+oldv) !== (''+newv);
     else if(typeof newv === 'object') {
-        // The old object is a template.
-        if(oldv.hasOwnProperty('strings')) {
-            // There is no new value, so definitely changed.
-            if(!newv) {
-                return true;
-            }
+        // Template:
+        if(oldv.__isTemplate) {
             // If the new value is not a template, then it changed.
-            else if(typeof newv === 'object' && !newv.hasOwnProperty('strings')) {
-                return true;
-            }
+            if(!newv.__isTemplate) return true;
             // If the new value is a template, but a different one.
-            else if(''+oldv.values !== ''+newv.values) {
-                return true;
-            }
+            else if(''+oldv.values !== ''+newv.values) return true;
 
             // Otherwise, there is no difference.
             return false;
         }
-        // Just a regular JS object.
+        // KeyedArray:
+        else if(oldv.__isKeyedArray) {
+            // The new value is not a keyed array, so different.
+            if(!newv.__isKeyedArray) return true;
+            // If the new value is a keyed array, but has different
+            // keys, then you knowi t changed.
+            if(''+oldv.keys !== ''+newv.keys) return true;  
+        }
+        // Object:
         else {
             return !Object.is(oldv, newv);
         }
     }
     return false;
+}
+
+/** Finds the differences between two arrays of keys. */
+export function difference(one: string[], two: string[]) {
+    let additions: { key: string, index: number }[] = [];
+    let deletions: { key: string, index: number }[] = [];
+    
+    one.forEach((item, index) => {
+        const found = two.find(obj => item === obj);
+        if(!found) deletions.push({ key: item, index });
+    });
+    two.forEach((item, index) => {
+        const found = one.find(obj => item === obj);
+        if(!found) additions.push({ key: item, index });
+    });
+    return { deletions, additions };
 }

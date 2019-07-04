@@ -27,23 +27,6 @@ export function buildHTML(strings) {
     }
     html += strings[length];
     return html;
-    // let ret = '';
-    // for(let i = 0; i < strings.length - 1; i++) {
-    //     // Format the string to account for spaces.
-    //     let str = strings[i].trim();
-    //     if(strings[i].startsWith(' ')) str = ` ${str}`;
-    //     if(strings[i].endsWith(' ')) str += ' ';
-
-    //     const matched = lastAttributeNameRegex.exec(str);
-    //     // Attribute.
-    //     if(matched) {
-    //         let attrPlaceholder = str.substring(0, matched.index) + matched[1] + matched[2] + matched[3];
-    //         ret += attrPlaceholder + marker;
-    //     } 
-    //     // Node
-    //     else ret += str + nodeMarker;
-    // }
-    // return ret + strings[strings.length - 1];
 }
 
 
