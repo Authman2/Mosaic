@@ -3,6 +3,7 @@ import { randomKey, changed, marker, nodeMarker } from "./util";
 import { buildHTML, memorize } from "./parser";
 import Observable from "./observable";
 import Memory from "./memory";
+import Router from "./router";
 
 
 // Setup the data property.
@@ -57,6 +58,7 @@ export default function Mosaic(options: MosaicOptions) {
         created?: Function;
         updated?: Function;
         barrierOn: boolean;
+        router?: HTMLElement;
         willUpdate?: Function;
         willDestroy?: Function;
         delayTemplate?: boolean;
@@ -96,6 +98,13 @@ export default function Mosaic(options: MosaicOptions) {
         }
 
         connectedCallback() {
+            // Be careful not to try and reload the template after it's already
+            // been painted. Instead just call the lifecycle function.
+            if(this.innerHTML !== '') {
+                if(this.created) this.created();
+                return;
+            }
+
             // See if you still have to setup the template.
             if(this.delayTemplate === true && !document.getElementById(tid))
                 setupTemplate.call(this);
@@ -126,6 +135,7 @@ export default function Mosaic(options: MosaicOptions) {
             // Attach the cloned template to this element, then repaint it.
             const template = document.getElementById(this.tid) as HTMLTemplateElement;
             const cloned = document.importNode(template.content, true);
+            this.innerHTML = ''; // Clear any existing elements.
             this.appendChild(cloned);
             this.repaint();
 
@@ -201,3 +211,4 @@ declare global {
 }
 window.html = (strings, ...values): Object => ({ strings, values, __isTemplate: true });
 window.Mosaic = Mosaic;
+export { Router };

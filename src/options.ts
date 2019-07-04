@@ -5,6 +5,7 @@ export interface MosaicOptions {
     view: Function;
     created: Function;
     updated: Function;
+    router: HTMLElement;
     willUpdate: Function;
     willDestroy: Function;
     delayTemplate: boolean;
