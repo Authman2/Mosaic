@@ -1,90 +1,89 @@
-import Mosaic from './index';
-import { getDOMfromID, traverseValues } from './util';
+// Define the web component for the Router.
+customElements.define('mosaic-router', class extends HTMLElement {
+    public data: Object;
 
-// Helper function so you're not rewritting the same code multiple times.
-const displayRoute = function(to, data?: Object) {
-    let routes = this.routes[to];
-    
-    if(data) this.data = data || {};
-    if(!routes) {
-        if(this.notfound) {
-            routes = this.notfound;
-            this.data.status = 404;
-        }
-        else return;
-    }
-
-    // Add the elements.
-    while((this.base as Element).firstChild) (this.base as Element).removeChild((this.base as Element).firstChild as Element);
-    for(const mos of routes) {
-        (this.base as Element).appendChild(mos.element);
-        // traverseValues(mos, child => {
-        //     child.router = this;
-        //     if(child.portfolio) child.portfolio.addDependency(child);
-        //     if(child.created) child.created();
-        // });
-    }
-}
-
-/** A basic, client-side router that allows Mosaic components to
-* be used as pages. */
-export class Router {
     /** @internal */
-    current: string;
+    private routes: Object;
     /** @internal */
-    routes: Object;
+    private current: string;
     /** @internal */
-    notfound?: Mosaic|Mosaic[];
+    private notFound?: HTMLElement;
+    /** @internal */
+    private element: string|Element;
 
-    data: Object;
-
-    constructor(public base: string|Element) {
-        this.routes = {};
+    constructor() {
+        super();
         this.data = {};
+        this.routes = {};
         this.current = '/';
+        this.element = document.body;
 
-        this.base = (typeof base === 'string' ? getDOMfromID(base) : base) || document.body;
         window.onpopstate = () => {
             let oldURL = window.location.pathname;
-            displayRoute.call(this, oldURL, { data: this.data });
-            oldURL += window.location.search;
+            this.data = Object.assign({}, this.data);
+            this.render(oldURL);
         }
     }
 
-    /** Adds a new route and Mosaics to the Router. */
-    addRoute(path: string|string[] = '/', mosaics: Mosaic|Mosaic[] = []) {
-        const addPath = path => {
-            // Add router option.
-            if(Array.isArray(mosaics)) mosaics.forEach(mos => mos.router = this);
-            else mosaics.router = this;
+    /** Private function for rendering a new page from the router. @internal */
+    private render(path: string) {
+        let route = this.routes[path];
+        if(!route) {
+            if(this.notFound) {
+                this.data['status'] = 404;
+                route = this.notFound;
+            } else route = document.createElement('div');
+        }
 
-            // Add the route.
-            this.routes[path] = Array.isArray(mosaics) ? mosaics : [mosaics];
+        // Render the component at this route.
+        this.innerHTML = '';
+        this.appendChild(route);
+    }
+
+    /** Adds a new route. */
+    addRoute(path: string|string[], component: HTMLElement) {
+        const addPath = path => {
+            // Configure the component.
+            (component as any).router = this;
+            this.routes[path] = component;
         };
-        if(Array.isArray(path)) path.forEach(_path => addPath(_path));
+
+        if(Array.isArray(path))
+            for(let i = 0; i < path.length; i++) addPath(path[i]);
         else addPath(path);
     }
 
-    /** Sets the component to use for a not found. */
-    setNotFound(component: Mosaic|Mosaic[]) {
-        this.notfound = Array.isArray(component) ? component : [component];
+    /** Sets a "Not Found" page to use for when a route is not defined. */
+    setNotFound(component: HTMLElement) {
+        this.notFound = component;
     }
 
-    /** Sends the router to a particular destination. */
+    /** Sends the router over to the specified destination if it is defined. */
     send(to: string, data: Object = {}) {
-        // Send to the new page.
         this.current = to;
+        this.data = Object.assign({}, data);
         window.history.pushState({}, this.current, window.location.origin + this.current);
-
-        // At this point you know that all necessary query params are there.
-        // All you have to do now is get the corresponding routes and render
-        // their elements. Make sure to pass along any additional data as well.
-        displayRoute.call(this, to, data);
+        this.render(this.current);
     }
 
-    /** Paints the router and its routes onto the page. */
+    /** Paints the router onto the page. */
     paint() {
-        if(window.location.pathname !== this.current) this.current = window.location.pathname;
-        displayRoute.call(this, this.current);
+        // Render the proper component based on the route.
+        if(window.location.pathname !== this.current)
+            this.current = window.location.pathname;
+        this.render(this.current);
+        
+        // Add the router to the document.
+        const base = typeof this.element === 'string' ? document.getElementById(this.element) : this.element;
+        if(base) base.replaceWith(this);
     }
+});
+
+
+/** A client-side routing solution for Mosaic apps. */
+export default function Router(element: string|Element) {
+    // Return an instance of the router.
+    const router = document.createElement('mosaic-router');
+    (router as any).element = element;
+    return router;
 }

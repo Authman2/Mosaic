@@ -1,27 +1,16 @@
-/** Basically an object that can perform a certain function when a property changes. 
-* @param {Object} observingObject The object to look for changes in.. */
-export class Observable {
-    constructor(observingObject: Object|any[], willChange: Function, didChange: Function) {
-        const Handler: Object = {
-            get(object, name, receiver) {
-                // Make nested proxies.
-                if(object[name] && Array.isArray(object[name])) {
-                    return new Observable(object[name], willChange, didChange);
-                } return Reflect.get(object, name, receiver);
-            },
-            set(object, name, value, receiver) {
-                // About to update.
-                let old = Object.assign({}, observingObject);
-                if(willChange) willChange(old);
-                
-                // Make changes and track array functions.
-                object[name] = value;
-
-                // Did update.
-                if(didChange) didChange(object, old);
-                return Reflect.set(object, name, value, receiver);
-            }
-        };
-        return new Proxy(observingObject, Handler);
-    }
+/** An object that can perform a given function when its data chanes. */
+export default function Observable(target: Object, willUpdate?: Function, didUpdate?: Function) {
+    return new Proxy(target, {
+        get(target, name, receiver) {
+            if(target[name] && Array.isArray(target[name]))
+                return Observable(target[name], willUpdate, didUpdate);
+            return Reflect.get(target, name, receiver);
+        },
+        set(target, name, value, receiver) {
+            if(willUpdate) willUpdate(Object.assign({}, target));
+            target[name] = value;
+            if(didUpdate) didUpdate(target);
+            return Reflect.set(target, name, value, receiver);
+        }
+    })
 }

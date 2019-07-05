@@ -1,0 +1,26 @@
+/* Styling for the custom element "home-page" */
+home-page {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    font-family: Avenir;
+    background-color: rgb(233, 237, 250);
+}
+
+img {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin-top: 40px;
+    padding-left: 5%;
+    padding-right: 5%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.round-button:nth-child(1) {
+    position: relative;
+    margin-left: 5%;
+    margin-top: 20px;
+    margin-right: 0px;
+}

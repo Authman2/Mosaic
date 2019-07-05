@@ -1,61 +1,45 @@
-import Mosaic from "./index";
+import { PortfolioAction } from './options';
 
-export class Portfolio {
-    /** @internal */
-    data: Object;
-    /** @internal */
-    action: (event: string, data: Object, additionalData: Object) => any;
-    /** @internal */
-    dependencies: Object = {};
+/** A central data store for Mosaic applications. */
+export default class Portfolio {
+    /** @interal */
+    private data: Object;
+    /** @interal */
+    private dependencies: Set<HTMLElement>;
+    /** @interal */
+    private action: PortfolioAction;
 
-    /** Portfolio is a state manager for Mosaic. You first define the global data
-    * properties that will be used, and then you define an event function that
-    * will be called everytime you run the "dispatch" function.
-    * @param {Object} data The global data object.
-    * @param {Function} action A function that runs when "dispatch" is called. */
-    constructor(data: Object, action: (event: string, data: Object, additionalData: Object) => any) {
+    constructor(data: Object, action: PortfolioAction) {
         this.data = data;
         this.action = action;
+        this.dependencies = new Set();
     }
 
-    /** Returns the specified property value given the name.
-    * @param {String} name The name of the property to look for. */
+    /** Returns the value of a data property. */
     get(name: string) {
         return this.data[name];
     }
 
-    /** Adds a new Mosaic dependency to this Portfolio. */
-    /** @internal */
-    addDependency(mosaic: Mosaic) {
-        if(!mosaic.iid) return;
-        this.dependencies[mosaic.iid!!] = mosaic;
+    /** Adds a dependency to this portfolio. @internal */
+    addDependency(component: HTMLElement) {
+        this.dependencies.add(component);
     }
 
-    /** Removes a dependency from this Portfolio. */
-    /** @internal */
-    removeDependency(mosaic: Mosaic) {
-        if(!mosaic.iid) return;
-        delete this.dependencies[mosaic.iid!!];
+    /** Removes a dependency from this portfolio. @internal */
+    removeDependency(component: HTMLElement) {
+        this.dependencies.delete(component);
     }
 
-    /** Triggers a particular event from this Portfolio and updates all of its
-    * dependencies.
-    * @param {string|string[]} event The event (or events) to be dispatched, as
-    * defined in the constructor.
-    * @param {Object} additional (Optional) Any additional data to pass along to the
-    * dispatched event. */
+    /** Dispatches one or more events and updates its dependencies. */
     dispatch(event: string|string[], additional: Object = {}) {
-        if(!this.action) throw new Error(`You must define an action in the Portfolio 
-            constructor before dispatching events.`);
+        if(!this.action)
+            throw new Error(`You must define an action in the Portfolio constructor before dispatching events.`);
 
-        // Update all of the dependencies.
-        let removals: string[] = [];
-        for(let key of Object.keys(this.dependencies)) {
-            let next: Mosaic = this.dependencies[key];
-            next.repaint();
-            if(document.contains(next.element as Element) === false) removals.push(next.iid!!);
-        }
-        removals.forEach(id => delete this.dependencies[id]);
+        // Trigger the events.
+        if(Array.isArray(event)) event.forEach(eve => this.action(eve, this.data, additional));
+        else this.action(event, this.data, additional);
+
+        // Repaint all of the dependencies.
+        this.dependencies.forEach(component => (component as any).repaint());
     }
-
 }
