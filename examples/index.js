@@ -1,37 +1,39 @@
-import Mosaic, { Router } from "../src/index";
+import Mosaic, { Portfolio } from "../src/index";
+
+const portfolio = new Portfolio({
+    count: 0
+}, (event, data, other) => {
+    if(event === 'count-up')
+        data.count += 1;
+});
+
 
 new Mosaic({
-    name: 'my-header',
-    view: () => html`<h1>My Header</h1>`
-});
-const home = new Mosaic({
-    name: 'home-page',
-    go() {
-        this.router.send('/contact');
-    },
+    portfolio,
+    name: 'my-label',
     view() {
-        return html`
-            <my-header></my-header>
-            <h1>Welcome to the Home Page!</h1>
-            <button onclick='${this.go.bind(this)}'>Go to contact</button>
-        `
-    }
-});
-const contact = new Mosaic({
-    name: 'contact-page',
-    go() {
-        this.router.send('/');
-    },
-    view() {
-        return html`
-            <my-header></my-header>
-            <h1>Welcome to the Contact Page!</h1>
-            <button onclick='${this.go.bind(this)}'>Go to home</button>
-        `
+        const count = this.portfolio.get('count');
+        return html`<h3>Count: ${count}</h3>`;
     }
 });
 
-const router = new Router('root');
-router.addRoute('/', home);
-router.addRoute('/contact', contact);
-router.paint();
+new Mosaic({
+    name: 'my-app',
+    element: 'root',
+    data: {
+        condition: true
+    },
+    created() {
+        setInterval(() => {
+            portfolio.dispatch('count-up');
+            this.data.condition = !this.data.condition;
+        }, 1000);
+    },
+    view() {
+        return html`
+            ${ this.data.condition === true ?
+                html`<my-label></my-label>` : ''
+            }
+        `
+    }
+}).paint();

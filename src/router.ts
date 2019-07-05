@@ -80,8 +80,7 @@ customElements.define('mosaic-router', class extends HTMLElement {
 });
 
 
-// The function for the router just creates an instance of it and
-// sets the injection point element.
+/** A client-side routing solution for Mosaic apps. */
 export default function Router(element: string|Element) {
     // Return an instance of the router.
     const router = document.createElement('mosaic-router');

@@ -4,6 +4,7 @@ import { buildHTML, memorize } from "./parser";
 import Observable from "./observable";
 import Memory from "./memory";
 import Router from "./router";
+import Portfolio from './portfolio';
 
 
 // Setup the data property.
@@ -59,6 +60,7 @@ export default function Mosaic(options: MosaicOptions) {
         updated?: Function;
         barrierOn: boolean;
         router?: HTMLElement;
+        portfolio?: Portfolio;
         willUpdate?: Function;
         willDestroy?: Function;
         delayTemplate?: boolean;
@@ -109,6 +111,9 @@ export default function Mosaic(options: MosaicOptions) {
             if(this.delayTemplate === true && !document.getElementById(tid))
                 setupTemplate.call(this);
 
+            // If this component uses a Portfolio, add it as a dependency.
+            if(this.portfolio) this.portfolio.addDependency(this);
+
             // Any attribute on a custom element tag should be
             // counted as insertion of data, so get its value
             // and add it as a data property.
@@ -144,7 +149,8 @@ export default function Mosaic(options: MosaicOptions) {
         }
 
         disconnectedCallback() {
-            // Clean up resources and run lifecycle function.
+            // Clean up resources and then run lifecycle function.
+            if(this.portfolio) this.portfolio.removeDependency(this);
             if(this.willDestroy) this.willDestroy();
         }
 
@@ -211,4 +217,4 @@ declare global {
 }
 window.html = (strings, ...values): Object => ({ strings, values, __isTemplate: true });
 window.Mosaic = Mosaic;
-export { Router };
+export { Router, Portfolio };

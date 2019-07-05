@@ -1,3 +1,5 @@
+import Portfolio from "./portfolio";
+
 /** The configuration options for a Mosaic component. */
 export interface MosaicOptions {
     name: string;
@@ -6,6 +8,7 @@ export interface MosaicOptions {
     created: Function;
     updated: Function;
     router: HTMLElement;
+    portfolio: Portfolio;
     willUpdate: Function;
     willDestroy: Function;
     delayTemplate: boolean;
@@ -28,3 +31,6 @@ export interface KeyedArray {
     items: Function;
     __isKeyedArray: boolean;
 }
+
+/** The format of the Portfolio action. */
+export type PortfolioAction = (event: string, data: Object, additionalData: Object) => any;
