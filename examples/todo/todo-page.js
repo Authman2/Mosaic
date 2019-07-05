@@ -4,7 +4,6 @@ import './todo-item';
 import './todo.css';
 
 
-
 function key() {
     return Math.random().toString(36).slice(2);
 }
@@ -16,11 +15,11 @@ export default new Mosaic({
     },
     addItem() {
         const title = document.getElementById('input-field').value;
-        this.data.items.push({ title, id: key() });
+        this.data.items.push({ title, id: key() });;
         document.getElementById('input-field').value = '';
     },
     deleteItem(index) {
-        this.data.items = this.data.items.filter(i => i !== index);
+        this.data.items.splice(index, 1);
     },
     view() {
         return html`

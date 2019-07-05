@@ -86,6 +86,7 @@ export function changed(oldv: any, newv: any) {
         }
         // KeyedArray:
         else if(oldv.__isKeyedArray) {
+            console.log(oldv, newv);
             // The new value is not a keyed array, so different.
             if(!newv.__isKeyedArray) return true;
             // If the new value is a keyed array, but has different

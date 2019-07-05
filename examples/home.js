@@ -21,7 +21,7 @@ export default new Mosaic({
             To try out the different features, select the buttons below!
         </p>
         <p>
-            For example, this entire example application was written using
+            For example, this entire demo application was written using
             the "Router" feature! Take a look at the "index.js" file to see
             how the router is being used to travel to other examples.
         </p>

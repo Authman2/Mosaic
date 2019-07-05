@@ -1,0 +1,31 @@
+delay-template-page {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    overflow-y: scroll;
+    font-family: Avenir;
+    background-color: rgb(233, 237, 250);
+}
+delay-template-page > div:nth-child(1) {
+    margin-bottom: 100px;
+}
+
+.info-card {
+    position: relative;
+    margin: 20px;
+    padding: 8px;
+    margin-left: auto;
+    margin-right: auto;
+    width: fit-content;
+    height: fit-content;
+    border-radius: 10px;
+    transition-duration: 0.1s;
+    background-color: white;
+}
+.info-card:hover {
+    transform: scale(1.1);
+    box-shadow: 0px 2px 20px 2px rgba(181, 188, 214, 0.5);
+}
+.info-card h4 {
+    padding-left: 30px;
+}

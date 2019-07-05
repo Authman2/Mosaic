@@ -24,6 +24,7 @@ const setupData = function(target: Object) {
 // and adding it directly to the document body with a tid.
 const setupTemplate = function() {
     if(!this.view) return;
+    
     const { strings, values } = this.view();
     const temp = document.createElement('template');
     temp.id = this.tid;
@@ -48,6 +49,7 @@ export default function Mosaic(options: MosaicOptions) {
     const defaultData = Object.assign({}, options.data);
     if(options.descendants)
         throw new Error('"Descendants" is a readonly property of Mosaics.');
+    if(!options.data) options.data = {};
 
     // Create a custom element and return an instance of it.
     customElements.define(options.name, class extends HTMLElement {
@@ -72,6 +74,7 @@ export default function Mosaic(options: MosaicOptions) {
         // Setup necessary info for a new instance and possibly a template.
         constructor() {
             super();
+            this.tid = tid;
             this.values = [];
             this.barrierOn = false;
             this.name = options.name;
@@ -84,10 +87,6 @@ export default function Mosaic(options: MosaicOptions) {
                 if(key === 'element') continue;
                 else this[key] = options[key];
             }
-            if(!options.data) {
-                options.data = {};
-                this.data = {};
-            }
 
             // Check if there are any child nodes at the time this is created,
             // then store them for later so the dev can use them if needed.
@@ -96,11 +95,6 @@ export default function Mosaic(options: MosaicOptions) {
                 this.descendants.append(...children);
                 this.innerHTML = '';
             }
-
-            // Finish setting up the template for this new component type.
-            this.tid = tid;
-            if(!document.getElementById(tid) && !this.delayTemplate)
-                setupTemplate.call(this);
         }
 
         connectedCallback() {
@@ -110,10 +104,6 @@ export default function Mosaic(options: MosaicOptions) {
                 if(this.created) this.created();
                 return;
             }
-
-            // See if you still have to setup the template.
-            if(this.delayTemplate === true && !document.getElementById(tid))
-                setupTemplate.call(this);
 
             // If this component uses a Portfolio, add it as a dependency.
             if(this.portfolio) this.portfolio.addDependency(this);
@@ -140,6 +130,12 @@ export default function Mosaic(options: MosaicOptions) {
 
             // At this point, it is safe to create Observable data.
             setupData.call(this, options.data);
+
+            // See if you still have to setup the template.
+            if(this.delayTemplate === true && !document.getElementById(tid)) {
+                if(this.created) this.created();
+                return;
+            } else if(!document.getElementById(this.tid)) setupTemplate.call(this);
             
             // Attach the cloned template to this element, then repaint it.
             const template = document.getElementById(this.tid) as HTMLTemplateElement;
@@ -165,8 +161,7 @@ export default function Mosaic(options: MosaicOptions) {
         /** Paints the Mosaic onto the web page. */
         paint() {
             const element = typeof options.element === 'string' ?
-                document.getElementById(options.element)
-                : options.element;
+                document.getElementById(options.element) : options.element;
             if(!element)
                 throw new Error(`Could not find the base element ${options.element}.`);
 
@@ -177,8 +172,21 @@ export default function Mosaic(options: MosaicOptions) {
         * the parts that have changed. */
         repaint() {
             // Find the template so you can get the memories.
-            const template = document.getElementById(this.tid);
+            let template = document.getElementById(this.tid) as HTMLTemplateElement;
 
+            // Check if there is no template (i.e. when delaying), in which
+            // case you have to create the template here before repainting.
+            if(!template && this.delayTemplate === true) {
+                setupTemplate.call(this);
+                template = document.getElementById(this.tid) as HTMLTemplateElement;
+            }
+            if(this.delayTemplate === true && this.innerHTML === '') {
+                const cloned = document.importNode(template.content, true);
+                this.innerHTML = ''; // Clear any existing elements.
+                this.appendChild(cloned);
+            }
+
+            // Get the new values and compare the differences.
             if(!this.view) return;
             let newValues = this.view().values;
             (template as any).repaint(this, this.values, newValues);

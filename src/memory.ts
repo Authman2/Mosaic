@@ -153,6 +153,13 @@ export default class Memory {
             let newItems = newValue.items;
             const { additions, deletions } = difference(oldKeys, newKeys);
 
+            // For deleting, just look for the node with the key and remove it.
+            for(let i = 0; i < deletions.length; i++) {
+                const { key } = deletions[i];
+                const found = document.querySelector(`[key='${key}']`);
+                if(found) found.remove();
+            }
+
             // For each addition, find the correct insertion index and insert
             // the node at that position.
             for(let i = 0; i < additions.length; i++) {
@@ -173,13 +180,6 @@ export default class Memory {
                 } else {
                     insertAfter(newNode, element);
                 }
-            }
-
-            // For deleting, just look for the node with the key and remove it.
-            for(let i = 0; i < deletions.length; i++) {
-                const { key } = deletions[i];
-                const found = document.querySelector(`[key='${key}']`);
-                if(found) found.remove();
             }
         }
     }
