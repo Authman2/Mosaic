@@ -8,7 +8,7 @@
 # <a target='_blank' rel='noopener noreferrer' href='https://mosaicjs.site'>Mosaic</a>
 Mosaic is a declarative front-end JavaScript library for building user interfaces!
 
-🧱 **(Web) Component-Based**: Mosaic uses the Custom Elements API to create web components that can keep track of their own data, actions, and more, and can be included in other components to create single page applications.
+💠 **(Web) Component-Based**: Mosaic uses the Custom Elements API to create web components that can keep track of their own data, actions, and more, and can be included in other components to create single page applications.
 
 ⚡️ **Observable Data**: Mosaic uses Observables to keep track of changes to a component's data. This means 
 that there is no need to call "setState" or anything like that to update a component - instead just change the data directly.
@@ -19,7 +19,7 @@ that there is no need to call "setState" or anything like that to update a compo
 
 🌐 **State Manager**: Comes with a built-in global state manager called *Portfolio*.
 
-👌 **Small Library Size**: Mosaic is very small, with the minified JavaScript file being 19.75KB.
+👌 **Small Library Size**: Mosaic is very small, with the minified JavaScript file being 19.73KB.
 
 🔖 **Tagged Template Literals**: Views are written using tagged template literals, which means there is no need for a compiler:
 ```javascript
