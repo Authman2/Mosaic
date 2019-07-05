@@ -1,39 +1,17 @@
-import Mosaic, { Portfolio } from "../src/index";
+import Mosaic, { Router } from "../src/index";
 
-const portfolio = new Portfolio({
-    count: 0
-}, (event, data, other) => {
-    if(event === 'count-up')
-        data.count += 1;
-});
+import Home from './home';
+import Todo from './todo/todo-page';
+
+import './index.css';
 
 
-new Mosaic({
-    portfolio,
-    name: 'my-label',
-    view() {
-        const count = this.portfolio.get('count');
-        return html`<h3>Count: ${count}</h3>`;
-    }
-});
+// 1.) Create the router.
+const router = new Router('root');
 
-new Mosaic({
-    name: 'my-app',
-    element: 'root',
-    data: {
-        condition: true
-    },
-    created() {
-        setInterval(() => {
-            portfolio.dispatch('count-up');
-            this.data.condition = !this.data.condition;
-        }, 1000);
-    },
-    view() {
-        return html`
-            ${ this.data.condition === true ?
-                html`<my-label></my-label>` : ''
-            }
-        `
-    }
-}).paint();
+// 2.) Add routes for each page.
+router.addRoute('/', Home);
+router.addRoute('/todo', Todo);
+
+// 3.) Paint the router!
+router.paint();

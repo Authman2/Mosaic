@@ -1,0 +1,49 @@
+html, body {
+    margin: 0px;
+    padding: 0px;
+}
+
+h1 {
+    font-size: 32px;
+    padding-left: 5%;
+    padding-right: 5%;
+    font-weight: bolder;
+}
+h3 {
+    font-size: 20px;
+    font-weight: 500;
+    padding-left: 5%;
+    padding-right: 5%;
+    margin-bottom: 40px;
+}
+p {
+    font-size: 18px;
+    font-weight: 200;
+    padding-left: 5%;
+    line-height: 1.65;
+    padding-right: 5%;
+    letter-spacing: 1.35;
+}
+
+.round-button {
+    border: none;
+    outline: none;
+    padding: 15px;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    background: none;
+    margin-right: 5px;
+    border-radius: 8px;
+    padding-left: 25px;
+    padding-right: 25px;
+    display: inline-block;
+    text-decoration: none;
+    background-color: cornflowerblue;
+}
+.round-button:hover {
+    background-color: rgb(75, 117, 196);
+}
+.round-button:active {
+    background-color: rgb(51, 88, 155);
+}

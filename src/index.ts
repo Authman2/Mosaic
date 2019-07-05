@@ -84,6 +84,10 @@ export default function Mosaic(options: MosaicOptions) {
                 if(key === 'element') continue;
                 else this[key] = options[key];
             }
+            if(!options.data) {
+                options.data = {};
+                this.data = {};
+            }
 
             // Check if there are any child nodes at the time this is created,
             // then store them for later so the dev can use them if needed.
@@ -135,7 +139,7 @@ export default function Mosaic(options: MosaicOptions) {
             }
 
             // At this point, it is safe to create Observable data.
-            if(options.data) setupData.call(this, options.data);
+            setupData.call(this, options.data);
             
             // Attach the cloned template to this element, then repaint it.
             const template = document.getElementById(this.tid) as HTMLTemplateElement;
