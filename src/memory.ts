@@ -3,9 +3,7 @@ import { MemoryOptions } from './options';
 
 /** Represents a piece of dynamic content in the markup. */
 export default class Memory {
-    constructor(private config: MemoryOptions) {
-        // console.log(config);
-    }
+    constructor(private config: MemoryOptions) {}
 
     /** Steps through a component tree until it reaches its destination. */
     private step(component: any) {
@@ -21,8 +19,6 @@ export default class Memory {
     /** Applies the changes to the appropriate DOM nodes when data changes. */
     commit(component: Object, oldValue: any, newValue: any) {
         const element = this.step(component);
-        // console.log(component, element);
-
         switch(this.config.type) {
             case 'node': this.commitNode(element, oldValue, newValue); break;
             case 'attribute': this.commitAttribute(element, oldValue, newValue); break;

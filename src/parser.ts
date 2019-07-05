@@ -35,7 +35,6 @@ export function buildHTML(strings) {
 export function memorize(fragment: HTMLTemplateElement) {
     let ret: any[] = [];
     traverse(fragment.content, (node: Element, steps: number[]) => {
-        // console.log(node);
         switch(node.nodeType) {
             case 1: ret = ret.concat(parseAttributes(node, steps)); break;
             case 3: ret = ret.concat(parseComment(node as any, steps)); break;
