@@ -20,6 +20,7 @@ export default new Mosaic({
     },
     deleteItem(index) {
         this.data.items.splice(index, 1);
+        console.log('hi');
     },
     view() {
         return html`
@@ -30,13 +31,13 @@ export default new Mosaic({
         </h3>
 
         <input type='text' placeholder='Enter a new todo item' id='input-field'
-            onkeypress='${e => e.keyCode === 13 && this.addItem.call(this)}'>
+            onkeypress='${e => e.keyCode === 13 && this.addItem()}'>
         <button id='add-todo-button' onclick='${this.addItem.bind(this)}'>Add Todo</button>
 
         ${Mosaic.list(this.data.items, item => item.id, (item, index) => {
-            return html`<todo-item title='${item.title}'
-                click='${this.deleteItem.bind(this, index)}'
-                class='todo-item'></todo-item>`;
+            const title = item.title;
+            const click = this.deleteItem.bind(this, index);
+            return html`<todo-item title='${title}' click='${click}'></todo-item>`;
         })}
         `
     }

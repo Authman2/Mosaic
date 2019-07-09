@@ -3,6 +3,7 @@ home-page {
     position: fixed;
     width: 100vw;
     height: 100vh;
+    overflow-y: scroll;
     font-family: Avenir;
     background-color: rgb(233, 237, 250);
 }

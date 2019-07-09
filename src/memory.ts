@@ -8,6 +8,7 @@ export default class Memory {
     /** Steps through a component tree until it reaches its destination. */
     private step(component: any) {
         let element = component as HTMLElement|ChildNode;
+        element = (element as any).shadowRoot;
         let child = element;
         for(let i = 0; i < this.config.steps.length; i++) {
             let nextStep: number = this.config.steps[i];
@@ -19,6 +20,7 @@ export default class Memory {
     /** Applies the changes to the appropriate DOM nodes when data changes. */
     commit(component: Object, oldValue: any, newValue: any) {
         const element = this.step(component);
+        // console.log(component, element);
         switch(this.config.type) {
             case 'node': this.commitNode(element, oldValue, newValue); break;
             case 'attribute': this.commitAttribute(element, oldValue, newValue); break;
@@ -79,8 +81,9 @@ export default class Memory {
                 // Because of the way functions are defined, we have to check
                 // here to see if it is a Mosaic component and needs the event.
                 if(this.config.isComponentType === true)
-                    if(typeof setValue === 'function')
-                        return (element as any).data[name] = setValue.bind(element);
+                    if(typeof setValue === 'function') {
+                        (element as any).data[name] = setValue.bind(element);
+                    }
                 return;
             }
             const attrVal = attr.value;

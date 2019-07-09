@@ -1,29 +1,49 @@
-import { lastAttributeNameRegex, marker, nodeMarker, traverse } from "./util";
+import { lastAttributeNameRegex, nodeMarker, traverse, changed } from "./util";
 import Memory from "./memory";
+
+/** The global repaint function for templates. */
+export function repaintTemplate(target: {}, memories: Memory[], old: any[], current: any[]) {
+    for(let i = 0; i < memories.length; i++) {
+        let mem: Memory = memories[i];
+        let oldv = old[i];
+        let newv = current[i];
+        // console.log(mem, oldv, newv);
+        if(changed(oldv, newv)) mem.commit(target, oldv, newv);
+    }
+}
+
+/** Creates a new template and adds it to the DOM. */
+export function createTemplate(component: any): HTMLTemplateElement {
+    if(!component || !component.view) return document.createElement('template');
+    
+    // Configure the template view.
+    const { strings, values } = component.view(component);
+    const template = document.createElement('template');
+    template.id = component.tid;
+    template.innerHTML = buildHTML(strings);
+
+    // Have the template basically memorize itself.
+    (template as any).memories = memorize.call(template);
+    document.body.appendChild(template);
+    return template;
+}
+
 
 /** Takes the strings of a tagged template literal and 
 * turns it into a full html string. */
 export function buildHTML(strings) {
     let html = '';
-    let isCommentBinding = false;
     const length = strings.length - 1;
 
     for(let i = 0; i < length; i++) {
         const str = strings[i];
-        const commentOpen = str.lastIndexOf('<!--');
-
-        isCommentBinding = (commentOpen > -1 || isCommentBinding) 
-        && str.indexOf('-->', commentOpen + 1) === -1;
-
         const attributeMatch = lastAttributeNameRegex.exec(str);
-        if(attributeMatch === null) {
-            // Node.
-            html += str + (isCommentBinding ? nodeMarker : nodeMarker);
-        } else {
-            // Attribute.
-            html += str.substring(0, attributeMatch.index) + attributeMatch[1] +
-                attributeMatch[2] + attributeMatch[3] + nodeMarker;
-        }
+        
+        // Node.
+        if(attributeMatch === null) html += str + nodeMarker;
+        // Attribute.
+        else html += str.substring(0, attributeMatch.index) + attributeMatch[1] +
+            attributeMatch[2] + attributeMatch[3] + nodeMarker;
     }
     html += strings[length];
     return html;
@@ -32,13 +52,14 @@ export function buildHTML(strings) {
 
 /** Memorizes parts of a DOM tree that contain dynamic content
 * and returns a list of memories of whether those parts are. */
-export function memorize(fragment: HTMLTemplateElement) {
+export function memorize() {
     let ret: any[] = [];
+    const fragment: HTMLTemplateElement = document.importNode(this, true);
     traverse(fragment.content, (node: Element, steps: number[]) => {
+        // console.dir(node);
         switch(node.nodeType) {
             case 1: ret = ret.concat(parseAttributes(node, steps)); break;
-            case 3: ret = ret.concat(parseComment(node as any, steps)); break;
-            case 8: ret = ret.concat(parseText(node as any, steps)); break;
+            case 8: ret = ret.concat(parseNode(node as any, steps)); break;
             default: break;
         }
     });
@@ -51,18 +72,19 @@ function parseAttributes(node: Element, steps: number[]): Memory[] {
     let ret: Memory[] = [];
     const defined = customElements.get(node.nodeName.toLowerCase()) !== undefined;
     
-    const regex = new RegExp(`[a-z|A-Z| ]*${marker}[a-z|A-Z| ]*`, 'g');
-    const regex2 = new RegExp(`[a-z|A-Z| ]*${nodeMarker}[a-z|A-Z| ]*`, 'g');
+    const regex = new RegExp(`[a-z|A-Z| ]*${nodeMarker}[a-z|A-Z| ]*`, 'g');
     for(let i = 0; i < node.attributes.length; i++) {
         const { name, value } = node.attributes[i];
-        if(!regex.test(value) && !regex2.test(value)) continue;
+        const match = value.match(regex);
+        // console.log(name, value, match);
+        if(!match || match.length < 1) continue;
         
         // Split the value to see where the dynamic parts in the string are.
         const split = (name === 'style' ? value.split(';') : value.split(' '))
             .filter(str => str.length > 0);
         for(let j = 0; j < split.length; j++) {
             const item = split[j];
-            const isDynamic = item === nodeMarker || item === marker;
+            const isDynamic = item === nodeMarker;
 
             // Make sure you only add memories for dynamic attributes.
             if(isDynamic) {
@@ -78,22 +100,10 @@ function parseAttributes(node: Element, steps: number[]): Memory[] {
     }
     return ret;
 }
-function parseComment(node: Comment, steps: number[]): Memory[] {
-    const defined = customElements.get(node.nodeName.toLowerCase()) !== undefined;
-    if(node.data === marker) {
-        return [new Memory({ type: "node", steps, isComponentType: defined })];
-    } else {
-        let i = -1;
-        let ret: Memory[] = [];
-        while((i = node.data.indexOf(marker, i + 1)) !== -1) {
-            let mem = new Memory({ type: "node", steps, isComponentType: defined });
-            ret.push(mem);
-        }
-        return ret;
-    }
-}
-function parseText(node: Text, steps: number[]): Memory[] {
-    if(node.textContent !== marker) return [];
+function parseNode(node: Text, steps: number[]): Memory[] {
+    const check = nodeMarker.replace('<!--','').replace('-->','');
+    if(node.textContent !== check) return [];
+
     let defined = customElements.get(node.nodeName.toLowerCase()) !== undefined;
     let defined2 = false;
     if(node.parentElement)

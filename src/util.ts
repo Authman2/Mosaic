@@ -2,8 +2,7 @@ import { buildHTML, memorize } from "./parser";
 import Memory from "./memory";
 
 // The placeholders in the HTML.
-export const marker = `{{m-${String(Math.random()).slice(2)}}}`;
-export const nodeMarker = `<!--${marker}-->`;
+export const nodeMarker = `<!--{{m-${String(Math.random()).slice(2)}}}-->`;
 export const lastAttributeNameRegex = /([ \x09\x0a\x0c\x0d])([^\0-\x1F\x7F-\x9F \x09\x0a\x0c\x0d"'>=/]+)([ \x09\x0a\x0c\x0d]*=[ \x09\x0a\x0c\x0d]*(?:[^ \x09\x0a\x0c\x0d"'`<>=]*|"[^"]*|'[^']*))$/;
 
 /** Returns a random key as a string. */
@@ -40,26 +39,32 @@ export function traverse($node: Node|HTMLElement|ChildNode, action: Function, st
     }
 }
 
-/** Renders an HTML element from a template. */
-export function renderTemplate(value: any, key?: string) {
-    // Construct the template, copy it, repaint it, then insert.
-    const temp = document.createElement('template');
-    temp.innerHTML = buildHTML(value.strings);
-    (temp as any).memories = memorize(document.importNode(temp, true));
-    (temp as any).repaint = function(element: any, oldValues: any[], newValues: any[]) {
-        for(let i = 0; i < this.memories.length; i++) {
-            let mem: Memory = this.memories[i];
-            let oldv = oldValues[i];
-            let newv = newValues[i];
-            if(changed(oldv, newv)) mem.commit(element, oldv, newv);
-        }
-    }
-    
-    const cloned = document.importNode(temp.content, true);
-    (temp as any).repaint(cloned, [], value.values);
-    if(key) (cloned.firstChild!! as Element).setAttribute('key', key);
-    return cloned;
+/** Returns whether or not a template with the given tid exists, 
+* and if so returns it. */
+export function templateExists(tid: string): HTMLTemplateElement|null {
+    return document.getElementById(tid) as HTMLTemplateElement;
 }
+
+/** Renders an HTML element from a template. */
+// export function renderTemplate(value: any, key?: string) {
+//     // Construct the template, copy it, repaint it, then insert.
+//     const temp = document.createElement('template');
+//     temp.innerHTML = buildHTML(value.strings);
+//     (temp as any).memories = memorize(document.importNode(temp, true));
+//     (temp as any).repaint = function(element: any, oldValues: any[], newValues: any[]) {
+//         for(let i = 0; i < this.memories.length; i++) {
+//             let mem: Memory = this.memories[i];
+//             let oldv = oldValues[i];
+//             let newv = newValues[i];
+//             if(changed(oldv, newv)) mem.commit(element, oldv, newv);
+//         }
+//     }
+    
+//     const cloned = document.importNode(temp.content, true);
+//     (temp as any).repaint(cloned, [], value.values);
+//     if(key) (cloned.firstChild!! as Element).setAttribute('key', key);
+//     return cloned;
+// }
 
 /** Compares two values are returns false if they are the same and 
 * true if they are different (i.e. they changed). */
