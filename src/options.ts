@@ -34,3 +34,10 @@ export interface KeyedArray {
 
 /** The format of the Portfolio action. */
 export type PortfolioAction = (event: string, data: Object, additionalData: Object) => any;
+
+/** A tagged template literal view function. */
+export type ViewFunction = {
+    strings: string[],
+    values: any[],
+    __isTemplate: true
+};

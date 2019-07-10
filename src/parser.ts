@@ -1,8 +1,9 @@
 import { lastAttributeNameRegex, nodeMarker, traverse, changed } from "./util";
 import Memory from "./memory";
+import { ViewFunction } from "./options";
 
 /** The global repaint function for templates. */
-export function repaintTemplate(target: {}, memories: Memory[], old: any[], current: any[]) {
+export function repaintTemplate(target: any, memories: Memory[], old: any[], current: any[]) {
     for(let i = 0; i < memories.length; i++) {
         let mem: Memory = memories[i];
         let oldv = old[i];
@@ -28,6 +29,20 @@ export function createTemplate(component: any): HTMLTemplateElement {
     return template;
 }
 
+/** Renders an instance of a template with its dynamic parts filled in. */
+export function renderTemplate(ttl: ViewFunction, key?: string) {
+    const template = document.createElement('template') as HTMLTemplateElement;
+    template.innerHTML = buildHTML(ttl.strings);
+
+    // TODO: For some reason there is a problem repainting the template.
+    const cloned = document.importNode(template.content, true).firstChild;
+    const memories = memorize.call(document.importNode(template, true));
+    repaintTemplate(cloned, memories, [], ttl.values);
+    console.log(cloned, memories);
+
+    // if(key) (cloned.firstChild as Element).setAttribute('key', key);
+    return cloned;
+}
 
 /** Takes the strings of a tagged template literal and 
 * turns it into a full html string. */

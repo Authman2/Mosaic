@@ -35,7 +35,8 @@ customElements.define('mosaic-router', class extends HTMLElement {
             } else route = document.createElement('div');
         }
 
-        // Render the component at this route.
+        // Render the component at this route. By calling "appendChild"
+        // you are essentially calling the "connectedCallback."
         this.innerHTML = '';
         this.appendChild(route);
     }

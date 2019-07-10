@@ -1,5 +1,6 @@
-import { nodeMarker, renderTemplate, insertAfter, difference, isBooleanAttribute } from './util';
+import { nodeMarker, insertAfter, difference, isBooleanAttribute } from './util';
 import { MemoryOptions } from './options';
+import { renderTemplate } from './parser';
 
 /** Represents a piece of dynamic content in the markup. */
 export default class Memory {
@@ -7,9 +8,12 @@ export default class Memory {
 
     /** Steps through a component tree until it reaches its destination. */
     private step(component: any) {
+        // TODO: This step function does not seem to work when using one-time-templates
+        // (that's a good name btw, keep that). Figure out why the doc-fragment/template
+        // is not working in the case of o.t.t's.
         let element = component as HTMLElement|ChildNode;
-        element = (element as any).shadowRoot;
         let child = element;
+        console.log(child);
         for(let i = 0; i < this.config.steps.length; i++) {
             let nextStep: number = this.config.steps[i];
             child = child.childNodes[nextStep];
@@ -20,7 +24,7 @@ export default class Memory {
     /** Applies the changes to the appropriate DOM nodes when data changes. */
     commit(component: Object, oldValue: any, newValue: any) {
         const element = this.step(component);
-        // console.log(component, element);
+        // console.log(component, element, this);
         switch(this.config.type) {
             case 'node': this.commitNode(element, oldValue, newValue); break;
             case 'attribute': this.commitAttribute(element, oldValue, newValue); break;
@@ -121,6 +125,8 @@ export default class Memory {
 
     /** Applies event changes such as adding/removing listeners. */
     commitEvent(element: HTMLElement|ChildNode, name: string, oldValue: any, newValue: any) {
+        if(typeof newValue !== 'function') return;
+        
         const events = (element as any).eventHandlers || {};
         const short = name.substring(2);
         if(events[name])

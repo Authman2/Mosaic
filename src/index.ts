@@ -1,4 +1,4 @@
-import { MosaicOptions, KeyedArray } from "./options";
+import { MosaicOptions, KeyedArray, ViewFunction } from "./options";
 import { randomKey, changed, nodeMarker, templateExists } from "./util";
 import { buildHTML, memorize, createTemplate, repaintTemplate } from "./parser";
 import Observable from "./observable";
@@ -24,6 +24,7 @@ const setupData = function(target: Object) {
 * to create and update a view in your web app. */
 export default function Mosaic(options: MosaicOptions) {
     const tid = randomKey();
+    const defaultState = Object.assign({}, options.data);
     if(options.descendants)
         throw new Error('"Descendants" is a readonly property of Mosaics.');
 
@@ -43,7 +44,6 @@ export default function Mosaic(options: MosaicOptions) {
 
         values?: any[];
         initial: boolean;
-        _shadowRoot: ShadowRoot;
 
         
         // The constructor is used to setup basic properties that will exist
@@ -75,32 +75,33 @@ export default function Mosaic(options: MosaicOptions) {
                 if(this.updated) this.updated();
             });
 
-            // Setup the shadow root.
-            this._shadowRoot = this.attachShadow({ mode: 'open' });
+            // Setup the descendants property, so that users can include
+            // additional markup in their components.
+            if(this.innerHTML !== '') {
+                this.descendants.append(...this.childNodes);
+                this.innerHTML = '';
+            }
         }
 
         connectedCallback() {
-            let template: HTMLTemplateElement|null = templateExists(this.tid);
+            let template = templateExists(this.tid);
             
             // Use the attributes as data. Don't forget to turn on the barrier.
-            // TODO: Here's the issue. For some reason, it can't tell that a
-            // function is being used here as an attribute.
             this.barrier = true;
             for(let i = 0; i < this.attributes.length; i++) {
                 const { name, value } = this.attributes[i];
-                // console.log(name, value);
-                if(typeof value === 'function') console.warn('function: ', value);
-                this.data[name] = value;
+                if(value === nodeMarker) this.data[name] = defaultState[name];
+                else this.data[name] = value;
             }
             this.barrier = false;
 
             // Create the template first if it doesn't exist.
             if(!template) template = createTemplate(this);
 
-            // If there are no child nodes already, then add clone one.
+            // If there are no child nodes already, then add the cloned one.
             if(this.initial === true) {
                 const cloned = document.importNode(template.content, true);
-                this._shadowRoot.appendChild(cloned);
+                this.appendChild(cloned);
                 this.initial = false;
             }
 
@@ -132,7 +133,8 @@ export default function Mosaic(options: MosaicOptions) {
             // Go through and commit changes to the DOM.
             if(!this.view) return;
             const newValues = this.view(this).values;
-            repaintTemplate(this, memories, this.values || [], newValues);
+            const oldValues = this.values || new Array(newValues.length).fill(undefined);
+            repaintTemplate(this, memories, oldValues, newValues);
 
             // Set the new values for the next update.
             this.values = newValues;
@@ -162,6 +164,6 @@ declare global {
         Mosaic: typeof Mosaic;
     }
 }
-window.html = (strings, ...values): Object => ({ strings, values, __isTemplate: true });
+window.html = (strings, ...values): ViewFunction => ({ strings, values, __isTemplate: true });
 window.Mosaic = Mosaic;
 export { Router, Portfolio };
