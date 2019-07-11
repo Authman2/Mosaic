@@ -30,17 +30,17 @@ export function createTemplate(component: any): HTMLTemplateElement {
 }
 
 /** Renders an instance of a template with its dynamic parts filled in. */
-export function renderTemplate(ttl: ViewFunction, key?: string) {
+export function oneTimeTemplate(ttl: ViewFunction, key?: string) {
     const template = document.createElement('template') as HTMLTemplateElement;
     template.innerHTML = buildHTML(ttl.strings);
 
     // TODO: For some reason there is a problem repainting the template.
-    const cloned = document.importNode(template.content, true).firstChild;
-    const memories = memorize.call(document.importNode(template, true));
+    const cloned = document.importNode(template.content, true);
+    const memories = memorize.call(template);
+    console.log('%c First called O.T.T!', 'color:cyan');
     repaintTemplate(cloned, memories, [], ttl.values);
-    console.log(cloned, memories);
 
-    // if(key) (cloned.firstChild as Element).setAttribute('key', key);
+    if(key) (cloned.firstChild as Element).setAttribute('key', key);
     return cloned;
 }
 

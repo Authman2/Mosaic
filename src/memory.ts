@@ -1,6 +1,6 @@
 import { nodeMarker, insertAfter, difference, isBooleanAttribute } from './util';
 import { MemoryOptions } from './options';
-import { renderTemplate } from './parser';
+import { oneTimeTemplate } from './parser';
 
 /** Represents a piece of dynamic content in the markup. */
 export default class Memory {
@@ -11,9 +11,12 @@ export default class Memory {
         // TODO: This step function does not seem to work when using one-time-templates
         // (that's a good name btw, keep that). Figure out why the doc-fragment/template
         // is not working in the case of o.t.t's.
+
+        // TODO: The problem might be that the o.t.t doesn't haven't any inner html.
         let element = component as HTMLElement|ChildNode;
         let child = element;
-        console.log(child);
+        // if(child.childNodes.length === 0) return child;
+
         for(let i = 0; i < this.config.steps.length; i++) {
             let nextStep: number = this.config.steps[i];
             child = child.childNodes[nextStep];
@@ -24,7 +27,9 @@ export default class Memory {
     /** Applies the changes to the appropriate DOM nodes when data changes. */
     commit(component: Object, oldValue: any, newValue: any) {
         const element = this.step(component);
-        // console.log(component, element, this);
+
+        // TODO: For some reason there are no child nodes here...
+        console.log(component, element, this);
         switch(this.config.type) {
             case 'node': this.commitNode(element, oldValue, newValue); break;
             case 'attribute': this.commitAttribute(element, oldValue, newValue); break;
@@ -36,8 +41,7 @@ export default class Memory {
     commitNode(element: HTMLElement|ChildNode, oldValue: any, newValue: any) {
         // html function.
         if(typeof newValue === 'object' && newValue.__isTemplate) {
-            const cloned = renderTemplate(newValue);
-            element.replaceWith(cloned); 
+            element.replaceWith(oneTimeTemplate(newValue));
         }
         // Array.
         else if(typeof newValue === 'object' && newValue.__isKeyedArray) {
@@ -145,7 +149,7 @@ export default class Memory {
         if(!oldValue || oldValue.length === 0) {
             const frag = document.createDocumentFragment();
             const mapped = newValue.items.map((obj, index) => {
-                return renderTemplate(obj, newValue.keys[index]);
+                return oneTimeTemplate(obj, newValue.keys[index]);
             });
             frag.append(...mapped);
             element.replaceWith(frag);
@@ -173,7 +177,7 @@ export default class Memory {
                 const oldIndex = index - (additions.length + i);
 
                 // Render the new item and find the old item too.
-                const newNode = renderTemplate(newItems[index], key);
+                const newNode = oneTimeTemplate(newItems[index], key);
                 const oldItem = oldItems[oldIndex];
 
                 // Once you have found the old item, look for the node in the

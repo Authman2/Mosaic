@@ -7,7 +7,6 @@ import DelayTemplate from './delayTemplate/delay-template-page';
 
 import './index.css';
 
-
 // 1.) Create the router.
 const router = new Router('root');
 

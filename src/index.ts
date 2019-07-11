@@ -7,19 +7,6 @@ import Router from "./router";
 import Portfolio from './portfolio';
 
 
-// Setup the data property.
-const setupData = function(target: Object) {
-    const targ = Object.assign({}, target);
-    this.data = Observable(targ, old => {
-        if(this.barrierOn === true) return;
-        if(this.willUpdate) this.willUpdate(old);
-    }, () => {
-        if(this.barrierOn === true) return;
-        this.repaint();
-        if(this.updated) this.updated();
-    });
-}
-
 /** A reusable web component that can be paired with other Mosaics
 * to create and update a view in your web app. */
 export default function Mosaic(options: MosaicOptions) {
@@ -57,7 +44,7 @@ export default function Mosaic(options: MosaicOptions) {
             
             // Get the user's properties from the options.
             let ops = Object.keys(options);
-            for (let i = 0; i < ops.length; i++) {
+            for(let i = 0; i < ops.length; i++) {
                 const key = ops[i];
                 if(key === 'name' || key === 'element') continue;
                 else if(key === 'data') continue;

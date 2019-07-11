@@ -26,6 +26,8 @@ export default new Mosaic({
             how the router is being used to travel to other examples.
         </p>
 
+        ${ html`<round-button title='Something' click='${() => console.log('hi')}'></round-button>` }
+
         <round-button title='Todo Example'
             click='${() => this.router.send('/todo')}'></round-button>
         <round-button title='Portfolio Example'
