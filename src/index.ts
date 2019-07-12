@@ -11,7 +11,6 @@ import Portfolio from './portfolio';
 * to create and update a view in your web app. */
 export default function Mosaic(options: MosaicOptions) {
     const tid: string = randomKey();
-    const trackedData: string[] = Object.keys(options.data || {});
     
     // Create a custom element and return an instance of it.
     customElements.define(options.name, class extends HTMLElement {
@@ -28,13 +27,6 @@ export default function Mosaic(options: MosaicOptions) {
 
         oldValues: any[];
 
-
-        // Define the static attributes that should be tracked as data.
-        // If these properties change, then it should change the
-        // underlying data property, which will then trigger a repaint.
-        static get observedAttributes() {
-            return trackedData;
-        }
 
         constructor() {
             super();
@@ -67,6 +59,9 @@ export default function Mosaic(options: MosaicOptions) {
             // Find (or create if it doesn't exist) the template
             // associated with this component.
             const template = getOrCreateTemplate(this);
+
+            // If this component uses a Portfolio, add it as a dependency.
+            if(this.portfolio) this.portfolio.addDependency(this);
             
             // Check the attributes that exist at connection time. If you
             // come across an attribute that is being tracked (i.e. defined
@@ -96,21 +91,23 @@ export default function Mosaic(options: MosaicOptions) {
 
             // Repaint this element with the newest values.
             this.repaint();
-            // console.log(this);
-            // console.dir(this);
-
             if(this.created) this.created();
         }
 
         disconnectedCallback() {
-            
+            if(this.portfolio) this.portfolio.removeDependency(this);
+            if(this.willDestroy) this.willDestroy();
         }
 
-        attributeChangedCallback(attrName, oldVal, newVal) {
-            // Trigger a repaint.
-            // console.log('Changed attribute: ', attrName, newVal);
-        }
+        paint(ele?: string|HTMLElement) {
+            let look = ele ? ele : options.element;
+            let element = typeof look === 'string' ? document.getElementById(look) : look;
+                
+            if(!element)
+                throw new Error(`Could not find the base element: ${options.element}.`);
 
+            element.appendChild(this);
+        }
 
         repaint() {
             const template = getOrCreateTemplate(this);
@@ -118,14 +115,17 @@ export default function Mosaic(options: MosaicOptions) {
 
             if(!this.view) return;
             const newValues = this.view(this).values;
-            repaintTemplate(this, memories, this.oldValues, newValues);
+            repaintTemplate(this, memories, this.oldValues, newValues, false);
 
             this.oldValues = newValues;
-            // console.log('%c Finished calling repaint', 'color:goldenrod', this);
-            // console.dir(this);
         }
 
-
+        set(data: Object) {
+            const keys = Object.keys(data);
+            for(let i = 0; i < keys.length; i++)
+                this.data[keys[i]] = data[keys[i]];
+            this.repaint();
+        }
 
         /** Private function that handles creating getter/setter combos
         * for each data property so that the user can reference data and
@@ -139,9 +139,10 @@ export default function Mosaic(options: MosaicOptions) {
                         return this.data[name];
                     },
                     'set': function(nv) {
+                        if(this.willUpdate) this.willUpdate();
                         this.data[name] = nv;
                         this.repaint();
-                        // console.log('Needs repainting: ', name, nv);
+                        if(this.updated) this.updated();
                     }
                 }
             }

@@ -8,6 +8,7 @@ export default new Mosaic({
     },
     view: function() {
         const { title, click } = this;
+        console.log(click);
         return html`<button class='round-button' onclick='${click}'>
             ${title}
         </button>`

@@ -6,7 +6,7 @@ export default new Mosaic({
     name: 'count-label',
     portfolio,
     view() {
-        const count = this.portfolio.get('count');
+        const count = portfolio.get('count');
         
         return html`<div class="count-label">
             <h2>Count:</h2>

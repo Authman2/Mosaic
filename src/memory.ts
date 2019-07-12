@@ -26,16 +26,22 @@ export default class Memory {
 
     /** Applies changes to memories of type "node." */
     commitNode(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, oldValue: any, newValue: any) {
-        if(typeof newValue === 'object') {
+        if(Array.isArray(newValue)) {
+            console.log("Don't worry, it's just an array type.");
+        }
+        if(typeof newValue === 'object' && newValue.__isTemplate) {
             const ott = oneTimeTemplate(newValue);
             pointer.replaceWith(ott);
+        }
+        if(typeof newValue === 'object' && newValue.__isKeyedArray) {
+            console.log("Don't worry, it's just an array.");
         }
         else if(typeof newValue === 'function') {
             const called = newValue();
             const ott = oneTimeTemplate(called);
             pointer.replaceWith(ott);
-            console.log(pointer, newValue, called, ott);
-        } else {
+        }
+        else {
             pointer.replaceWith(newValue);
         }
     }
@@ -77,17 +83,18 @@ export default class Memory {
 
     /** Applies event changes such as adding/removing listeners. */
     commitEvent(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, name: string, oldValue: any, newValue: any) {
+        const events = (pointer as any).eventHandlers || {};
+        const shortName = name.substring(2);
+
         // TODO: Temporary - For right now it seems like functions on OTT's
         // can get incorrectly labeled as string types instead of functions,
         // even though the string still describes the function. So for now,
         // just parse it as a function and use that as the new value.
         if(typeof newValue === 'string') {
+            if(name in events) return;
             const realFunction = parseFunction(newValue);
             newValue = realFunction;
         }
-
-        const events = (pointer as any).eventHandlers || {};
-        const shortName = name.substring(2);
 
         // If there's no new value, then try to remove the event listener.
         if(!newValue && events[name]) {
@@ -110,6 +117,7 @@ export default class Memory {
     }
 
     /** Helper function for applying changes to arrays. */
+    // TODO: You actually almost forgot to reimplement arrays...
     commitArray(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, oldValue: any, newValue: any) {
         // console.log('%c Committing Array', 'color:goldenrod', pointer, newValue);
     }

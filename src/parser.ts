@@ -25,9 +25,16 @@ export function repaintTemplate(element: HTMLElement, memories: Memory[], oldVal
         const pointer = step(element, mem.config.steps, isOTT);
         // console.log(element, pointer);
 
+        // Get the old and new values.
         let oldv = oldValues[i];
         let newv = newValues[i];
-        if(changed(oldv, newv)) mem.commit(element, pointer, oldv, newv);
+
+        // For conditional rendering.
+        let alwaysUpdateFunction = mem.config.type === 'node';
+
+        // Compare and commit.
+        if(changed(oldv, newv, alwaysUpdateFunction))
+            mem.commit(element, pointer, oldv, newv);
     }
 }
 

@@ -5,6 +5,7 @@ import './round-button';
 import Logo from '../MosaicLogo.png';
 import './home.css';
 
+/** A function to show how conditional rendering works. */
 function depends(on) {
     if(on === true) return html`<h1>Conditional Working!!!</h1>`;
     else return html`<h2>Conditional is False Now!!!</h2>`;
@@ -13,7 +14,7 @@ function depends(on) {
 export default new Mosaic({
     name: 'home-page',
     data: {
-        on: false
+        on: false,
     },
     created() {
         setInterval(() => {
@@ -45,8 +46,6 @@ export default new Mosaic({
             click='${() => this.router.send('/todo')}'></round-button>
         <round-button title='Portfolio Example'
             click='${() => this.router.send('/portfolio')}'></round-button>
-        <round-button title='Delay Template Example'
-            click='${() => this.router.send('/delaytemplate')}'></round-button>
         `
     }
 });

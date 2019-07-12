@@ -54,7 +54,7 @@ export function step(parent: ChildNode|Element, steps: number[], isOTT?: boolean
 }
 
 /** Parses and returns a useable function from a string. */
-export function parseFunction (str) {
+export function parseFunction(str) {
     var fn_body_idx = str.indexOf('{'),
         fn_body = str.substring(fn_body_idx+1, str.lastIndexOf('}')),
         fn_declare = str.substring(0, fn_body_idx),
@@ -69,7 +69,7 @@ export function parseFunction (str) {
 
 /** Compares two values are returns false if they are the same and 
 * true if they are different (i.e. they changed). */
-export function changed(oldv: any, newv: any) {
+export function changed(oldv: any, newv: any, isOTT?: boolean) {
     // If no old value, then it is the first render so it did change.
     // Or if there is an old value and no new value, then it changed.
     if(!oldv) return true;
@@ -77,7 +77,10 @@ export function changed(oldv: any, newv: any) {
 
     // Compare by type.
     if(isPrimitive(newv)) return oldv !== newv;
-    else if(typeof newv === 'function') return (''+oldv) !== (''+newv);
+    else if(typeof newv === 'function') {
+        if(isOTT && isOTT === true) return true;
+        else return (''+oldv) !== (''+newv);
+    }
     else if(Array.isArray(newv)) return (''+oldv) !== (''+newv);
     else if(typeof newv === 'object') {
         // Template:
