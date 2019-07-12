@@ -1,195 +1,116 @@
-import { nodeMarker, insertAfter, difference, isBooleanAttribute } from './util';
+import { nodeMarker, insertAfter, difference, isBooleanAttribute, parseFunction } from './util';
 import { MemoryOptions } from './options';
 import { oneTimeTemplate } from './parser';
 
 /** Represents a piece of dynamic content in the markup. */
 export default class Memory {
-    constructor(private config: MemoryOptions) {}
+    constructor(public config: MemoryOptions) {}
 
-    /** Steps through a component tree until it reaches its destination. */
-    private step(component: any) {
-        // TODO: This step function does not seem to work when using one-time-templates
-        // (that's a good name btw, keep that). Figure out why the doc-fragment/template
-        // is not working in the case of o.t.t's.
-
-        // TODO: The problem might be that the o.t.t doesn't haven't any inner html.
-        let element = component as HTMLElement|ChildNode;
-        let child = element;
-        // if(child.childNodes.length === 0) return child;
-
-        for(let i = 0; i < this.config.steps.length; i++) {
-            let nextStep: number = this.config.steps[i];
-            child = child.childNodes[nextStep];
-        }
-        return child;
-    }
 
     /** Applies the changes to the appropriate DOM nodes when data changes. */
-    commit(component: Object, oldValue: any, newValue: any) {
-        const element = this.step(component);
-
-        // TODO: For some reason there are no child nodes here...
-        console.log(component, element, this);
+    commit(element: ChildNode|Element, pointer: ChildNode|Element, oldValue: any, newValue: any) {
+        // console.log(element, pointer, oldValue, newValue);
         switch(this.config.type) {
-            case 'node': this.commitNode(element, oldValue, newValue); break;
-            case 'attribute': this.commitAttribute(element, oldValue, newValue); break;
-            default: break;
+            case 'node':
+                this.commitNode(element, pointer, oldValue, newValue);
+                break;
+            case 'attribute':
+                if(!this.config.attribute) break;
+                const { name } = this.config.attribute;
+                if(this.config.isEvent === true)
+                    this.commitEvent(element, pointer, name, oldValue, newValue);
+                else this.commitAttribute(element, pointer, name, oldValue, newValue);
+                break;
         }
     }
 
     /** Applies changes to memories of type "node." */
-    commitNode(element: HTMLElement|ChildNode, oldValue: any, newValue: any) {
-        // html function.
-        if(typeof newValue === 'object' && newValue.__isTemplate) {
-            element.replaceWith(oneTimeTemplate(newValue));
+    commitNode(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, oldValue: any, newValue: any) {
+        if(typeof newValue === 'object') {
+            const ott = oneTimeTemplate(newValue);
+            pointer.replaceWith(ott);
         }
-        // Array.
-        else if(typeof newValue === 'object' && newValue.__isKeyedArray) {
-            this.commitArray(element, oldValue, newValue);
-        }
-        else if(Array.isArray(newValue)) {
-            // Don't bother rendering regular arrays. Force the developer
-            // to use the more efficient one with specific keys.
-            throw new Error(`Please do not use direct arrays in the view function as it is inefficient. Use the "Mosaic.list" function instead.`);
-        }
-        // Primitives and other DOM nodes.
-        else {
-            element.replaceWith(newValue);
+        else if(typeof newValue === 'function') {
+            const called = newValue();
+            const ott = oneTimeTemplate(called);
+            pointer.replaceWith(ott);
+            console.log(pointer, newValue, called, ott);
+        } else {
+            pointer.replaceWith(newValue);
         }
     }
 
     /** Applies attribtue and event listener changes. */
-    commitAttribute(element: HTMLElement|ChildNode, oldValue: any, newValue: any) {
-        if(!this.config.attribute) return;
-        const { name } = this.config.attribute;
+    commitAttribute(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, name: string, oldValue: any, newValue: any) {
+        // console.log(pointer);
+        const attribute = (pointer as Element).attributes.getNamedItem(name);
+        const countsAsData = this.config.isComponentType === true 
+            && !!(pointer as any).data
+            && !!(pointer as any).data[name];
 
-        if(this.config.isEvent === true) {
-            // Parse event listener.
-            this.commitEvent(element, name, oldValue, newValue);
-        } else {
-            // Certain data types on Mosaic components will require that you
-            // parse them a certain way before setting the value.
-            let setValue = newValue;
-            if(typeof newValue === 'object') setValue = JSON.stringify(newValue);
-            else if(typeof newValue === 'function') {
-                // Remove the attribute so it doesn't get called while parsing.
-                setValue = newValue as Function;
-                (element as Element).removeAttribute(name);
-            } else setValue = newValue;
+        if(!attribute) {
+            // If you come across a boolean attribute that should be true,
+            // then add it as an attribute.
+            if(isBooleanAttribute(name) && newValue === true)
+                (pointer as Element).setAttribute(name, 'true');
+            return;
+        }
 
-            // Get the current value of the attribute. The value will
-            // be updated on each memory.
-            const attr = (element as Element).attributes.getNamedItem(name);
-            if(!attr) {
-                // Check if there is no attribute name, but it's a 
-                // boolean attribute, in which case you wanna add the attribute.
-                if(isBooleanAttribute(name) && setValue === true)
-                    (element as Element).setAttribute(name, 'true');
+        // Replace the first instance of the marker with the new value.
+        // Then be sure to set the attribute value to this newly replaced
+        // string so that on the next dynamic attribute it goes to the next
+        // position to replace (notice how the new value gets converted to a
+        // string first. This ensures attribute safety).
+        const newAttributeValue = attribute.value.replace(nodeMarker, ''+newValue);
+        (pointer as Element).setAttribute(name, newAttributeValue);
 
-                // Because of the way functions are defined, we have to check
-                // here to see if it is a Mosaic component and needs the event.
-                if(this.config.isComponentType === true)
-                    if(typeof setValue === 'function') {
-                        (element as any).data[name] = setValue.bind(element);
-                    }
-                return;
-            }
-            const attrVal = attr.value;
-
-            // Replace the first instance of the marker with the new value.
-            // Then be sure to set the attribute value to this newly replaced
-            // string so that on the next dynamic attribute it goes to the next
-            // position to replace.
-            const newAttrVal = attrVal.replace(nodeMarker, setValue);
-            (element as Element).setAttribute(name, newAttrVal);
-            
-            // Set the boolean attribute. Mostly only used for "false" here.
-            if(isBooleanAttribute(name)) {
-                if(!setValue) (element as Element).removeAttribute(name);
-                else (element as Element).setAttribute(name, 'true');
-            }
-
-            // If this is a Mosaic component, set the attribute as a data
-            // property and force a repaint. Then set the data property 
-            // depending on the type.
-            if(this.config.isComponentType === true) {
-                // Object.
-                try { return (element as any).data[name] = JSON.parse(newAttrVal); }
-                catch(_) {}
-
-                // Number.
-                const parsedNum = parseFloat(newAttrVal);
-                if(!isNaN(parsedNum)) return (element as any).data[name] = parsedNum;
-
-                // Regular strings.
-                return (element as any).data[name] = newAttrVal;
-            }
+        // You have to check and be sure of what you are setting first. If
+        // the attribute is meant to serve as injected data, then all you
+        // need to do is pass it on to the next component and repaint it.
+        // If it is an actual HTML attribute, however, you must set that
+        // attribute on the pointer element.
+        if(countsAsData === true) {
+            (pointer as any).data[name] = newValue;
+            (pointer as any).repaint();
         }
     }
 
     /** Applies event changes such as adding/removing listeners. */
-    commitEvent(element: HTMLElement|ChildNode, name: string, oldValue: any, newValue: any) {
-        if(typeof newValue !== 'function') return;
-        
-        const events = (element as any).eventHandlers || {};
-        const short = name.substring(2);
-        if(events[name])
-            (element as Element).removeEventListener(short, events[name]);
+    commitEvent(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, name: string, oldValue: any, newValue: any) {
+        // TODO: Temporary - For right now it seems like functions on OTT's
+        // can get incorrectly labeled as string types instead of functions,
+        // even though the string still describes the function. So for now,
+        // just parse it as a function and use that as the new value.
+        if(typeof newValue === 'string') {
+            const realFunction = parseFunction(newValue);
+            newValue = realFunction;
+        }
 
-        events[name] = newValue.bind(element);
-        (element as any).eventHandlers = events;
-        (element as Element).addEventListener(short, (element as any).eventHandlers[name]);
+        const events = (pointer as any).eventHandlers || {};
+        const shortName = name.substring(2);
 
-        (element as Element).removeAttribute(name);
+        // If there's no new value, then try to remove the event listener.
+        if(!newValue && events[name]) {
+            (pointer as Element).removeEventListener(shortName, events[name]);
+        }
+        // While there is a new value, add it to an "eventHandlers" property
+        // so that you can always keep track of the element's functions.
+        else if(newValue) {
+            events[name] = newValue.bind(element);
+            (pointer as any).eventHandlers = events;
+            (pointer as Element).addEventListener(
+                shortName, 
+                (pointer as any).eventHandlers[name]
+            );
+        }
+
+        // Remove the attribute from the DOM tree to avoid clutter.
+        if((pointer as Element).hasAttribute(name))
+            (pointer as Element).removeAttribute(name);
     }
 
     /** Helper function for applying changes to arrays. */
-    commitArray(element: HTMLElement|ChildNode, oldValue: any, newValue: any) {
-        // First render, everything is new.
-        if(!oldValue || oldValue.length === 0) {
-            const frag = document.createDocumentFragment();
-            const mapped = newValue.items.map((obj, index) => {
-                return oneTimeTemplate(obj, newValue.keys[index]);
-            });
-            frag.append(...mapped);
-            element.replaceWith(frag);
-        }
-        // Make efficient patches.
-        else {
-            let oldKeys = oldValue.keys;
-            let newKeys = newValue.keys;
-            let oldItems = oldValue.items;
-            let newItems = newValue.items;
-            const { additions, deletions } = difference(oldKeys, newKeys);
-
-            // For deleting, just look for the node with the key and remove it.
-            for(let i = 0; i < deletions.length; i++) {
-                const { key } = deletions[i];
-                const found = document.querySelector(`[key='${key}']`);
-                if(found) found.remove();
-            }
-
-            // For each addition, find the correct insertion index and insert
-            // the node at that position.
-            for(let i = 0; i < additions.length; i++) {
-                // Get the old index for where you need to correctly insert.
-                const { key, index } = additions[i];
-                const oldIndex = index - (additions.length + i);
-
-                // Render the new item and find the old item too.
-                const newNode = oneTimeTemplate(newItems[index], key);
-                const oldItem = oldItems[oldIndex];
-
-                // Once you have found the old item, look for the node in the
-                // DOM and insert the element before that.
-                if(oldItem) {
-                    const oldKey = oldKeys[oldIndex];
-                    const oldNode = document.querySelector(`[key='${oldKey}']`);
-                    insertAfter(newNode, oldNode);
-                } else {
-                    insertAfter(newNode, element);
-                }
-            }
-        }
+    commitArray(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, oldValue: any, newValue: any) {
+        // console.log('%c Committing Array', 'color:goldenrod', pointer, newValue);
     }
 }

@@ -1,47 +1,49 @@
-import { lastAttributeNameRegex, nodeMarker, traverse, changed } from "./util";
+import { lastAttributeNameRegex, nodeMarker, traverse, changed, step } from "./util";
 import Memory from "./memory";
 import { ViewFunction } from "./options";
 
-/** The global repaint function for templates. */
-export function repaintTemplate(target: any, memories: Memory[], old: any[], current: any[]) {
-    for(let i = 0; i < memories.length; i++) {
-        let mem: Memory = memories[i];
-        let oldv = old[i];
-        let newv = current[i];
-        // console.log(mem, oldv, newv);
-        if(changed(oldv, newv)) mem.commit(target, oldv, newv);
+/** Either finds or creates a template with the given tid. */
+export function getOrCreateTemplate(mosaic: HTMLElement): HTMLTemplateElement {
+    const found = document.getElementById((mosaic as any).tid) as HTMLTemplateElement;
+    if(found) return found;
+    else {
+        if(!(mosaic as any).view) return document.createElement('template');
+
+        const { strings } = (mosaic as any).view(mosaic);
+        const template = document.createElement('template');
+        template.id = (mosaic as any).tid;
+        template.innerHTML = buildHTML(strings);
+        (template as any).memories = memorize.call(template);
+        return template;
     }
 }
 
-/** Creates a new template and adds it to the DOM. */
-export function createTemplate(component: any): HTMLTemplateElement {
-    if(!component || !component.view) return document.createElement('template');
-    
-    // Configure the template view.
-    const { strings, values } = component.view(component);
-    const template = document.createElement('template');
-    template.id = component.tid;
-    template.innerHTML = buildHTML(strings);
+/** Repaints a template with its newest values. */
+export function repaintTemplate(element: HTMLElement, memories: Memory[], oldValues: any[], newValues: any[], isOTT?: boolean) {
+    for(let i = 0; i < memories.length; i++) {
+        const mem: Memory = memories[i];
+        const pointer = step(element, mem.config.steps, isOTT);
+        // console.log(element, pointer);
 
-    // Have the template basically memorize itself.
-    (template as any).memories = memorize.call(template);
-    document.body.appendChild(template);
-    return template;
+        let oldv = oldValues[i];
+        let newv = newValues[i];
+        if(changed(oldv, newv)) mem.commit(element, pointer, oldv, newv);
+    }
 }
 
-/** Renders an instance of a template with its dynamic parts filled in. */
-export function oneTimeTemplate(ttl: ViewFunction, key?: string) {
-    const template = document.createElement('template') as HTMLTemplateElement;
-    template.innerHTML = buildHTML(ttl.strings);
-
-    // TODO: For some reason there is a problem repainting the template.
-    const cloned = document.importNode(template.content, true);
-    const memories = memorize.call(template);
-    console.log('%c First called O.T.T!', 'color:cyan');
-    repaintTemplate(cloned, memories, [], ttl.values);
-
-    if(key) (cloned.firstChild as Element).setAttribute('key', key);
-    return cloned;
+/** Creates and renders a new template, then repaints it to have values. */
+export function oneTimeTemplate(view: ViewFunction) {
+    // Create and memorize the template.
+    const template = document.createElement('template');
+    template.innerHTML = buildHTML(view.strings);
+    (template as any).memories = memorize.call(template);
+    
+    // Repaint the template with its memories.
+    const parser = new DOMParser();
+    const parsed = parser.parseFromString(template.innerHTML, 'text/html');
+    const instance = parsed.body.firstChild as HTMLElement;
+    repaintTemplate(instance, (template as any).memories, [], view.values, true);
+    return instance;
 }
 
 /** Takes the strings of a tagged template literal and 
@@ -63,7 +65,6 @@ export function buildHTML(strings) {
     html += strings[length];
     return html;
 }
-
 
 /** Memorizes parts of a DOM tree that contain dynamic content
 * and returns a list of memories of whether those parts are. */

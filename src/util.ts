@@ -39,32 +39,33 @@ export function traverse($node: Node|HTMLElement|ChildNode, action: Function, st
     }
 }
 
-/** Returns whether or not a template with the given tid exists, 
-* and if so returns it. */
-export function templateExists(tid: string): HTMLTemplateElement|null {
-    return document.getElementById(tid) as HTMLTemplateElement;
+/** Steps down through the child nodes until it reaches the last step. */
+export function step(parent: ChildNode|Element, steps: number[], isOTT?: boolean) {
+    // If it's a One Time Template, then don't bother stepping. You already have
+    // the element through the parent.
+    if(isOTT && isOTT === true) return parent;
+
+    let child = parent;
+    for(let i = 0; i < steps.length; i++) {
+        let next: number = steps[i];
+        if(child.childNodes.length >= next) child = child.childNodes[next];
+    }
+    return child;
 }
 
-/** Renders an HTML element from a template. */
-// export function renderTemplate(value: any, key?: string) {
-//     // Construct the template, copy it, repaint it, then insert.
-//     const temp = document.createElement('template');
-//     temp.innerHTML = buildHTML(value.strings);
-//     (temp as any).memories = memorize(document.importNode(temp, true));
-//     (temp as any).repaint = function(element: any, oldValues: any[], newValues: any[]) {
-//         for(let i = 0; i < this.memories.length; i++) {
-//             let mem: Memory = this.memories[i];
-//             let oldv = oldValues[i];
-//             let newv = newValues[i];
-//             if(changed(oldv, newv)) mem.commit(element, oldv, newv);
-//         }
-//     }
-    
-//     const cloned = document.importNode(temp.content, true);
-//     (temp as any).repaint(cloned, [], value.values);
-//     if(key) (cloned.firstChild!! as Element).setAttribute('key', key);
-//     return cloned;
-// }
+/** Parses and returns a useable function from a string. */
+export function parseFunction (str) {
+    var fn_body_idx = str.indexOf('{'),
+        fn_body = str.substring(fn_body_idx+1, str.lastIndexOf('}')),
+        fn_declare = str.substring(0, fn_body_idx),
+        fn_params = fn_declare.substring(fn_declare.indexOf('(')+1, fn_declare.lastIndexOf(')')),
+        args = fn_params.split(',');
+    args.push(fn_body);
+  
+    function Fn () { return Function.apply(this, args); }
+    Fn.prototype = Function.prototype;
+    return Fn();
+}
 
 /** Compares two values are returns false if they are the same and 
 * true if they are different (i.e. they changed). */

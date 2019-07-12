@@ -11,7 +11,6 @@ export interface MosaicOptions {
     portfolio: Portfolio;
     willUpdate: Function;
     willDestroy: Function;
-    delayTemplate: boolean;
     element: string|Element;
     readonly descendants: DocumentFragment;
 }

@@ -5,9 +5,21 @@ import './round-button';
 import Logo from '../MosaicLogo.png';
 import './home.css';
 
+function depends(on) {
+    if(on === true) return html`<h1>Conditional Working!!!</h1>`;
+    else return html`<h2>Conditional is False Now!!!</h2>`;
+}
 
 export default new Mosaic({
     name: 'home-page',
+    data: {
+        on: false
+    },
+    created() {
+        setInterval(() => {
+            this.on = !this.on;
+        }, 2000);
+    },
     view() {
         return html`
         <img src='${Logo}' alt='mosaic logo'>
@@ -26,7 +38,8 @@ export default new Mosaic({
             how the router is being used to travel to other examples.
         </p>
 
-        ${ html`<round-button title='Something' click='${() => console.log('hi')}'></round-button>` }
+        ${ depends.bind(null, this.on) }
+        ${ html`<round-button title='Something' click='${() => console.log('printing something!!')}'></round-button>` }
 
         <round-button title='Todo Example'
             click='${() => this.router.send('/todo')}'></round-button>
