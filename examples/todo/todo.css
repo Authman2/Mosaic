@@ -38,7 +38,7 @@ todo-page {
     line-height: 80px;
     text-align: center;
     border-radius: 8px;
-    margin-bottom: -80px;
+    margin-bottom: -20px;
     background-color: rgb(115, 134, 196);
 }
 .todo-item:hover, #add-todo-button:hover {

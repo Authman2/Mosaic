@@ -15,12 +15,11 @@ export default new Mosaic({
     },
     addItem() {
         const title = document.getElementById('input-field').value;
-        this.data.items.push({ title, id: key() });;
+        this.items = this.items.concat({ title, id: key() });
         document.getElementById('input-field').value = '';
     },
     deleteItem(index) {
-        this.data.items.splice(index, 1);
-        console.log('hi');
+        this.items = this.items.filter((_, idx) => idx !== index);
     },
     view() {
         return html`

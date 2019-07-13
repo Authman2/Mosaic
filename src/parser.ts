@@ -39,7 +39,7 @@ export function repaintTemplate(element: HTMLElement, memories: Memory[], oldVal
 }
 
 /** Creates and renders a new template, then repaints it to have values. */
-export function oneTimeTemplate(view: ViewFunction) {
+export function oneTimeTemplate(view: ViewFunction, key?: string) {
     // Create and memorize the template.
     const template = document.createElement('template');
     template.innerHTML = buildHTML(view.strings);
@@ -49,8 +49,13 @@ export function oneTimeTemplate(view: ViewFunction) {
     const parser = new DOMParser();
     const parsed = parser.parseFromString(template.innerHTML, 'text/html');
     const instance = parsed.body.firstChild as HTMLElement;
-    repaintTemplate(instance, (template as any).memories, [], view.values, true);
-    return instance;
+    
+    if(key) instance.setAttribute('key', key);
+    return {
+        instance,
+        values: view.values,
+        memories: (template as any).memories,
+    };
 }
 
 /** Takes the strings of a tagged template literal and 

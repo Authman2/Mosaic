@@ -3,6 +3,7 @@ import Mosaic, { Router } from "../src/index";
 import Home from './home';
 import Todo from './todo/todo-page';
 import Portfolio from './portfolio/portfolio-page';
+import Conditional from './conditional/conditional-page';
 
 import './index.css';
 
@@ -13,6 +14,7 @@ const router = new Router('root');
 router.addRoute('/', Home);
 router.addRoute('/todo', Todo);
 router.addRoute('/portfolio', Portfolio);
+router.addRoute('/conditional', Conditional);
 
 // 3.) Paint the router!
 router.paint();

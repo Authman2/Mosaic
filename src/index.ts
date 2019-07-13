@@ -1,8 +1,6 @@
 import { MosaicOptions, KeyedArray, ViewFunction } from "./options";
-import { randomKey, changed, nodeMarker } from "./util";
-import { buildHTML, memorize, getOrCreateTemplate, repaintTemplate } from "./parser";
-import Observable from "./observable";
-import Memory from "./memory";
+import { randomKey, nodeMarker } from "./util";
+import { getOrCreateTemplate, repaintTemplate } from "./parser";
 import Router from "./router";
 import Portfolio from './portfolio';
 
@@ -16,6 +14,7 @@ export default function Mosaic(options: MosaicOptions) {
     customElements.define(options.name, class extends HTMLElement {
         tid: string;
         data: Object;
+        oldValues: any[];
         created?: Function;
         updated?: Function;
         router?: HTMLElement;
@@ -24,9 +23,6 @@ export default function Mosaic(options: MosaicOptions) {
         willDestroy?: Function;
         view?: (self?: any) => ViewFunction;
         readonly descendants: DocumentFragment;
-
-        oldValues: any[];
-
 
         constructor() {
             super();
@@ -99,8 +95,8 @@ export default function Mosaic(options: MosaicOptions) {
             if(this.willDestroy) this.willDestroy();
         }
 
-        paint(ele?: string|HTMLElement) {
-            let look = ele ? ele : options.element;
+        paint(el?: string|HTMLElement) {
+            let look = el ? el : options.element;
             let element = typeof look === 'string' ? document.getElementById(look) : look;
                 
             if(!element)

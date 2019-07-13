@@ -1,0 +1,30 @@
+conditional-page {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    overflow-y: scroll;
+    font-family: Avenir;
+    background-color: rgb(233, 237, 250);
+}
+
+.condtional-page {
+    text-align: center;
+}
+.conditional-page > h1, .conditional-page > h3 {
+    text-align: left;
+}
+
+.condition-a {
+    margin: 20px;
+    padding: 10px;
+    border-radius: 15px;
+    background-color: lightskyblue;
+    box-shadow: 2px 2px 20px 4px rgba(12, 98, 179, 0.15);
+}
+.condition-b {
+    margin: 20px;
+    padding: 10px;
+    border-radius: 15px;
+    background-color: lightseagreen;
+    box-shadow: 2px 2px 20px 4px rgba(12, 179, 68, 0.15);
+}
