@@ -1,35 +1,34 @@
-import { MosaicOptions, KeyedArray, ViewFunction } from "./options";
-import { randomKey, nodeMarker } from "./util";
-import { getOrCreateTemplate, repaintTemplate } from "./parser";
-import Router from "./router";
+import { MosaicComponent, MosaicOptions, ViewFunction } from './options';
+import Observable from './observable';
+import Router from './router';
 import Portfolio from './portfolio';
+import { randomKey, nodeMarker } from './util';
+import { getTemplate, _repaint } from './parser';
 
-
-/** A reusable web component that can be paired with other Mosaics
-* to create and update a view in your web app. */
-export default function Mosaic(options: MosaicOptions) {
+export default function Mosaic(options: MosaicOptions): MosaicComponent {
+    // Configure some basic properties.
     const tid: string = randomKey();
+    const copiedData: Object = Object.assign({}, options.data || {});
     
-    // Create a custom element and return an instance of it.
-    customElements.define(options.name, class extends HTMLElement {
-        tid: string;
-        data: Object;
-        oldValues: any[];
-        created?: Function;
-        updated?: Function;
-        router?: HTMLElement;
-        portfolio?: Portfolio;
-        willUpdate?: Function;
-        willDestroy?: Function;
-        view?: (self?: any) => ViewFunction;
-        readonly descendants: DocumentFragment;
+    // Error checking.
+    if(typeof options.name !== 'string')
+        throw new Error('Name must be specified and must be a string.');
 
-        constructor() {
-            super();
+    // Define the custom element.
+    customElements.define(options.name, class extends MosaicComponent {
+        constructor() { super(); }
+
+        connectedCallback() {
+            // 1.) Setup basic properties.
             this.tid = tid;
-            this.oldValues = [];
-            this.data = Object.assign({}, options.data || {});
-            this.descendants = document.createDocumentFragment();
+            this.data = new Observable(copiedData, old => {
+                if(this.barrier === true) return;
+                if(this.willUpdate) this.willUpdate(old);
+            }, () => {
+                if(this.barrier === true) return;
+                this.repaint();
+                if(this.updated) this.updated();
+            });
             
             // Configure all of the properties if they exist.
             let _options = Object.keys(options);
@@ -40,78 +39,52 @@ export default function Mosaic(options: MosaicOptions) {
                 else this[key] = options[key];
             }
 
-            // Setup getters and setters for the data properties.
-            this.setupGettersAndSetters(Object.keys(this.data));
-            
             // Remove any child nodes and save them as to the descendants
             // property so that it can optionally be used later on.
             if(this.innerHTML !== '') {
                 this.descendants.append(...this.childNodes);
                 this.innerHTML = '';
             }
-        }
 
-        connectedCallback() {
-            // Find (or create if it doesn't exist) the template
-            // associated with this component.
-            const template = getOrCreateTemplate(this);
-
-            // If this component uses a Portfolio, add it as a dependency.
-            if(this.portfolio) this.portfolio.addDependency(this);
-            
-            // Check the attributes that exist at connection time. If you
-            // come across an attribute that is being tracked (i.e. defined
-            // under the data of this component from the constructor), then
-            // add it as a data property. Otherwise, regular attribute.
-            for(let i = 0; i < this.attributes.length; i++) {
-                const { name, value } = this.attributes[i];
-                const countsAsData = this.data && (name in this.data);
-                const containsAsData = this[name] !== undefined && this[name] !== null;
-                
-                // If you find that the value should be added as data, then
-                // call the "set" binding for that property to set the value.
-                if(countsAsData === true && containsAsData && value !== nodeMarker) {
-                    this.data[name] = value;
-                }
-                // Otherwise, just set a normal attribute.
-                else if(countsAsData === false || !this[name]) {
-                    if(value !== nodeMarker) this.setAttribute(name, value);
-                }
-            }
-
-            // Clone the template into this element if it;s not already there.
-            if(this.innerHTML === '') {
-                const cloned = document.importNode(template.content, true);
-                this.appendChild(cloned);
-            }
-
-            // Repaint this element with the newest values.
+            // 2.) Find the template for this component, clone it, and repaint.
+            // Then call the created lifecycle function.
+            const template = getTemplate(this);
+            const cloned = document.importNode(template.content, true);
+            this.appendChild(cloned);
             this.repaint();
             if(this.created) this.created();
+
+            // 3.) If there are any attributes present on this element at
+            // connection time and they are not dynamic (i.e. their value does
+            // not match the nodeMarker) then you can receive them as data.
+            let receivedAttributes = {};
+            for(let i = 0; i < this.attributes.length; i++) {
+                const { name, value } = this.attributes[i];
+                if(value === nodeMarker) continue;
+                receivedAttributes[name] = value;
+            }
+            if(this.received) this.received(receivedAttributes);
         }
 
         disconnectedCallback() {
-            if(this.portfolio) this.portfolio.removeDependency(this);
             if(this.willDestroy) this.willDestroy();
         }
 
         paint(el?: string|HTMLElement) {
             let look = el ? el : options.element;
-            let element = typeof look === 'string' ? document.getElementById(look) : look;
-                
+            let element = typeof look === 'string' ? document.getElementById(look) : look; 
             if(!element)
                 throw new Error(`Could not find the base element: ${options.element}.`);
-
             element.appendChild(this);
         }
-
+        
         repaint() {
-            const template = getOrCreateTemplate(this);
+            const template = getTemplate(this);
             const memories = (template as any).memories;
 
             if(!this.view) return;
             const newValues = this.view(this).values;
-            repaintTemplate(this, memories, this.oldValues, newValues, false);
+            _repaint(this, memories, this.oldValues, newValues);
 
             this.oldValues = newValues;
         }
@@ -122,40 +95,10 @@ export default function Mosaic(options: MosaicOptions) {
                 this.data[keys[i]] = data[keys[i]];
             this.repaint();
         }
-
-        /** Private function that handles creating getter/setter combos
-        * for each data property so that the user can reference data and
-        * actions by saying "this.propertyName," as well as update data. */
-        private setupGettersAndSetters(data: string[]) {
-            const definition = {};
-            for(let i = 0; i < data.length; i++) {
-                const name = data[i];
-                definition[name] = {
-                    'get': function() {
-                        return this.data[name];
-                    },
-                    'set': function(nv) {
-                        if(this.willUpdate) this.willUpdate();
-                        this.data[name] = nv;
-                        this.repaint();
-                        if(this.updated) this.updated();
-                    }
-                }
-            }
-            Object.defineProperties(this, definition);
-        }
     });
 
-    // Return a new instance of the component.
     const component = document.createElement(options.name);
-    return component;
-}
-
-/** A function for efficiently rendering a list in a component. */
-Mosaic.list = function(items, key: Function, map: Function): KeyedArray {
-    const keys = items.map(itm => key(itm));
-    const mapped = items.map((itm, index) => map(itm, index));
-    return { keys, items: mapped, __isKeyedArray: true };
+    return component as MosaicComponent;
 }
 
 declare global {

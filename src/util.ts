@@ -1,6 +1,3 @@
-import { buildHTML, memorize } from "./parser";
-import Memory from "./memory";
-
 // The placeholders in the HTML.
 export const nodeMarker = `<!--{{m-${String(Math.random()).slice(2)}}}-->`;
 export const lastAttributeNameRegex = /([ \x09\x0a\x0c\x0d])([^\0-\x1F\x7F-\x9F \x09\x0a\x0c\x0d"'>=/]+)([ \x09\x0a\x0c\x0d]*=[ \x09\x0a\x0c\x0d]*(?:[^ \x09\x0a\x0c\x0d"'`<>=]*|"[^"]*|'[^']*))$/;
@@ -40,11 +37,7 @@ export function traverse($node: Node|HTMLElement|ChildNode, action: Function, st
 }
 
 /** Steps down through the child nodes until it reaches the last step. */
-export function step(parent: ChildNode|Element, steps: number[], isOTT?: boolean) {
-    // If it's a One Time Template, then don't bother stepping. You already have
-    // the element through the parent.
-    if(isOTT && isOTT === true) return parent;
-
+export function step(parent: ChildNode|Element, steps: number[]) {
     let child = parent;
     for(let i = 0; i < steps.length; i++) {
         let next: number = steps[i];

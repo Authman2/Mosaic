@@ -1,10 +1,31 @@
 import Portfolio from "./portfolio";
+import Observable from './observable';
+
+/** The methods that users can call on Mosaics. */
+export class MosaicComponent extends HTMLElement {
+    tid: string = '';
+    created?: Function;
+    updated?: Function;
+    router?: HTMLElement;
+    oldValues: any[] = [];
+    portfolio?: Portfolio;
+    willUpdate?: Function;
+    willDestroy?: Function;
+    barrier: boolean = false;
+    received?: (info: Object) => void;
+    view?: (self?: any) => ViewFunction;
+    data: Observable = new Observable({});
+    readonly descendants: DocumentFragment = document.createDocumentFragment();
+
+    paint(el?: string|Element) {};
+    repaint() {};
+    set(data: Object) {};
+}
 
 /** The configuration options for a Mosaic component. */
 export interface MosaicOptions {
     name: string;
     data: Object;
-    view: Function;
     created: Function;
     updated: Function;
     router: HTMLElement;
@@ -12,6 +33,8 @@ export interface MosaicOptions {
     willUpdate: Function;
     willDestroy: Function;
     element: string|Element;
+    received?: (info: Object) => void;
+    view: (self?: any) => ViewFunction;
     readonly descendants: DocumentFragment;
 }
 
