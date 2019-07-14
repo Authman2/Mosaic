@@ -30,10 +30,10 @@ export interface MosaicOptions {
     updated: Function;
     router: HTMLElement;
     portfolio: Portfolio;
-    willUpdate: Function;
     willDestroy: Function;
     element: string|Element;
     received?: (info: Object) => void;
+    willUpdate: (old: Object) => void;
     view: (self?: any) => ViewFunction;
     readonly descendants: DocumentFragment;
 }

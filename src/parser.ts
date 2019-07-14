@@ -23,14 +23,10 @@ export function OTT(view: ViewFunction, key?: string) {
     const template = document.createElement('template');
     template.innerHTML = buildHTML(view.strings);
     (template as any).memories = memorize.call(template);
-    
-    // Repaint the template with its memories.
-    const parser = new DOMParser();
-    const parsed = parser.parseFromString(template.innerHTML, 'text/html');
-    const instance = parsed.body.firstChild as HTMLElement;
-    (instance as any).isOTT = true;
-    
+
+    const instance = document.importNode(template.content, true).firstChild as HTMLElement;
     if(key) instance.setAttribute('key', key);
+    
     return {
         instance,
         values: view.values,
@@ -39,20 +35,19 @@ export function OTT(view: ViewFunction, key?: string) {
 }
 
 /** A global repaint function, which can be used for templates and components. */
-export function _repaint(element: HTMLElement, memories: Memory[], oldValues: any[], newValues: any[]) {
-    const isOTT: boolean = (element as any).isOTT === true;
-
+export function _repaint(element: HTMLElement, memories: Memory[], 
+                        oldValues: any[], newValues: any[], isOTT: boolean = false) {
     for(let i = 0; i < memories.length; i++) {
         const mem: Memory = memories[i];
-        const pointer = isOTT === true ? element : step(element, mem.config.steps);
+        const pointer = isOTT ? element : step(element, mem.config.steps);
         
         // Get the old and new values.
         let oldv = oldValues[i];
         let newv = newValues[i];
-
+        
         // For conditional rendering.
         let alwaysUpdateFunction = mem.config.type === 'node';
-
+        
         // Compare and commit.
         if(changed(oldv, newv, alwaysUpdateFunction))
             mem.commit(element, pointer, oldv, newv);
@@ -105,7 +100,6 @@ function parseAttributes(node: Element, steps: number[]): Memory[] {
     for(let i = 0; i < node.attributes.length; i++) {
         const { name, value } = node.attributes[i];
         const match = value.match(regex);
-        // console.log(name, value, match);
         if(!match || match.length < 1) continue;
         
         // Split the value to see where the dynamic parts in the string are.

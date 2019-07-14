@@ -9,7 +9,7 @@ export default class Memory {
 
     /** Applies the changes to the appropriate DOM nodes when data changes. */
     commit(element: ChildNode|Element, pointer: ChildNode|Element, oldValue: any, newValue: any) {
-        // console.log(element, pointer, oldValue, newValue);
+        // console.log(element, pointer, oldValue, newValue, this);
         switch(this.config.type) {
             case 'node':
                 this.commitNode(element, pointer, oldValue, newValue);
@@ -33,8 +33,7 @@ export default class Memory {
             const ott = OTT(newValue);
             const inst = ott.instance;
             pointer.replaceWith(inst);
-            _repaint(inst, ott.memories, [], ott.values);
-            // console.log(inst);
+            _repaint(inst, ott.memories, [], ott.values, true);
         }
         if(typeof newValue === 'object' && newValue.__isKeyedArray) {
             this.commitArray(element, pointer, oldValue, newValue);
@@ -42,8 +41,9 @@ export default class Memory {
         else if(typeof newValue === 'function') {
             const called = newValue();
             const ott = OTT(called);
-            pointer.replaceWith(ott.instance);
-            _repaint(ott.instance, ott.memories, [], ott.values);
+            const inst = ott.instance;
+            pointer.replaceWith(inst);
+            _repaint(inst, ott.memories, [], ott.values, true);
         }
         else {
             pointer.replaceWith(newValue);
@@ -58,7 +58,7 @@ export default class Memory {
         // it as an attribute.
         if(!attribute) {
             if(isBooleanAttribute(name) && newValue === true)
-            (pointer as Element).setAttribute(name, 'true');
+                (pointer as Element).setAttribute(name, 'true');
             return;
         }
 
@@ -83,7 +83,7 @@ export default class Memory {
             if(pointer.received) {
                 let obj = {};
                 obj[name] = newValue;
-                pointer.received(obj);
+                pointer.received.call(pointer, obj);
             }
         }
     }

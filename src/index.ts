@@ -8,7 +8,6 @@ import { getTemplate, _repaint } from './parser';
 export default function Mosaic(options: MosaicOptions): MosaicComponent {
     // Configure some basic properties.
     const tid: string = randomKey();
-    const copiedData: Object = Object.assign({}, options.data || {});
     
     // Error checking.
     if(typeof options.name !== 'string')
@@ -16,12 +15,12 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
 
     // Define the custom element.
     customElements.define(options.name, class extends MosaicComponent {
-        constructor() { super(); }
-
-        connectedCallback() {
-            // 1.) Setup basic properties.
+        constructor() {
+            super();
+            
+            // 1.) Setup basic properties such as data.
             this.tid = tid;
-            this.data = new Observable(copiedData, old => {
+            this.data = new Observable(Object.assign({}, options.data || {}), old => {
                 if(this.barrier === true) return;
                 if(this.willUpdate) this.willUpdate(old);
             }, () => {
@@ -29,8 +28,10 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                 this.repaint();
                 if(this.updated) this.updated();
             });
-            
-            // Configure all of the properties if they exist.
+        }
+
+        connectedCallback() {
+            // 1.) Configure all of the properties if they exist.
             let _options = Object.keys(options);
             for(let i = 0; i < _options.length; i++) {
                 let key = _options[i];
