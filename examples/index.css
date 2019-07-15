@@ -1,13 +1,15 @@
-my-app {
+home-page {
     position: absolute;
     top: 0px;
     left: 0px;
     right: 0px;
     bottom: 0px;
     padding: 20px;
+    color: #4341AE;
     margin-left: 10%;
     margin-right: 10%;
     text-align: center;
+    letter-spacing: 1.2px;
     background-color: white;
     font-family: Avenir, sans-serif;
 }
@@ -21,7 +23,8 @@ p {
     font-size: 18px;
 }
 h3 {
-    font-weight: 500;
+    font-weight: 400;
+    color: rgb(114, 114, 114);
 }
 
 section {

@@ -13,13 +13,24 @@ export class MosaicComponent extends HTMLElement {
     willDestroy?: Function;
     barrier: boolean = false;
     received?: (info: Object) => void;
+    initiallyRendered: boolean = false;
     view?: (self?: any) => ViewFunction;
     data: Observable = new Observable({});
-    readonly descendants: DocumentFragment = document.createDocumentFragment();
+    descendants: DocumentFragment = document.createDocumentFragment();
 
     paint(el?: string|Element) {};
     repaint() {};
     set(data: Object) {};
+}
+
+/** The methods that users can call on the Mosaic Router. */
+export class MosaicRouter extends HTMLElement {
+    data: Object = {};
+
+    addRoute(path: string|string[], component: HTMLElement) {};
+    setNotFound(component: HTMLElement) {};
+    send(to: string, data: Object = {}) {};
+    paint() {};
 }
 
 /** The configuration options for a Mosaic component. */
@@ -32,10 +43,10 @@ export interface MosaicOptions {
     portfolio: Portfolio;
     willDestroy: Function;
     element: string|Element;
+    descendants: DocumentFragment;
     received?: (info: Object) => void;
     willUpdate: (old: Object) => void;
     view: (self?: any) => ViewFunction;
-    readonly descendants: DocumentFragment;
 }
 
 /** Config options for a memory. */

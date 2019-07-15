@@ -1,7 +1,7 @@
-// Define the web component for the Router.
-customElements.define('mosaic-router', class extends HTMLElement {
-    public data: Object;
+import { MosaicRouter } from "./options";
 
+// Define the web component for the Router.
+customElements.define('mosaic-router', class extends MosaicRouter {
     /** @internal */
     private routes: Object;
     /** @internal */
@@ -21,6 +21,7 @@ customElements.define('mosaic-router', class extends HTMLElement {
         window.onpopstate = () => {
             let oldURL = window.location.pathname;
             this.data = Object.assign({}, this.data);
+            this.current = oldURL;
             this.render(oldURL);
         }
     }
@@ -37,6 +38,9 @@ customElements.define('mosaic-router', class extends HTMLElement {
 
         // Render the component at this route. By calling "appendChild"
         // you are essentially calling the "connectedCallback."
+        // TODO: For some reason when you go back to a page it no longer
+        // has the event handlers so you can't click any butotns. Figure
+        // out why this is.
         this.innerHTML = '';
         this.appendChild(route);
     }
@@ -82,9 +86,9 @@ customElements.define('mosaic-router', class extends HTMLElement {
 
 
 /** A client-side routing solution for Mosaic apps. */
-export default function Router(element: string|Element) {
+export default function Router(element: string|Element): MosaicRouter {
     // Return an instance of the router.
     const router = document.createElement('mosaic-router');
     (router as any).element = element;
-    return router;
+    return router as MosaicRouter;
 }

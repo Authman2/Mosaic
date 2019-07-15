@@ -15,57 +15,69 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
 
     // Define the custom element.
     customElements.define(options.name, class extends MosaicComponent {
-        constructor() { super(); }
+        constructor() {
+            super();
+            this.initiallyRendered = false;
+        }
 
         connectedCallback() {
             // 1.) Setup basic properties such as data.
-            this.tid = tid;
-            this.data = new Observable(Object.assign({}, options.data || {}), old => {
-                if(this.barrier === true) return;
-                if(this.willUpdate) this.willUpdate(old);
-            }, () => {
-                if(this.barrier === true) return;
-                this.repaint();
-                if(this.updated) this.updated();
-            });
+            if(!this.initiallyRendered) {
+                this.tid = tid;
+                this.data = new Observable(Object.assign({}, options.data || {}), old => {
+                    if(this.barrier === true) return;
+                    if(this.willUpdate) this.willUpdate(old);
+                }, () => {
+                    if(this.barrier === true) return;
+                    this.repaint();
+                    if(this.updated) this.updated();
+                });
 
-            // Configure all of the properties if they exist.
-            let _options = Object.keys(options);
-            for(let i = 0; i < _options.length; i++) {
-                let key = _options[i];
-                if(key === 'element') continue;
-                else if(key === 'data') continue;
-                else this[key] = options[key];
-            }
+                // Configure all of the properties if they exist.
+                let _options = Object.keys(options);
+                for(let i = 0; i < _options.length; i++) {
+                    let key = _options[i];
+                    if(key === 'element') continue;
+                    else if(key === 'data') continue;
+                    else this[key] = options[key];
+                }
 
-            // Remove any child nodes and save them as to the descendants
-            // property so that it can optionally be used later on.
-            if(this.innerHTML !== '') {
-                this.descendants.append(...this.childNodes);
-                this.innerHTML = '';
+                // Remove any child nodes and save them as to the descendants
+                // property so that it can optionally be used later on.
+                if(this.innerHTML !== '') this.descendants.append(...this.childNodes);
             }
 
             // Add portfolio dependency.
             if(this.portfolio) this.portfolio.addDependency(this);
+            
+            // Clear any existing content that was in there before.
+            if(!this.initiallyRendered) this.innerHTML = '';
 
             // 2.) Find the template for this component, clone it, and repaint.
             // Then call the created lifecycle function.
             const template = getTemplate(this);
             const cloned = document.importNode(template.content, true);
-            this.appendChild(cloned);
+            if(!this.initiallyRendered) this.appendChild(cloned);
+            
             this.repaint();
             if(this.created) this.created();
 
             // 3.) If there are any attributes present on this element at
             // connection time and they are not dynamic (i.e. their value does
             // not match the nodeMarker) then you can receive them as data.
-            let receivedAttributes = {};
-            for(let i = 0; i < this.attributes.length; i++) {
-                const { name, value } = this.attributes[i];
-                if(value === nodeMarker) continue;
-                receivedAttributes[name] = value;
+            if(this.initiallyRendered === false) {
+                let receivedAttributes = {};
+                for(let i = 0; i < this.attributes.length; i++) {
+                    const { name, value } = this.attributes[i];
+                    if(value === nodeMarker) continue;
+                    receivedAttributes[name] = value;
+                }
+                if(this.received) this.received(receivedAttributes);
             }
-            if(this.received) this.received(receivedAttributes);
+
+            // Make sure the component knows that it has been fully rendered
+            // for the first time. This makes the router work.
+            this.initiallyRendered = true;
         }
 
         disconnectedCallback() {

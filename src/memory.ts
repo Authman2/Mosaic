@@ -76,6 +76,12 @@ export default class Memory {
             else (pointer as Element).removeAttribute(name);
         }
 
+        // Remove the function attribute so it's not cluttered. The event
+        // listener will still exist on the element, though.
+        if(typeof newValue === 'function') {
+            (pointer as Element).removeAttribute(name);
+        }
+
         // If you come across a Mosaic element rather than a regular HTML tag,
         // call the lifecycle function to handle what to do when that data
         // comes in. The component itself will then decide what to do with it.
