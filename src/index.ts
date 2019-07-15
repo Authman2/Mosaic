@@ -45,6 +45,9 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                 this.innerHTML = '';
             }
 
+            // Add portfolio dependency.
+            if(this.portfolio) this.portfolio.addDependency(this);
+
             // 2.) Find the template for this component, clone it, and repaint.
             // Then call the created lifecycle function.
             const template = getTemplate(this);
@@ -66,6 +69,7 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
         }
 
         disconnectedCallback() {
+            if(this.portfolio) this.portfolio.removeDependency(this);
             if(this.willDestroy) this.willDestroy();
         }
 
