@@ -3,9 +3,7 @@ import Mosaic from '../src/index';
 export default new Mosaic({
     name: 'round-button',
     received(data) {
-        if(data.click && !this.data.click) {
-            this.data.click = data.click;
-        }
+        if(data.click && !this.data.click) this.data.click = data.click;
         
         if(data.type) {
             switch(data.type) {

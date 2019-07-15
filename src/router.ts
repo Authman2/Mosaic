@@ -38,9 +38,6 @@ customElements.define('mosaic-router', class extends MosaicRouter {
 
         // Render the component at this route. By calling "appendChild"
         // you are essentially calling the "connectedCallback."
-        // TODO: For some reason when you go back to a page it no longer
-        // has the event handlers so you can't click any butotns. Figure
-        // out why this is.
         this.innerHTML = '';
         this.appendChild(route);
     }
