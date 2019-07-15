@@ -34,7 +34,6 @@ export default class Memory {
             const inst = ott.instance;
             pointer.replaceWith(inst);
             _repaint(inst, ott.memories, [], ott.values, true);
-            inst.outerHTML = inst.innerHTML;
         }
         if(typeof newValue === 'object' && newValue.__isKeyedArray) {
             this.commitArray(element, pointer, oldValue, newValue);
@@ -143,7 +142,6 @@ export default class Memory {
                 const instance = ott.instance;
                 const mems = ott.memories;
                 _repaint(instance, mems, [], ott.values, true);
-                instance.outerHTML = instance.innerHTML;
             }
         } else {
             // Make efficient patches.
@@ -186,7 +184,6 @@ export default class Memory {
 
                 // Repaint the inserted node.
                 _repaint(newNode.instance, newNode.memories, [], newNode.values, true);
-                newNode.instance.outerHTML = newNode.instance.innerHTML;
             }
         }
     }

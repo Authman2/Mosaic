@@ -24,17 +24,11 @@ export function OTT(view: ViewFunction, key?: string) {
     template.innerHTML = buildHTML(view.strings);
     (template as any).memories = memorize.call(template);
 
-    // Create a holding container for the OTT. The only reason this is 
-    // necessary is because of the way the renderer is current set up.
-    // Otherwise the stepper will not reach the right node. It will be
-    // removed later on when parsing a memory.
-    const holder = document.createElement('div');
     const instance = document.importNode(template.content, true).firstChild as HTMLElement;
-    holder.appendChild(instance);
     if(key) instance.setAttribute('key', key);
     
     return {
-        instance: holder,
+        instance,
         values: view.values,
         memories: (template as any).memories,
     };
@@ -44,6 +38,16 @@ export function OTT(view: ViewFunction, key?: string) {
 export function _repaint(element: HTMLElement, memories: Memory[], oldValues: any[], newValues: any[], isOTT: boolean = false) {
     for(let i = 0; i < memories.length; i++) {
         const mem: Memory = memories[i];
+        
+        // What's really funny is that when you render a component, you
+        // assume that it will have the <custom-element> holder, right?
+        // But with OTTs you don't have that, even though all memory
+        // steps are expecting it. So when you come across a memory that
+        // is a OTT, just remove that first step, cause it is only used
+        // for the holding container.
+        if(isOTT === true) mem.config.steps.splice(0, 1);
+
+        // Get the reference to the true node that you are pointing at.
         const pointer = step(element, mem.config.steps);
         
         // Get the old and new values.

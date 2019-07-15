@@ -70,8 +70,7 @@ const app = Mosaic({
         <my-button title='Add at index 2'
                 onclick='${this.addItem}'></my-button>
         ${Mosaic.list(this.data.items, item => item.id, (item, index) => {
-            return html`<my-button title='Click' click='${() => console.log('ok then')}'></my-button>`
-            return html`<div id='${item.id}' onclick='${() => console.log('hi')}' style='width:50px;height:50px;background-color:green;cursor:pointer'>
+            return html`<div id='${item.id}' onclick='${() => this.data.items = this.data.items.filter(a => a.id !== item.id)}' style='width:50px;height:50px;background-color:green;cursor:pointer'>
                 <h5>${item.name}</h5>
                 <h5>${item.id}</h5>
             </div>`
