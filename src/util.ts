@@ -37,11 +37,16 @@ export function traverse($node: Node|HTMLElement|ChildNode, action: Function, st
 }
 
 /** Steps down through the child nodes until it reaches the last step. */
-export function step(parent: ChildNode|Element, steps: number[]) {
+export function step(parent: ChildNode|Element, steps: number[], skipText: boolean = false) {
     let child = parent;
     for(let i = 0; i < steps.length; i++) {
         let next: number = steps[i];
-        if(child.childNodes.length >= next) child = child.childNodes[next];
+        if(child.childNodes.length >= next) {
+            const nextChild = child.childNodes[next];
+            
+            if(nextChild) child = child.childNodes[next];
+            else continue;
+        }
     }
     return child;
 }
@@ -90,16 +95,16 @@ export function changed(oldv: any, newv: any, isOTT?: boolean) {
 
 /** Finds the differences between two arrays of keys. */
 export function difference(one: string[], two: string[]) {
-    let additions: { key: string, index: number }[] = [];
-    let deletions: { key: string, index: number }[] = [];
+    let additions: { key: string, newIndex: number }[] = [];
+    let deletions: { key: string, oldIndex: number }[] = [];
     
     one.forEach((item, index) => {
         const found = two.find(obj => item === obj);
-        if(!found) deletions.push({ key: item, index });
+        if(!found) deletions.push({ key: item, oldIndex: index });
     });
     two.forEach((item, index) => {
         const found = one.find(obj => item === obj);
-        if(!found) additions.push({ key: item, index });
+        if(!found) additions.push({ key: item, newIndex: index });
     });
     return { deletions, additions };
 }

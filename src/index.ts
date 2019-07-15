@@ -1,4 +1,4 @@
-import { MosaicComponent, MosaicOptions, ViewFunction } from './options';
+import { MosaicComponent, MosaicOptions, ViewFunction, KeyedArray } from './options';
 import Observable from './observable';
 import Router from './router';
 import Portfolio from './portfolio';
@@ -15,9 +15,9 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
 
     // Define the custom element.
     customElements.define(options.name, class extends MosaicComponent {
-        constructor() {
-            super();
-            
+        constructor() { super(); }
+
+        connectedCallback() {
             // 1.) Setup basic properties such as data.
             this.tid = tid;
             this.data = new Observable(Object.assign({}, options.data || {}), old => {
@@ -28,10 +28,8 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                 this.repaint();
                 if(this.updated) this.updated();
             });
-        }
 
-        connectedCallback() {
-            // 1.) Configure all of the properties if they exist.
+            // Configure all of the properties if they exist.
             let _options = Object.keys(options);
             for(let i = 0; i < _options.length; i++) {
                 let key = _options[i];
@@ -100,6 +98,13 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
 
     const component = document.createElement(options.name);
     return component as MosaicComponent;
+}
+
+/** A function for efficiently rendering a list in a component. */
+Mosaic.list = function(items, key: Function, map: Function): KeyedArray {
+    const keys = items.map((itm, index) => key(itm, index));
+    const mapped = items.map((itm, index) => map(itm, index));
+    return { keys, items: mapped, __isKeyedArray: true };
 }
 
 declare global {

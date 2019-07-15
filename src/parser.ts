@@ -24,22 +24,27 @@ export function OTT(view: ViewFunction, key?: string) {
     template.innerHTML = buildHTML(view.strings);
     (template as any).memories = memorize.call(template);
 
+    // Create a holding container for the OTT. The only reason this is 
+    // necessary is because of the way the renderer is current set up.
+    // Otherwise the stepper will not reach the right node. It will be
+    // removed later on when parsing a memory.
+    const holder = document.createElement('div');
     const instance = document.importNode(template.content, true).firstChild as HTMLElement;
+    holder.appendChild(instance);
     if(key) instance.setAttribute('key', key);
     
     return {
-        instance,
+        instance: holder,
         values: view.values,
         memories: (template as any).memories,
     };
 }
 
 /** A global repaint function, which can be used for templates and components. */
-export function _repaint(element: HTMLElement, memories: Memory[], 
-                        oldValues: any[], newValues: any[], isOTT: boolean = false) {
+export function _repaint(element: HTMLElement, memories: Memory[], oldValues: any[], newValues: any[], isOTT: boolean = false) {
     for(let i = 0; i < memories.length; i++) {
         const mem: Memory = memories[i];
-        const pointer = isOTT ? element : step(element, mem.config.steps);
+        const pointer = step(element, mem.config.steps);
         
         // Get the old and new values.
         let oldv = oldValues[i];

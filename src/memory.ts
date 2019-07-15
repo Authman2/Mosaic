@@ -1,4 +1,4 @@
-import { nodeMarker, insertAfter, difference, isBooleanAttribute } from './util';
+import { nodeMarker, insertAfter, difference, isBooleanAttribute, step, randomKey } from './util';
 import { MemoryOptions, MosaicComponent } from './options';
 import { OTT, _repaint } from './parser';
 
@@ -34,6 +34,7 @@ export default class Memory {
             const inst = ott.instance;
             pointer.replaceWith(inst);
             _repaint(inst, ott.memories, [], ott.values, true);
+            inst.outerHTML = inst.innerHTML;
         }
         if(typeof newValue === 'object' && newValue.__isKeyedArray) {
             this.commitArray(element, pointer, oldValue, newValue);
@@ -115,6 +116,78 @@ export default class Memory {
 
     /** Helper function for applying changes to arrays. */
     commitArray(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, oldValue: any, newValue: any) {
-        
+        if(!oldValue || oldValue.length === 0) {
+            // Convert the Keyed Array to an array of OTTs.
+            const keys = newValue.keys;
+            const items = newValue.items;
+            const otts: any[] = [];
+            for(let i = 0; i < keys.length; i++) {
+                const key = keys[i];
+                const item = items[i];
+                const rendered = OTT(item, key);
+                otts.push(rendered);
+            }
+            
+            // Add each item to the DOM.
+            const frag = document.createDocumentFragment();
+            for(let i = 0; i < otts.length; i++) {
+                const ott = otts[i];
+                const instance = ott.instance;
+                frag.append(instance);
+            }
+            pointer.replaceWith(frag);
+            
+            // Repaint each node.
+            for(let i = 0; i < otts.length; i++) {
+                const ott = otts[i];
+                const instance = ott.instance;
+                const mems = ott.memories;
+                _repaint(instance, mems, [], ott.values, true);
+                instance.outerHTML = instance.innerHTML;
+            }
+        } else {
+            // Make efficient patches.
+            const { additions, deletions } = difference(oldValue.keys, newValue.keys);
+            
+            // For the deletions, just look for the keyed item and remove it.
+            for(let i = 0; i < deletions.length; i++) {
+                const { key } = deletions[i];
+                const found = document.querySelector(`[key='${key}']`);
+                if(found) {
+                    if(newValue.items.length === 0) {
+                        const comment = document.createComment(nodeMarker);
+                        found.replaceWith(comment);
+                    } else {
+                        found.remove();
+                    }
+                }
+            }
+
+            // For additions, find the node next to the index of the last item,
+            // then place it after that.
+            for(let i = 0; i < additions.length; i++) {
+                // Get the old index for where you need to correctly insert.
+                const { key, newIndex } = additions[i];
+                const oldIndex = newIndex - (additions.length + i);
+
+                // Render the new item and find the old item too.
+                const newNode = OTT(newValue.items[newIndex], key);
+                const oldItem = oldValue.items[oldIndex];
+
+                // Once you have found the old item, look for the node in the
+                // DOM and insert the element before that.
+                if(oldItem) {
+                    const oldKey = oldValue.keys[oldIndex];
+                    const oldNode = document.querySelector(`[key='${oldKey}']`);
+                    insertAfter(newNode.instance, oldNode);
+                } else {
+                    pointer.replaceWith(newNode.instance);
+                }
+
+                // Repaint the inserted node.
+                _repaint(newNode.instance, newNode.memories, [], newNode.values, true);
+                newNode.instance.outerHTML = newNode.instance.innerHTML;
+            }
+        }
     }
 }
