@@ -1,4 +1,4 @@
-import { nodeMarker, insertAfter, difference, isBooleanAttribute, step, randomKey } from './util';
+import { nodeMarker, insertAfter, difference, isBooleanAttribute } from './util';
 import { MemoryOptions, MosaicComponent } from './options';
 import { OTT, _repaint } from './parser';
 

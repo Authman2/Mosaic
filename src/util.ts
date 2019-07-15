@@ -37,7 +37,7 @@ export function traverse($node: Node|HTMLElement|ChildNode, action: Function, st
 }
 
 /** Steps down through the child nodes until it reaches the last step. */
-export function step(parent: ChildNode|Element, steps: number[], skipText: boolean = false) {
+export function step(parent: ChildNode|Element, steps: number[]) {
     let child = parent;
     for(let i = 0; i < steps.length; i++) {
         let next: number = steps[i];
