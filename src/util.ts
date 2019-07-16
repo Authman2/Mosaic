@@ -51,6 +51,26 @@ export function step(parent: ChildNode|Element, steps: number[]) {
     return child;
 }
 
+/** A function that goes up through the component chain attempting to
+* find the router so that each element can have a reference to it. */
+export function goUpToConfigureRouter() {
+    // See if there is an element that already has a router property.
+    // If so, take it (this may go all the way back up the tree).
+    let i = 0;
+    let parent = this.parentNode;
+    while(parent && parent.parentNode && parent.parentNode.nodeName !== 'BODY') {
+        if((parent as any).router) {
+            this.router = (parent as any).router;
+            break;
+        }
+        parent = parent.parentNode;
+        i += 1;
+        if(i > 1000) break;
+    }
+    if(parent && parent.firstChild && (parent.firstChild as any).router)
+        this.router = (parent.firstChild as any).router;
+}
+
 /** Compares two values are returns false if they are the same and 
 * true if they are different (i.e. they changed). */
 export function changed(oldv: any, newv: any, isOTT?: boolean) {

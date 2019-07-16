@@ -23,16 +23,6 @@ export class MosaicComponent extends HTMLElement {
     set(data: Object) {};
 }
 
-/** The methods that users can call on the Mosaic Router. */
-export class MosaicRouter extends HTMLElement {
-    data: Object = {};
-
-    addRoute(path: string|string[], component: HTMLElement) {};
-    setNotFound(component: HTMLElement) {};
-    send(to: string, data: Object = {}) {};
-    paint() {};
-}
-
 /** The configuration options for a Mosaic component. */
 export interface MosaicOptions {
     name: string;

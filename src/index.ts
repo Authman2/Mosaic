@@ -2,7 +2,7 @@ import { MosaicComponent, MosaicOptions, ViewFunction, KeyedArray } from './opti
 import Observable from './observable';
 import Router from './router';
 import Portfolio from './portfolio';
-import { randomKey, nodeMarker } from './util';
+import { randomKey, nodeMarker, goUpToConfigureRouter } from './util';
 import { getTemplate, _repaint } from './parser';
 
 export default function Mosaic(options: MosaicOptions): MosaicComponent {
@@ -52,6 +52,9 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             
             // Clear any existing content that was in there before.
             if(!this.initiallyRendered) this.innerHTML = '';
+
+            // Make sure we have the router property.
+            goUpToConfigureRouter.call(this);
 
             // 2.) Find the template for this component, clone it, and repaint.
             // Then call the created lifecycle function.

@@ -1,7 +1,10 @@
-import { MosaicRouter } from "./options";
+import { traverse } from "./util";
+import { MosaicComponent } from "./options";
 
-// Define the web component for the Router.
-customElements.define('mosaic-router', class extends MosaicRouter {
+/** A client-side routing solution for Mosaic apps. */
+export default class Router {
+    public data: Object;
+
     /** @internal */
     private routes: Object;
     /** @internal */
@@ -9,14 +12,16 @@ customElements.define('mosaic-router', class extends MosaicRouter {
     /** @internal */
     private notFound?: HTMLElement;
     /** @internal */
-    private element: string|Element;
+    private element: Element;
 
-    constructor() {
-        super();
+    constructor(element?: string|Element) {
         this.data = {};
         this.routes = {};
         this.current = '/';
-        this.element = document.body;
+
+        if(typeof element === 'string') this.element = document.getElementById(element) || document.body;
+        else if(element) this.element = element;
+        else this.element = document.body;
 
         window.onpopstate = () => {
             let oldURL = window.location.pathname;
@@ -38,14 +43,14 @@ customElements.define('mosaic-router', class extends MosaicRouter {
 
         // Render the component at this route. By calling "appendChild"
         // you are essentially calling the "connectedCallback."
-        this.innerHTML = '';
-        this.appendChild(route);
+        this.element.innerHTML = '';
+        this.element.appendChild(route);
     }
 
     /** Adds a new route. */
     addRoute(path: string|string[], component: HTMLElement) {
+        // Configure the component.
         const addPath = path => {
-            // Configure the component.
             (component as any).router = this;
             this.routes[path] = component;
         };
@@ -74,18 +79,5 @@ customElements.define('mosaic-router', class extends MosaicRouter {
         if(window.location.pathname !== this.current)
             this.current = window.location.pathname;
         this.render(this.current);
-        
-        // Add the router to the document.
-        const base = typeof this.element === 'string' ? document.getElementById(this.element) : this.element;
-        if(base) base.replaceWith(this);
     }
-});
-
-
-/** A client-side routing solution for Mosaic apps. */
-export default function Router(element: string|Element): MosaicRouter {
-    // Return an instance of the router.
-    const router = document.createElement('mosaic-router');
-    (router as any).element = element;
-    return router as MosaicRouter;
 }
