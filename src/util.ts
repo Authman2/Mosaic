@@ -1,3 +1,6 @@
+import { KeyedArray } from "./options";
+import { OTT, _repaint } from "./parser";
+
 // The placeholders in the HTML.
 export const nodeMarker = `<!--{{m-${String(Math.random()).slice(2)}}}-->`;
 export const lastAttributeNameRegex = /([ \x09\x0a\x0c\x0d])([^\0-\x1F\x7F-\x9F \x09\x0a\x0c\x0d"'>=/]+)([ \x09\x0a\x0c\x0d]*=[ \x09\x0a\x0c\x0d]*(?:[^ \x09\x0a\x0c\x0d"'`<>=]*|"[^"]*|'[^']*))$/;
@@ -127,4 +130,53 @@ export function difference(one: string[], two: string[]) {
         if(!found) additions.push({ key: item, newIndex: index });
     });
     return { deletions, additions };
+}
+
+/** Renders array elements for the first time. Use the function
+* parameters to determine whether it is for a keyed array or an
+* unkeyed array. Just used so you don't rewrite mostly the same code. */
+export function renderFirstTimeArray(pointer: Element, newValue: any[]|KeyedArray) {
+    const isRegular = Array.isArray(newValue);
+    
+    let keys, items;
+    if(isRegular) keys = newValue.keys;
+    if(isRegular) items = newValue;
+    else (newValue as KeyedArray).items;
+    
+    const otts: any[] = [];
+    for(let i = 0; i < items.length; i++) {
+        let key, item;
+        item = items[i];
+
+        if(!isRegular) key = keys[i];
+        
+        const rendered = isRegular ? OTT(item) : OTT(item, key);
+        otts.push(rendered);
+    }
+    
+    // Add each item to the DOM.
+    const frag = document.createDocumentFragment();
+    for(let i = 0; i < otts.length; i++) {
+        const ott = otts[i];
+        const instance = ott.instance;
+        frag.append(instance);
+    }
+
+    let addition;
+    if(isRegular) {
+        addition = document.createElement('div');
+        addition.appendChild(frag);
+    } else {
+        addition = frag;
+    }
+
+    pointer.replaceWith(addition);
+    
+    // Repaint each node.
+    for(let i = 0; i < otts.length; i++) {
+        const ott = otts[i];
+        const instance = ott.instance;
+        const mems = ott.memories;
+        _repaint(instance, mems, [], ott.values, true);
+    }
 }

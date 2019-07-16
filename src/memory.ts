@@ -1,4 +1,4 @@
-import { nodeMarker, insertAfter, difference, isBooleanAttribute } from './util';
+import { nodeMarker, insertAfter, difference, isBooleanAttribute, renderFirstTimeArray } from './util';
 import { MemoryOptions, MosaicComponent } from './options';
 import { OTT, _repaint } from './parser';
 
@@ -27,7 +27,7 @@ export default class Memory {
     /** Applies changes to memories of type "node." */
     commitNode(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, oldValue: any, newValue: any) {
         if(Array.isArray(newValue)) {
-            throw new Error(`Regular arrays cannot be used in Mosaic. Please use the "Mosaic.list" function for efficient rendering.`);
+            renderFirstTimeArray(pointer as Element, newValue);
         }
         if(typeof newValue === 'object' && newValue.__isTemplate) {
             const ott = OTT(newValue);
@@ -122,33 +122,7 @@ export default class Memory {
     /** Helper function for applying changes to arrays. */
     commitArray(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, oldValue: any, newValue: any) {
         if(!oldValue || oldValue.length === 0) {
-            // Convert the Keyed Array to an array of OTTs.
-            const keys = newValue.keys;
-            const items = newValue.items;
-            const otts: any[] = [];
-            for(let i = 0; i < keys.length; i++) {
-                const key = keys[i];
-                const item = items[i];
-                const rendered = OTT(item, key);
-                otts.push(rendered);
-            }
-            
-            // Add each item to the DOM.
-            const frag = document.createDocumentFragment();
-            for(let i = 0; i < otts.length; i++) {
-                const ott = otts[i];
-                const instance = ott.instance;
-                frag.append(instance);
-            }
-            pointer.replaceWith(frag);
-            
-            // Repaint each node.
-            for(let i = 0; i < otts.length; i++) {
-                const ott = otts[i];
-                const instance = ott.instance;
-                const mems = ott.memories;
-                _repaint(instance, mems, [], ott.values, true);
-            }
+            renderFirstTimeArray(pointer as Element, newValue);
         } else {
             // Make efficient patches.
             const { additions, deletions } = difference(oldValue.keys, newValue.keys);

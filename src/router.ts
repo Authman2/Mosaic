@@ -1,6 +1,3 @@
-import { traverse } from "./util";
-import { MosaicComponent } from "./options";
-
 /** A client-side routing solution for Mosaic apps. */
 export default class Router {
     public data: Object;
