@@ -11,7 +11,11 @@ export default new Mosaic({
     },
     created() {
         setTimeout(() => {
-            this.data.items.push('h');
+            this.data.items.splice(1, 0, 'h');
+
+            setTimeout(() => {
+                this.data.items.splice(2,1);
+            }, 3000);
         }, 5000);
     },
     view: self => html`

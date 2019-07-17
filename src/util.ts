@@ -88,7 +88,7 @@ export function changed(oldv: any, newv: any, isOTT?: boolean) {
         if(isOTT && isOTT === true) return true;
         else return (''+oldv) !== (''+newv);
     }
-    else if(Array.isArray(newv)) return (''+oldv) !== (''+newv);
+    else if(Array.isArray(newv)) return true;
     else if(typeof newv === 'object') {
         // Template:
         if(oldv.__isTemplate) {
