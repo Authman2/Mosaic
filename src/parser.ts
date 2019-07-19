@@ -1,4 +1,4 @@
-import { MosaicComponent, ViewFunction } from "./options";
+import { MosaicComponent, ViewFunction, BatchUpdate } from "./options";
 import { lastAttributeNameRegex, nodeMarker, traverse, changed, step } from "./util";
 import Memory from "./memory";
 
@@ -36,6 +36,8 @@ export function OTT(view: ViewFunction, key?: string) {
 
 /** A global repaint function, which can be used for templates and components. */
 export function _repaint(element: HTMLElement, memories: Memory[], oldValues: any[], newValues: any[], isOTT: boolean = false) {
+    let nestedNodes: Object = {};
+
     for(let i = 0; i < memories.length; i++) {
         const mem: Memory = memories[i];
 
@@ -61,8 +63,25 @@ export function _repaint(element: HTMLElement, memories: Memory[], oldValues: an
         
         // Compare and commit.
         if(changed(oldv, newv, alwaysUpdateFunction))
-            mem.commit(element, pointer, oldv, newv);
+            mem.commit(element, pointer, oldv, newv, nestedNodes);
     }
+
+    Object.keys(nestedNodes).forEach(key => {
+        const point = nestedNodes[key] as MosaicComponent;
+        const justData = {};
+        const justAttrs = {};
+        for(let i = 0; i < point.batches.length; i++) {
+            const { name: b_name, value: b_value } = point.batches[i];
+            if(point.data[b_name]) {
+                justData[b_name] = b_value;
+                continue;
+            }
+            justAttrs[b_name] = b_value;
+        }
+        if(point.received) point.received(justAttrs);
+        point.set(justData);
+        point.batches = [];
+    });
 }
 
 /** Takes the strings of a tagged template literal and 

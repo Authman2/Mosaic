@@ -2,11 +2,13 @@ import Mosaic from '../src/index';
 
 export default new Mosaic({
     name: 'round-button',
-    received(data) {
-        if(data.click && !this.data.click) this.data.click = data.click;
-        
-        if(data.type) {
-            switch(data.type) {
+    data: {
+        click: () => {}
+    },
+    received(info) {
+        console.log(info);
+        if(info.type) {
+            switch(info.type) {
                 case 'primary': this.style.backgroundColor = 'cornflowerblue'; break;
                 case 'success': this.style.backgroundColor = 'mediumseagreen'; break;
                 case 'danger': this.style.backgroundColor = 'crimson'; break;

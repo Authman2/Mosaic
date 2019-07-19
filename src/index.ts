@@ -24,6 +24,7 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             // 1.) Setup basic properties such as data.
             if(!this.initiallyRendered) {
                 this.tid = tid;
+                this.iid = randomKey();
                 this.data = new Observable(Object.assign({}, options.data || {}), old => {
                     if(this.barrier === true) return;
                     if(this.willUpdate) this.willUpdate(old);
@@ -108,9 +109,11 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
         }
 
         set(data: Object) {
+            this.barrier = true;
             const keys = Object.keys(data);
             for(let i = 0; i < keys.length; i++)
                 this.data[keys[i]] = data[keys[i]];
+            this.barrier = false;
             this.repaint();
         }
     });

@@ -1,5 +1,5 @@
 import { nodeMarker, insertAfter, difference, isBooleanAttribute, renderFirstTimeArray } from './util';
-import { MemoryOptions, MosaicComponent } from './options';
+import { MemoryOptions, MosaicComponent, BatchUpdate } from './options';
 import { OTT, _repaint } from './parser';
 
 /** Represents a piece of dynamic content in the markup. */
@@ -8,7 +8,7 @@ export default class Memory {
 
 
     /** Applies the changes to the appropriate DOM nodes when data changes. */
-    commit(element: ChildNode|Element, pointer: ChildNode|Element, oldValue: any, newValue: any) {
+    commit(element: ChildNode|Element, pointer: ChildNode|Element, oldValue: any, newValue: any, nestedNodes: Object) {
         // console.log(element, pointer, oldValue, newValue, this);
         switch(this.config.type) {
             case 'node':
@@ -18,8 +18,8 @@ export default class Memory {
                 if(!this.config.attribute) break;
                 const { name } = this.config.attribute;
                 if(this.config.isEvent === true)
-                    this.commitEvent(element, pointer, name, oldValue, newValue);
-                else this.commitAttribute(element, pointer, name, oldValue, newValue);
+                    this.commitEvent(element, pointer, name, oldValue, newValue, nestedNodes);
+                else this.commitAttribute(element, pointer, name, oldValue, newValue, nestedNodes);
                 break;
         }
     }
@@ -51,7 +51,10 @@ export default class Memory {
     }
 
     /** Applies attribtue and event listener changes. */
-    commitAttribute(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, name: string, oldValue: any, newValue: any) {
+    commitAttribute(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, 
+            name: string, oldValue: any, newValue: any, nestedNodes: Object)
+        {
+
         const attribute = (pointer as Element).attributes.getNamedItem(name);
         
         // If you come across a boolean attribute that should be true, then add
@@ -82,20 +85,30 @@ export default class Memory {
             (pointer as Element).removeAttribute(name);
         }
 
-        // If you come across a Mosaic element rather than a regular HTML tag,
-        // call the lifecycle function to handle what to do when that data
-        // comes in. The component itself will then decide what to do with it.
         if(this.config.isComponentType === true && pointer instanceof MosaicComponent) {
-            if(pointer.received) {
-                let obj = {};
-                obj[name] = newValue;
-                pointer.received.call(pointer, obj);
-            }
+            pointer.batches.push({
+                name,
+                value: newValue
+            });
+            nestedNodes[pointer.iid] = pointer;
         }
+
+        // // If you come across a Mosaic element rather than a regular HTML tag,
+        // // call the lifecycle function to handle what to do when that data
+        // // comes in. The component itself will then decide what to do with it.
+        // if(this.config.isComponentType === true && pointer instanceof MosaicComponent) {
+        //     if(pointer.received) {
+        //         let obj = {};
+        //         obj[name] = newValue;
+        //         pointer.received.call(pointer, obj);
+        //     }
+        // }
     }
 
     /** Applies event changes such as adding/removing listeners. */
-    commitEvent(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, name: string, oldValue: any, newValue: any) {
+    commitEvent(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, 
+            name: string, oldValue: any, newValue: any, nestedNodes: Object)
+        {
         const events = (pointer as any).eventHandlers || {};
         const shortName = name.substring(2);
 
@@ -117,6 +130,15 @@ export default class Memory {
         // Remove the attribute from the DOM tree to avoid clutter.
         if((pointer as Element).hasAttribute(name))
             (pointer as Element).removeAttribute(name);
+
+
+        if(this.config.isComponentType === true && pointer instanceof MosaicComponent) {
+            pointer.batches.push({
+                name,
+                value: newValue
+            });
+            nestedNodes[pointer.iid] = pointer;
+        }
     }
 
     /** Helper function for applying changes to arrays. */

@@ -1,8 +1,15 @@
 import Portfolio from "./portfolio";
 import Observable from './observable';
 
+/** A batched update during the rendering cycle. */
+export type BatchUpdate = {
+    name: string,
+    value: any
+};
+
 /** The methods that users can call on Mosaics. */
 export class MosaicComponent extends HTMLElement {
+    iid: string = '';
     tid: string = '';
     created?: Function;
     updated?: Function;
@@ -12,6 +19,7 @@ export class MosaicComponent extends HTMLElement {
     willUpdate?: Function;
     willDestroy?: Function;
     barrier: boolean = false;
+    batches: BatchUpdate[] = [];
     received?: (info: Object) => void;
     initiallyRendered: boolean = false;
     view?: (self?: any) => ViewFunction;
