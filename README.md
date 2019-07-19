@@ -19,7 +19,7 @@ that there is no need to call "setState" or anything like that to update a compo
 
 🌐 **State Manager**: Comes with a built-in global state manager called *Portfolio*.
 
-👌 **Small Library Size**: The minified Mosaic library comes in at a size of 20.2KB.
+👌 **Small Library Size**: The minified Mosaic library comes in at a size of 20.6KB.
 
 🔖 **Tagged Template Literals**: Views are written using tagged template literals, which means there is no need for a compiler:
 ```javascript
@@ -50,13 +50,16 @@ For a more detailed example, run the project inside the "example" folder.
 import Mosaic from '@authman2/mosaic';
 
 // The "text" data property gets injected by 
-// the parent component.
+// the parent component so we need to specify
+// that in the "data" option with a default value.
 new Mosaic({
     name: 'my-label',
+    data: { text: '' },
     view: self => {
         return html`
             <h2>${ self.data.text }</h2>
             <p>This is a custom label component!</p>
+            ${self.descendants}
         `;
     }
 });
@@ -64,8 +67,8 @@ new Mosaic({
 // Create an app component. Note how components
 // do not need to be nested under a single div.
 const app = new Mosaic({
-    element: 'root',
     name: 'my-app',
+    element: 'root',
     data: { title: "Mosaic App" },
     sayHello: function() {
         console.log("Hello World!!");
@@ -77,7 +80,9 @@ const app = new Mosaic({
             <p>Click below to print a message!</p>
             <button onclick="${this.sayHello}">Click Me!</button>
 
-            <my-label text='Welcome to Mosaic!'></my-label>
+            <my-label text='Welcome to Mosaic!'>
+                Awesome, right?
+            </my-label>
         `;
     }
 });

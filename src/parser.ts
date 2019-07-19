@@ -1,5 +1,5 @@
 import { MosaicComponent, ViewFunction, BatchUpdate } from "./options";
-import { lastAttributeNameRegex, nodeMarker, traverse, changed, step } from "./util";
+import { lastAttributeNameRegex, nodeMarker, traverse, changed, step, objectFromArray } from "./util";
 import Memory from "./memory";
 
 /** Finds or creates the template associated with a component. */
@@ -66,22 +66,22 @@ export function _repaint(element: HTMLElement, memories: Memory[], oldValues: an
             mem.commit(element, pointer, oldv, newv, nestedNodes);
     }
 
-    Object.keys(nestedNodes).forEach(key => {
-        const point = nestedNodes[key] as MosaicComponent;
-        const justData = {};
-        const justAttrs = {};
-        for(let i = 0; i < point.batches.length; i++) {
-            const { name: b_name, value: b_value } = point.batches[i];
-            if(point.data[b_name]) {
-                justData[b_name] = b_value;
-                continue;
-            }
-            justAttrs[b_name] = b_value;
-        }
-        if(point.received) point.received(justAttrs);
-        point.set(justData);
-        point.batches = [];
-    });
+    // Go through the immediately nested nodes and update them with the
+    // new data, while also sending over the parsed attributes. Then
+    // clear the batch when you are done.
+    const keys = Object.keys(nestedNodes);
+    for(let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        const component = nestedNodes[key] as MosaicComponent;
+        const justData = objectFromArray(component.batches.data);
+        const justAttrs = objectFromArray(component.batches.attributes);
+        
+        if(component.received && component.batches.attributes.length > 0)
+            component.received(justAttrs);
+        if(component.batches.data.length > 0) component.set(justData);
+
+        component.batches = { attributes: [], data: [] };
+    }
 }
 
 /** Takes the strings of a tagged template literal and 

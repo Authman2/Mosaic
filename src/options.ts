@@ -2,10 +2,10 @@ import Portfolio from "./portfolio";
 import Observable from './observable';
 
 /** A batched update during the rendering cycle. */
-export type BatchUpdate = {
-    name: string,
-    value: any
-};
+export type BatchUpdate = [
+    string,
+    any
+];
 
 /** The methods that users can call on Mosaics. */
 export class MosaicComponent extends HTMLElement {
@@ -19,12 +19,12 @@ export class MosaicComponent extends HTMLElement {
     willUpdate?: Function;
     willDestroy?: Function;
     barrier: boolean = false;
-    batches: BatchUpdate[] = [];
-    received?: (info: Object) => void;
     initiallyRendered: boolean = false;
-    view?: (self?: any) => ViewFunction;
     data: Observable = new Observable({});
+    received?: (attributes: Object) => void;
+    view?: (self?: MosaicComponent) => ViewFunction;
     descendants: DocumentFragment = document.createDocumentFragment();
+    batches: { attributes: BatchUpdate[], data: BatchUpdate[] } = { attributes: [], data: [] };
 
     paint(el?: string|Element) {};
     repaint() {};
@@ -42,9 +42,9 @@ export interface MosaicOptions {
     willDestroy: Function;
     element: string|Element;
     descendants: DocumentFragment;
-    received?: (info: Object) => void;
     willUpdate: (old: Object) => void;
-    view: (self?: any) => ViewFunction;
+    received?: (attributes: Object) => void;
+    view: (self?: MosaicComponent) => ViewFunction;
 }
 
 /** Config options for a memory. */

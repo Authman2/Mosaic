@@ -49,28 +49,32 @@ count-label {
 }
 
 round-button {
-    padding: 15px;
-    border-radius: 5px;
-    padding-right: 20px;
-    box-shadow: 2px 2px 20px 4px rgba(0,0,0,0.15);
-}
-round-button > button {
     position: relative;
-    top: 0px;
-    margin: 15px;
+    margin: 50px;
     border: none;
+    padding: 15px;
     outline: none;
-    padding: 10px;
+    display: block;
     color: white;
     font-size: 18px;
     cursor: pointer;
     background: none;
+    max-width: 200px;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 5px;
+    padding-right: 20px;
     text-decoration: none;
     transition-duration: 0.15s;
+    box-shadow: 2px 2px 20px 4px rgba(0,0,0,0.15);
 }
-round-button > button:hover {
+round-button:hover {
     color: black;
     font-weight: bold;
+}
+
+section:nth-of-type(3) round-button {
+    padding: 0px;
 }
 
 ion-icon {

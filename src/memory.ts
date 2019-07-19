@@ -85,24 +85,13 @@ export default class Memory {
             (pointer as Element).removeAttribute(name);
         }
 
+        // Batch the pointer element and the attribute [name, value] pair together so that
+        // it can be update all at once at the end of the repaint cycle.
         if(this.config.isComponentType === true && pointer instanceof MosaicComponent) {
-            pointer.batches.push({
-                name,
-                value: newValue
-            });
-            nestedNodes[pointer.iid] = pointer;
+            if(pointer.data[name]) pointer.batches.data.push([name, newValue]);
+            else pointer.batches.attributes.push([name, newValue]);
+            if(!nestedNodes[pointer.iid]) nestedNodes[pointer.iid] = pointer;
         }
-
-        // // If you come across a Mosaic element rather than a regular HTML tag,
-        // // call the lifecycle function to handle what to do when that data
-        // // comes in. The component itself will then decide what to do with it.
-        // if(this.config.isComponentType === true && pointer instanceof MosaicComponent) {
-        //     if(pointer.received) {
-        //         let obj = {};
-        //         obj[name] = newValue;
-        //         pointer.received.call(pointer, obj);
-        //     }
-        // }
     }
 
     /** Applies event changes such as adding/removing listeners. */
@@ -132,12 +121,12 @@ export default class Memory {
             (pointer as Element).removeAttribute(name);
 
 
+        // Batch the pointer element and the attribute [name, value] pair together so that
+        // it can be update all at once at the end of the repaint cycle.
         if(this.config.isComponentType === true && pointer instanceof MosaicComponent) {
-            pointer.batches.push({
-                name,
-                value: newValue
-            });
-            nestedNodes[pointer.iid] = pointer;
+            if(pointer.data[name]) pointer.batches.data.push([name, newValue]);
+            else pointer.batches.attributes.push([name, newValue]);
+            if(!nestedNodes[pointer.iid]) nestedNodes[pointer.iid] = pointer;
         }
     }
 

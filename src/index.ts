@@ -58,29 +58,36 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             goUpToConfigureRouter.call(this);
 
             // 2.) Find the template for this component, clone it, and repaint.
-            // Then call the created lifecycle function.
             const template = getTemplate(this);
             const cloned = document.importNode(template.content, true);
             if(!this.initiallyRendered) this.appendChild(cloned);
-            
             this.repaint();
-            if(this.created) this.created();
-
+            
             // 3.) If there are any attributes present on this element at
             // connection time and they are not dynamic (i.e. their value does
             // not match the nodeMarker) then you can receive them as data.
+            // TODO: Set the data object here too, not everything is an attribute
+            // just because it's not dynamic.
             if(this.initiallyRendered === false) {
                 let receivedAttributes = {};
+                let receivedData = {};
                 for(let i = 0; i < this.attributes.length; i++) {
                     const { name, value } = this.attributes[i];
                     if(value === nodeMarker) continue;
-                    receivedAttributes[name] = value;
+                    if(this.data[name]) {
+                        receivedData[name] = value;
+                        this.removeAttribute(name);
+                    } else receivedAttributes[name] = value;
                 }
-                if(this.received) this.received(receivedAttributes);
+                if(this.received && Object.keys(receivedAttributes).length > 0)
+                    this.received(receivedAttributes);
+                if(Object.keys(receivedData).length > 0) this.set(receivedData);
             }
-
+            
             // Make sure the component knows that it has been fully rendered
-            // for the first time. This makes the router work.
+            // for the first time. This makes the router work. Then call the
+            // created lifecycle function.
+            if(this.created) this.created();
             this.initiallyRendered = true;
         }
 
@@ -115,6 +122,7 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                 this.data[keys[i]] = data[keys[i]];
             this.barrier = false;
             this.repaint();
+            if(this.updated) this.updated();
         }
     });
 

@@ -30,6 +30,12 @@ export function insertAfter(newNode, referenceNode) {
     return newNode;
 }
 
+/** Returns an object from an array of key value pairs. */
+export function objectFromArray(array: any[]) {
+    if((Object as any).fromEntries) return (Object as any).fromEntries(array);
+    else return Array.from(array).reduce((acc, [key,value]) => Object.assign(acc, { [key]: value }), {});
+}
+
 /** Traverses a dom tree and performs an action at each level. */
 export function traverse($node: Node|HTMLElement|ChildNode, action: Function, steps: number[] = []) {
     if(action) action($node, steps);

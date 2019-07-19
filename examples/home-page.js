@@ -77,10 +77,10 @@ export default new Mosaic({
             <portfolio-label></portfolio-label>
             <br>
             <round-button type='primary' click='${() => portfolio.dispatch('count-up')}'>
-                <h1 style='position:relative;top:3px;'>+</h1>
+                <h1>+</h1>
             </round-button>
             <round-button type='primary' click='${() => portfolio.dispatch('count-down')}'>
-                <h1 style='position:relative;top:3px;'>-</h1>
+                <h1>-</h1>
             </round-button>
         </section>
 
