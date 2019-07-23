@@ -17,35 +17,35 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
     customElements.define(options.name, class extends MosaicComponent {
         constructor() {
             super();
+            // Setup initial Mosaic properties.
             this.initiallyRendered = false;
+            this.tid = tid;
+            this.iid = randomKey();
+            this.data = new Observable(Object.assign({}, options.data || {}), old => {
+                if(this.barrier === true) return;
+                if(this.willUpdate) this.willUpdate(old);
+            }, () => {
+                if(this.barrier === true) return;
+                this.repaint();
+                if(this.updated) this.updated();
+            });
+
+            // Configure all of the properties if they exist.
+            let _options = Object.keys(options);
+            for(let i = 0; i < _options.length; i++) {
+                let key = _options[i];
+                if(key === 'element') continue;
+                else if(key === 'data') continue;
+                else this[key] = options[key];
+            }
         }
 
         connectedCallback() {
-            // 1.) Setup basic properties such as data.
+            // 1.) Remove any child nodes and save them as to the descendants
+            // property so that it can optionally be used later on.
             if(!this.initiallyRendered) {
-                this.tid = tid;
-                this.iid = randomKey();
-                this.data = new Observable(Object.assign({}, options.data || {}), old => {
-                    if(this.barrier === true) return;
-                    if(this.willUpdate) this.willUpdate(old);
-                }, () => {
-                    if(this.barrier === true) return;
-                    this.repaint();
-                    if(this.updated) this.updated();
-                });
-
-                // Configure all of the properties if they exist.
-                let _options = Object.keys(options);
-                for(let i = 0; i < _options.length; i++) {
-                    let key = _options[i];
-                    if(key === 'element') continue;
-                    else if(key === 'data') continue;
-                    else this[key] = options[key];
-                }
-
-                // Remove any child nodes and save them as to the descendants
-                // property so that it can optionally be used later on.
-                if(this.innerHTML !== '') this.descendants.append(...this.childNodes);
+                if(this.childNodes.length !== 0)
+                    this.descendants.append(...this.childNodes);
             }
 
             // Add portfolio dependency.
@@ -66,8 +66,6 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             // 3.) If there are any attributes present on this element at
             // connection time and they are not dynamic (i.e. their value does
             // not match the nodeMarker) then you can receive them as data.
-            // TODO: Set the data object here too, not everything is an attribute
-            // just because it's not dynamic.
             if(this.initiallyRendered === false) {
                 let receivedAttributes = {};
                 let receivedData = {};

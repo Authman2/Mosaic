@@ -120,7 +120,6 @@ export default class Memory {
         if((pointer as Element).hasAttribute(name))
             (pointer as Element).removeAttribute(name);
 
-
         // Batch the pointer element and the attribute [name, value] pair together so that
         // it can be update all at once at the end of the repaint cycle.
         if(this.config.isComponentType === true && pointer instanceof MosaicComponent) {
