@@ -8,6 +8,7 @@ home-page {
     color: #4341AE;
     margin-left: 10%;
     margin-right: 10%;
+    padding-top: 50px;
     text-align: center;
     letter-spacing: 1.2px;
     background-color: white;
@@ -94,15 +95,15 @@ portfolio-label {
     display: inline-block;
 }
 
-example-page-1 {
+example-page-1, example-page-2 {
     color: #4341AE;
     font-family: Avenir;
 }
-example-page-1 > h1 {
+example-page-1 > h1, example-page-2 > h1 {
     margin-left: 5%;
     margin-right: 5%;
 }
-example-page-1 > section {
+example-page-1 > section, example-page-2 > section {
     margin-left: 5%;
     margin-right: 5%;
 }

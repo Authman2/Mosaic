@@ -1,4 +1,4 @@
-import { nodeMarker, insertAfter, difference, isBooleanAttribute, renderFirstTimeArray } from './util';
+import { nodeMarker, insertAfter, difference, isBooleanAttribute } from './util';
 import { MemoryOptions, MosaicComponent, BatchUpdate } from './options';
 import { OTT, _repaint } from './parser';
 
@@ -34,7 +34,33 @@ export default class Memory {
             return;
 
         if(Array.isArray(newValue)) {
-            renderFirstTimeArray(pointer as Element, newValue);
+            let items = newValue;
+            const otts: any[] = [];
+            for(let i = 0; i < items.length; i++) {
+                let item = items[i];
+                const rendered = OTT(item);
+                otts.push(rendered);
+            }
+            
+            // Add each item to the DOM.
+            const frag = document.createDocumentFragment();
+            for(let i = 0; i < otts.length; i++) {
+                const ott = otts[i];
+                const instance = ott.instance;
+                frag.append(instance);
+            }
+
+            let addition = document.createElement('div');
+            addition.appendChild(frag);
+            pointer.replaceWith(addition);
+            
+            // Repaint each node.
+            for(let i = 0; i < otts.length; i++) {
+                const ott = otts[i];
+                const instance = ott.instance;
+                const mems = ott.memories;
+                _repaint(instance, mems, [], ott.values, true);
+            }
         }
         if(typeof newValue === 'object' && newValue.__isTemplate) {
             const ott = OTT(newValue);
@@ -138,50 +164,6 @@ export default class Memory {
 
     /** Helper function for applying changes to arrays. */
     commitArray(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, oldValue: any, newValue: any) {
-        if(!oldValue || oldValue.length === 0) {
-            renderFirstTimeArray(pointer as Element, newValue);
-        } else {
-            // Make efficient patches.
-            const { additions, deletions } = difference(oldValue.keys, newValue.keys);
-            
-            // For the deletions, just look for the keyed item and remove it.
-            for(let i = 0; i < deletions.length; i++) {
-                const { key } = deletions[i];
-                const found = document.querySelector(`[key='${key}']`);
-                if(found) {
-                    if(newValue.items.length === 0) {
-                        const comment = document.createComment(nodeMarker);
-                        found.replaceWith(comment);
-                    } else {
-                        found.remove();
-                    }
-                }
-            }
-
-            // For additions, find the node next to the index of the last item,
-            // then place it after that.
-            for(let i = 0; i < additions.length; i++) {
-                // Get the old index for where you need to correctly insert.
-                const { key, newIndex } = additions[i];
-                const oldIndex = newIndex - (additions.length + i);
-
-                // Render the new item and find the old item too.
-                const newNode = OTT(newValue.items[newIndex], key);
-                const oldItem = oldValue.items[oldIndex];
-
-                // Once you have found the old item, look for the node in the
-                // DOM and insert the element before that.
-                if(oldItem) {
-                    const oldKey = oldValue.keys[oldIndex];
-                    const oldNode = document.querySelector(`[key='${oldKey}']`);
-                    insertAfter(newNode.instance, oldNode);
-                } else {
-                    pointer.replaceWith(newNode.instance);
-                }
-
-                // Repaint the inserted node.
-                _repaint(newNode.instance, newNode.memories, [], newNode.values, true);
-            }
-        }
+        
     }
 }

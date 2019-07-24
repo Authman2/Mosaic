@@ -73,7 +73,7 @@ export default new Mosaic({
                 This works through the use of "dependencies" which get added and removed 
                 throughout the lifecycle of your app. Each label here is using the portfolio, 
                 and when we update the global state each component gets updated. It is also
-                important to now that components do not need to subscribe to changes in the 
+                important to note that components do not need to subscribe to changes in the 
                 portfolio in order to make changes to the global state. Click the "+" and "-" 
                 buttons to see the portfolio get updated! 
             </h3>

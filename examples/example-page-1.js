@@ -7,6 +7,9 @@ import './shadow-example';
 
 export default new Mosaic({
     name: 'example-page-1',
+    created() {
+        window.scrollTo({ top: 0 });
+    },
     view() {
         return html`
         <h1>More Examples</h1>

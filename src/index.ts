@@ -34,6 +34,16 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                 if(this.updated) this.updated();
             });
 
+            // TODO: Add a property to each array.
+            Object.keys(this.data).forEach(key => {
+                const val = this.data[key];
+                if(Array.isArray(val)) {
+                    this.data[key].additions = [];
+                    this.data[key].deletions = [];
+                    this.data[key].modifications = [];
+                }
+            })
+
             // Configure all of the properties if they exist.
             let _options = Object.keys(copyOptions);
             for(let i = 0; i < _options.length; i++) {
