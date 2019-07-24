@@ -60,6 +60,7 @@ round-button {
     cursor: pointer;
     background: none;
     max-width: 200px;
+    user-select: none;
     margin-left: auto;
     margin-right: auto;
     border-radius: 5px;
@@ -69,7 +70,14 @@ round-button {
     box-shadow: 2px 2px 20px 4px rgba(0,0,0,0.15);
 }
 round-button:hover {
+    transform: scale(1.05);
     box-shadow: inset 0px 0px 100px 100px rgba(255, 255, 255, 0.4);
+}
+round-button:active {
+    transform: scale(0.95);
+}
+round-button * {
+    user-select: none;
 }
 
 section:nth-of-type(3) round-button {
@@ -90,7 +98,14 @@ example-page-1 {
     color: #4341AE;
     font-family: Avenir;
 }
-
+example-page-1 > h1 {
+    margin-left: 5%;
+    margin-right: 5%;
+}
+example-page-1 > section {
+    margin-left: 5%;
+    margin-right: 5%;
+}
 router-card > div {
     position: relative;
     margin: 50px;

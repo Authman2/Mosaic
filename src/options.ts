@@ -19,6 +19,7 @@ export class MosaicComponent extends HTMLElement {
     willUpdate?: Function;
     willDestroy?: Function;
     barrier: boolean = false;
+    defferedAttributes: any[] = [];
     initiallyRendered: boolean = false;
     data: Observable = new Observable({});
     received?: (attributes: Object) => void;
@@ -32,7 +33,7 @@ export class MosaicComponent extends HTMLElement {
 }
 
 /** The configuration options for a Mosaic component. */
-export interface MosaicOptions {
+export interface MosaicOptions extends HTMLElement {
     name: string;
     data: Object;
     created: Function;

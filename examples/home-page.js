@@ -6,6 +6,12 @@ import portfolio from './portfolio';
 export default new Mosaic({
     element: 'root',
     name: 'home-page',
+    data: { num: 0 },
+    created() {
+        setInterval(() => {
+            this.data.num = Math.floor(Math.random() * 1000);
+        }, 1000);
+    },
     view: self => html`
         <img src='${Logo}' alt='Mosaic Logo'>
         <h1>Welcome to Mosaic!</h1>

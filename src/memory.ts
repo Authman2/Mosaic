@@ -26,6 +26,13 @@ export default class Memory {
 
     /** Applies changes to memories of type "node." */
     commitNode(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, oldValue: any, newValue: any) {
+        // If you come across a node inside of a Mosaic component, then do not
+        // actually add it to the DOM. Instead, let it be rendered by the
+        // constructor and set into the "descendants" property so the component
+        // itself can decide whether or not to use it as a descendants property.
+        if(this.config.isComponentType === true && pointer instanceof MosaicComponent)
+            return;
+
         if(Array.isArray(newValue)) {
             renderFirstTimeArray(pointer as Element, newValue);
         }

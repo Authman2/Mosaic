@@ -17,6 +17,7 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
     customElements.define(options.name, class extends MosaicComponent {
         constructor() {
             super();
+            
             // Setup initial Mosaic properties.
             this.initiallyRendered = false;
             this.tid = tid;
@@ -34,9 +35,31 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             let _options = Object.keys(options);
             for(let i = 0; i < _options.length; i++) {
                 let key = _options[i];
+
                 if(key === 'element') continue;
                 else if(key === 'data') continue;
+                else if(key === 'descendants')
+                    throw new Error('You cannot directly set the "descendants" property on a component.');
+                else if(key === 'style') {
+                    // Set all of the style properties.
+                    if(typeof options[key] !== 'object')
+                        console.warn('Setting the style property directly must use an object.');
+                    else
+                        this.defferedAttributes.push({ name: key, value: options[key] });
+                }
                 else this[key] = options[key];
+            }
+
+            // If you come across an attribute that is an HTMLElement
+            // option, then deffer it until the component is actually
+            // created so that it doesn't cause any problems.
+            const lowerCase = _options.slice().map(key => key.toLowerCase());
+            for(let i = 0; i < this.attributes.length; i++) {
+                const att = this.attributes[i];
+                
+                if(!(lowerCase as any).includes(att.name)) continue;
+                this.defferedAttributes.push(att);
+                this.removeAttribute(att.name);
             }
         }
 
@@ -77,10 +100,28 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                         this.removeAttribute(name);
                     } else receivedAttributes[name] = value;
                 }
+                
+                // Send attributes and data through lifecycle functions.
                 if(this.received && Object.keys(receivedAttributes).length > 0)
                     this.received(receivedAttributes);
                 if(Object.keys(receivedData).length > 0) this.set(receivedData);
             }
+
+            // If there are any deffered attributes, add those too.
+            for(let i = 0; i < this.defferedAttributes.length; i++) {
+                let att = this.defferedAttributes[i];
+
+                if(typeof att.value === 'object') {
+                    let objKeys = Object.keys(att.value);
+                    for(let i = 0; i < objKeys.length; i++) {
+                        const oKey = objKeys[i];
+                        this[att.name][oKey] = att.value[oKey];
+                    }
+                } else {
+                    this.setAttribute(att.name, att.value);
+                }
+            }
+            this.defferedAttributes = [];
             
             // Make sure the component knows that it has been fully rendered
             // for the first time. This makes the router work. Then call the
