@@ -16,6 +16,7 @@ export class MosaicComponent extends HTMLElement {
     router?: HTMLElement;
     oldValues: any[] = [];
     portfolio?: Portfolio;
+    mixins: Object[] = [];
     willUpdate?: Function;
     willDestroy?: Function;
     barrier: boolean = false;
@@ -36,6 +37,7 @@ export class MosaicComponent extends HTMLElement {
 export interface MosaicOptions extends HTMLElement {
     name: string;
     data: Object;
+    mixins: Object[];
     created: Function;
     updated: Function;
     router: HTMLElement;

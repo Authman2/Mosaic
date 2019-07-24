@@ -2,19 +2,20 @@ import { MosaicComponent, MosaicOptions, ViewFunction, KeyedArray } from './opti
 import Observable from './observable';
 import Router from './router';
 import Portfolio from './portfolio';
-import { randomKey, nodeMarker, goUpToConfigureRouter } from './util';
+import { randomKey, nodeMarker, goUpToConfigureRouter, applyMixin } from './util';
 import { getTemplate, _repaint } from './parser';
 
 export default function Mosaic(options: MosaicOptions): MosaicComponent {
     // Configure some basic properties.
+    const copyOptions = Object.assign({}, options);
     const tid: string = randomKey();
     
     // Error checking.
-    if(typeof options.name !== 'string')
+    if(typeof copyOptions.name !== 'string')
         throw new Error('Name must be specified and must be a string.');
 
     // Define the custom element.
-    customElements.define(options.name, class extends MosaicComponent {
+    customElements.define(copyOptions.name, class extends MosaicComponent {
         constructor() {
             super();
             
@@ -22,7 +23,7 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             this.initiallyRendered = false;
             this.tid = tid;
             this.iid = randomKey();
-            this.data = new Observable(Object.assign({}, options.data || {}), old => {
+            this.data = new Observable(Object.assign({}, copyOptions.data || {}), old => {
                 if(this.barrier === true) return;
                 if(this.willUpdate) this.willUpdate(old);
             }, () => {
@@ -32,12 +33,20 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             });
 
             // Configure all of the properties if they exist.
-            let _options = Object.keys(options);
+            let _options = Object.keys(copyOptions);
             for(let i = 0; i < _options.length; i++) {
                 let key = _options[i];
 
                 if(key === 'element') continue;
                 else if(key === 'data') continue;
+                else if(key === 'mixins') {
+                    this.barrier = true;
+                    for(let i = 0; i < options[key].length; i++) {
+                        const mixin = options[key][i];
+                        applyMixin(this, mixin);
+                    }
+                    this.barrier = false;
+                }
                 else if(key === 'descendants')
                     throw new Error('You cannot directly set the "descendants" property on a component.');
                 else if(key === 'style') {
@@ -136,10 +145,10 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
         }
 
         paint(el?: string|HTMLElement) {
-            let look = el ? el : options.element;
+            let look = el ? el : copyOptions.element;
             let element = typeof look === 'string' ? document.getElementById(look) : look; 
             if(!element)
-                throw new Error(`Could not find the base element: ${options.element}.`);
+                throw new Error(`Could not find the base element: ${copyOptions.element}.`);
             element.appendChild(this);
         }
         
@@ -165,7 +174,7 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
         }
     });
 
-    const component = document.createElement(options.name);
+    const component = document.createElement(copyOptions.name);
     return component as MosaicComponent;
 }
 

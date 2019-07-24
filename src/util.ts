@@ -1,4 +1,4 @@
-import { KeyedArray } from "./options";
+import { KeyedArray, MosaicComponent } from "./options";
 import { OTT, _repaint } from "./parser";
 
 // The placeholders in the HTML.
@@ -42,6 +42,23 @@ export function traverse($node: Node|HTMLElement|ChildNode, action: Function, st
     let children = $node.childNodes;
     for(var i = 0; i < children.length; i++) {
         traverse(children[i], action, steps.concat(i));
+    }
+}
+
+/** Applies mixin properties to a Mosaic component. */
+export function applyMixin(to: MosaicComponent, from: Object) {
+    let keys = Object.keys(from);
+    for(let i = 0; i < keys.length; i++) {
+        let k = keys[i];
+        if(k === 'data') {
+            let dKeys = Object.keys(from[k]);
+            for(let j = 0; j < dKeys.length; j++) {
+                let dk = dKeys[j];
+                to.data[dk] = from[k][dk];
+            }
+        } else {
+            to[k] = from[k];
+        }
     }
 }
 
