@@ -45,7 +45,12 @@ export function _repaint(element: HTMLElement, memories: Memory[], oldValues: an
         // We have to splice the array for OTTs because they do not have
         // a holding container such as <custom-element>.
         let pointer;
-        if(isOTT === true) {
+        if((element as any).useShadow === true && (element as any).shadowRoot) {
+            const host = (element as any).shadowRoot;
+            const regularSteps = mem.config.steps.slice();
+            pointer = step(host, regularSteps);
+        }
+        else if(isOTT === true) {
             const OTTsteps = mem.config.steps.slice();
             OTTsteps.splice(0, 1);
             pointer = step(element, OTTsteps);

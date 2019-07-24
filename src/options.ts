@@ -20,6 +20,7 @@ export class MosaicComponent extends HTMLElement {
     willUpdate?: Function;
     willDestroy?: Function;
     barrier: boolean = false;
+    useShadow: boolean = true;
     defferedAttributes: any[] = [];
     initiallyRendered: boolean = false;
     data: Observable = new Observable({});
@@ -40,6 +41,7 @@ export interface MosaicOptions extends HTMLElement {
     mixins: Object[];
     created: Function;
     updated: Function;
+    useShadow: boolean;
     router: HTMLElement;
     portfolio: Portfolio;
     willDestroy: Function;

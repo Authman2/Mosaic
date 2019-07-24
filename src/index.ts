@@ -16,6 +16,8 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
 
     // Define the custom element.
     customElements.define(copyOptions.name, class extends MosaicComponent {
+        _shadow?: ShadowRoot;
+
         constructor() {
             super();
             
@@ -70,6 +72,10 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                 this.defferedAttributes.push(att);
                 this.removeAttribute(att.name);
             }
+
+            // See if you need to attach the shadow dom based on the options.
+            if(copyOptions.useShadow === true)
+                this._shadow = this.attachShadow({ mode: 'open' });
         }
 
         connectedCallback() {
@@ -92,7 +98,10 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             // 2.) Find the template for this component, clone it, and repaint.
             const template = getTemplate(this);
             const cloned = document.importNode(template.content, true);
-            if(!this.initiallyRendered) this.appendChild(cloned);
+            if(!this.initiallyRendered) {
+                if(this._shadow) this._shadow.appendChild(cloned);
+                else this.appendChild(cloned);
+            }
             this.repaint();
             
             // 3.) If there are any attributes present on this element at

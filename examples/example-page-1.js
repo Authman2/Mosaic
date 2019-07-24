@@ -2,6 +2,7 @@ import Mosaic from '../src/index';
 
 import './router-card';
 import './mixins';
+import './shadow-example';
 
 
 export default new Mosaic({
@@ -32,6 +33,17 @@ export default new Mosaic({
             </h3>
             <mixin-one></mixin-one>
             <mixin-two></mixin-two>
+        </section>
+
+        <section>
+            <h3>
+                <b>Shadow DOM</b>: Back to building design systems, let's talk about the Shadow DOM.
+                This allows us to create components whose styles are not affected by the CSS from the
+                rest of your app. This makes building independent components for something like a
+                design system very easy and convenient. Just specify the "useShadow" property when
+                creating a component!
+            </h3>
+            <shadow-example></shadow-example>
         </section>
         `
     }
