@@ -1,8 +1,8 @@
 <p align="center"><a href="https://mosaicjs.site" target="_blank" rel="noopener noreferrer"><img width="100" height="100" src="./MosaicLogo.png" alt="Mosaic logo"></a></p>
 <p align="center">
-   <a href="https://www.npmjs.com/package/@authman2/mosaic"><img alt="npm" src="https://img.shields.io/npm/v/@authman2/mosaic.svg?color=#41bb18"></a>
-   <a href="https://npmcharts.com/compare/@authman2/mosaic?minimal=true"><img src="https://img.shields.io/npm/dm/@authman2/mosaic.svg?color=seagreen" alt="Downloads"></a>
-   <img alt="NPM" src="https://img.shields.io/npm/l/@authman2/mosaic.svg?color=blue">
+   <a href="https://www.npmjs.com/package/mosaic-framework"><img alt="npm" src="https://img.shields.io/npm/v/mosaic-framework.svg?color=#41bb18"></a>
+   <a href="https://npmcharts.com/compare/mosaic-framework?minimal=true"><img src="https://img.shields.io/npm/dm/mosaic-framework.svg?color=seagreen" alt="Downloads"></a>
+   <img alt="NPM" src="https://img.shields.io/npm/l/mosaic-framework.svg?color=blue">
 </p>
 
 # <a target='_blank' rel='noopener noreferrer' href='https://mosaicjs.site'>Mosaic</a>
@@ -40,14 +40,14 @@ For a more detailed example, run the project inside the "example" folder.
     
   <div id='root'></div>
 
-  <script src='https://unpkg.com/@authman2/mosaic@latest/dist/index.js'></script>
+  <script src='https://unpkg.com/mosaic-framework@latest/dist/index.js'></script>
   <script type="text/javascript" src='./index.js'></script>
 </html>
 ```
 **index.js**:
 ```js
 // Import Mosaic
-import Mosaic from '@authman2/mosaic';
+import Mosaic from 'mosaic-framework';
 
 // The "text" data property gets injected by 
 // the parent component so we need to specify
@@ -94,11 +94,11 @@ app.paint();
 ## Installation
 The easiest way to use Mosaic is to first install the npm package by using:
 ```shell
-npm install --save @authman2/mosaic
+npm install --save mosaic-framework
 ```
 or with a script tag.
 ```html
-<script src='https://unpkg.com/@authman2/mosaic@latest/dist/index.js'></script>
+<script src='https://unpkg.com/mosaic-framework@latest/dist/index.js'></script>
 ```
 **(Optional)** For fast builds and hot reloading, install the build tool "Parcel." This is not required, though, as Mosaic uses built-in JavaScript features. This means that no build tool is required, but any may be used if it helps the overall project structure.
 ```shell

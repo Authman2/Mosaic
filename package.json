@@ -1,5 +1,5 @@
 {
-  "name": "@authman2/mosaic",
+  "name": "mosaic-framework",
   "version": "0.6.7",
   "description": "A front-end JavaScript library for creating user interfaces",
   "main": "dist/index.js",
