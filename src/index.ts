@@ -34,16 +34,6 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                 if(this.updated) this.updated();
             });
 
-            // TODO: Add a property to each array.
-            Object.keys(this.data).forEach(key => {
-                const val = this.data[key];
-                if(Array.isArray(val)) {
-                    this.data[key].additions = [];
-                    this.data[key].deletions = [];
-                    this.data[key].modifications = [];
-                }
-            })
-
             // Configure all of the properties if they exist.
             let _options = Object.keys(copyOptions);
             for(let i = 0; i < _options.length; i++) {
@@ -61,26 +51,7 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                 }
                 else if(key === 'descendants')
                     throw new Error('You cannot directly set the "descendants" property on a component.');
-                else if(key === 'style') {
-                    // Set all of the style properties.
-                    if(typeof options[key] !== 'object')
-                        console.warn('Setting the style property directly must use an object.');
-                    else
-                        this.defferedAttributes.push({ name: key, value: options[key] });
-                }
                 else this[key] = options[key];
-            }
-
-            // If you come across an attribute that is an HTMLElement
-            // option, then deffer it until the component is actually
-            // created so that it doesn't cause any problems.
-            const lowerCase = _options.slice().map(key => key.toLowerCase());
-            for(let i = 0; i < this.attributes.length; i++) {
-                const att = this.attributes[i];
-                
-                if(!(lowerCase as any).includes(att.name)) continue;
-                this.defferedAttributes.push(att);
-                this.removeAttribute(att.name);
             }
 
             // See if you need to attach the shadow dom based on the options.
@@ -123,33 +94,25 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                 for(let i = 0; i < this.attributes.length; i++) {
                     const { name, value } = this.attributes[i];
                     if(value === nodeMarker) continue;
-                    if(this.data[name]) {
-                        receivedData[name] = value;
-                        this.removeAttribute(name);
-                    } else receivedAttributes[name] = value;
+                    
+                    if(this.data.hasOwnProperty(name)) receivedData[name] = value;
+                    else receivedAttributes[name] = value;
                 }
                 
-                // Send attributes and data through lifecycle functions.
+                // Send the attributes through lifecycle functions.
                 if(this.received && Object.keys(receivedAttributes).length > 0)
                     this.received(receivedAttributes);
-                if(Object.keys(receivedData).length > 0) this.set(receivedData);
-            }
-
-            // If there are any deffered attributes, add those too.
-            for(let i = 0; i < this.defferedAttributes.length; i++) {
-                let att = this.defferedAttributes[i];
-
-                if(typeof att.value === 'object') {
-                    let objKeys = Object.keys(att.value);
-                    for(let i = 0; i < objKeys.length; i++) {
-                        const oKey = objKeys[i];
-                        this[att.name][oKey] = att.value[oKey];
-                    }
-                } else {
-                    this.setAttribute(att.name, att.value);
+                
+                // Save the new data and repaint.
+                if(Object.keys(receivedData).length > 0) {
+                    this.barrier = true;
+                    const keys = Object.keys(receivedData);
+                    for(let i = 0; i < keys.length; i++)
+                        this.data[keys[i]] = receivedData[keys[i]];
+                    this.barrier = false;
+                    this.repaint();
                 }
             }
-            this.defferedAttributes = [];
             
             // Make sure the component knows that it has been fully rendered
             // for the first time. This makes the router work. Then call the
@@ -188,6 +151,7 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             for(let i = 0; i < keys.length; i++)
                 this.data[keys[i]] = data[keys[i]];
             this.barrier = false;
+            
             this.repaint();
             if(this.updated) this.updated();
         }

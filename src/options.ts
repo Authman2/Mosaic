@@ -21,7 +21,6 @@ export class MosaicComponent extends HTMLElement {
     willDestroy?: Function;
     barrier: boolean = false;
     useShadow: boolean = true;
-    defferedAttributes: any[] = [];
     initiallyRendered: boolean = false;
     data: Observable = new Observable({});
     received?: (attributes: Object) => void;
@@ -35,7 +34,7 @@ export class MosaicComponent extends HTMLElement {
 }
 
 /** The configuration options for a Mosaic component. */
-export interface MosaicOptions extends HTMLElement {
+export interface MosaicOptions {
     name: string;
     data: Object;
     mixins: Object[];

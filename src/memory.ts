@@ -104,14 +104,15 @@ export default class Memory {
         // position to replace (notice how the new value gets converted to a
         // string first. This ensures attribute safety).
         const newAttributeValue = attribute.value.replace(nodeMarker, ''+newValue);
-        (pointer as Element).setAttribute(name, newAttributeValue);
-
+        const setValue = newAttributeValue.length > 0 ? newAttributeValue : newValue;
+        (pointer as Element).setAttribute(name, setValue);
+        
         // Add or remove boolean attributes.
         if(isBooleanAttribute(name)) {
             if(newValue === true) (pointer as Element).setAttribute(name, 'true');
             else (pointer as Element).removeAttribute(name);
         }
-
+        
         // Remove the function attribute so it's not cluttered. The event
         // listener will still exist on the element, though.
         if(typeof newValue === 'function') {
@@ -121,8 +122,9 @@ export default class Memory {
         // Batch the pointer element and the attribute [name, value] pair together so that
         // it can be update all at once at the end of the repaint cycle.
         if(this.config.isComponentType === true && pointer instanceof MosaicComponent) {
-            if(pointer.data[name]) pointer.batches.data.push([name, newValue]);
+            if(pointer.data.hasOwnProperty(name)) pointer.batches.data.push([name, newValue]);
             else pointer.batches.attributes.push([name, newValue]);
+            
             if(!nestedNodes[pointer.iid]) nestedNodes[pointer.iid] = pointer;
         }
     }
@@ -156,7 +158,7 @@ export default class Memory {
         // Batch the pointer element and the attribute [name, value] pair together so that
         // it can be update all at once at the end of the repaint cycle.
         if(this.config.isComponentType === true && pointer instanceof MosaicComponent) {
-            if(pointer.data[name]) pointer.batches.data.push([name, newValue]);
+            if(pointer.data.hasOwnProperty(name)) pointer.batches.data.push([name, newValue]);
             else pointer.batches.attributes.push([name, newValue]);
             if(!nestedNodes[pointer.iid]) nestedNodes[pointer.iid] = pointer;
         }

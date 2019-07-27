@@ -80,7 +80,7 @@ export function _repaint(element: HTMLElement, memories: Memory[], oldValues: an
         const component = nestedNodes[key] as MosaicComponent;
         const justData = objectFromArray(component.batches.data);
         const justAttrs = objectFromArray(component.batches.attributes);
-        
+        console.log(justAttrs, justData);
         if(component.received && component.batches.attributes.length > 0)
             component.received(justAttrs);
         if(component.batches.data.length > 0) component.set(justData);
@@ -143,7 +143,7 @@ function parseAttributes(node: Element, steps: number[]): Memory[] {
         for(let j = 0; j < split.length; j++) {
             const item = split[j];
             const isDynamic = item === nodeMarker;
-
+            
             // Make sure you only add memories for dynamic attributes.
             if(isDynamic) {
                 ret.push(new Memory({
