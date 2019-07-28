@@ -160,13 +160,84 @@ export default class Memory {
         if(this.config.isComponentType === true && pointer instanceof MosaicComponent) {
             if(pointer.data.hasOwnProperty(name)) pointer.batches.data.push([name, newValue]);
             else pointer.batches.attributes.push([name, newValue]);
-            
+
             if(!nestedNodes[pointer.iid]) nestedNodes[pointer.iid] = pointer;
         }
     }
 
     /** Helper function for applying changes to arrays. */
     commitArray(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, oldValue: any, newValue: any) {
-        
+        const oldItems = oldValue ? oldValue.items : [];
+        const newItems = newValue ? newValue.items : [];
+
+        const oldKeys = oldValue ? oldValue.keys : [];
+        const newKeys = newValue ? newValue.keys : [];
+
+        // There is an old array, so patch.
+        if(oldItems.length > 0) {
+            const { additions, deletions } = difference(oldKeys, newKeys);
+            console.log(additions, deletions);
+
+            const parent = pointer.parentElement || element;
+
+            // TODO: Find a way to account for modifications.
+
+            deletions.forEach(({ key, oldIndex }) => {
+                const found = (parent as Element).querySelector(`[key="${key}"]`);
+                if(found) {
+                    if(newItems.length === 0)
+                        found.replaceWith(document.createComment(nodeMarker));
+                    else
+                        found.remove();
+                }
+            });
+
+            additions.forEach(({ key, newIndex }) => {
+                const item = newItems[newIndex];
+                const ott = OTT(item, key);
+                const node = ott.instance;
+                _repaint(node, ott.memories, [], ott.values);
+                
+                let existingKey = oldKeys[newIndex];
+                if(existingKey) {
+                    let previous = pointer;
+                    let index = newIndex;
+                    for(let i = 0; i < index; i++) {
+                        if(previous.nextSibling) previous = previous.nextSibling;
+                        index -= 1;
+                    }
+                    parent.insertBefore(node, previous);
+                    // insertAfter(node, foundRefNode);
+                    // existingNode.replaceWith(node);
+                } else {
+                    let idx = newIndex;
+                    let refKey = oldKeys[idx];
+                    while(!refKey) {
+                        idx -= 1;
+                        refKey = oldKeys[idx];
+                    }
+                    const foundRefNode = (parent as Element).querySelector(`[key="${refKey}"]`);
+                    insertAfter(node, foundRefNode);
+                }
+            })
+        }
+        // No old value, so build the entire array.
+        else {
+            let ref = pointer;
+            for(let i = 0; i < newKeys.length; i++) {
+                const item = newItems[i];
+                const key = newKeys[i];
+                const ott = OTT(item, key);
+                const node = ott.instance;
+                _repaint(node, ott.memories, [], ott.values);
+                
+                if(i === 0) {
+                    ref.replaceWith(node);
+                    ref = node;
+                } else {
+                    ref = insertAfter(node, ref);
+                }
+            }
+        }
     }
 }

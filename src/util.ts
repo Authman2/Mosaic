@@ -138,7 +138,7 @@ export function changed(oldv: any, newv: any, isOTT?: boolean) {
             // The new value is not a keyed array, so different.
             if(!newv.__isKeyedArray) return true;
             // If the new value is a keyed array, but has different
-            // keys, then you knowi t changed.
+            // keys, then you know it changed.
             if(''+oldv.keys !== ''+newv.keys) return true;  
         }
         // Object:
