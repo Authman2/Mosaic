@@ -21,7 +21,10 @@ export const m1 = new Mosaic({
     mixins: [MyMixin],
     name: 'mixin-one',
     data: {
-        somethingElse: "Wow this still works!!!"
+        library: "Mosaic"
+    },
+    created() {
+        console.log(`This lifecycle function will be called after the mixin's lifecycle function.`, this.data);
     },
     view() {
         return html`<div>

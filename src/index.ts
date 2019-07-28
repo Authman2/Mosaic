@@ -27,11 +27,22 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             this.iid = randomKey();
             this.data = new Observable(Object.assign({}, copyOptions.data || {}), old => {
                 if(this.barrier === true) return;
-                if(this.willUpdate) this.willUpdate(old);
+                if(this.willUpdate) {
+                    if(Array.isArray(this.willUpdate))
+                        this.willUpdate.forEach(func => func.call(this, old));
+                    else
+                        this.willUpdate(old);
+                }
             }, () => {
                 if(this.barrier === true) return;
                 this.repaint();
-                if(this.updated) this.updated();
+
+                if(this.updated) {
+                    if(Array.isArray(this.updated))
+                        this.updated.forEach(func => func.call(this));
+                    else
+                        this.updated();
+                }
             });
 
             // Configure all of the properties if they exist.
@@ -41,17 +52,17 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
 
                 if(key === 'element') continue;
                 else if(key === 'data') continue;
-                else if(key === 'mixins') {
-                    this.barrier = true;
-                    for(let i = 0; i < options[key].length; i++) {
-                        const mixin = options[key][i];
-                        applyMixin(this, mixin);
-                    }
-                    this.barrier = false;
-                }
                 else if(key === 'descendants')
                     throw new Error('You cannot directly set the "descendants" property on a component.');
                 else this[key] = options[key];
+            }
+            if(copyOptions.mixins) {
+                for(let i = 0; i < copyOptions.mixins.length; i++) {
+                    this.barrier = true;
+                    const mixin = copyOptions.mixins[i];
+                    applyMixin(this, mixin);
+                    this.barrier = false;
+                }
             }
 
             // See if you need to attach the shadow dom based on the options.
@@ -100,8 +111,12 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                 }
                 
                 // Send the attributes through lifecycle functions.
-                if(this.received && Object.keys(receivedAttributes).length > 0)
-                    this.received(receivedAttributes);
+                if(this.received && Object.keys(receivedAttributes).length > 0) {
+                    if(Array.isArray(this.received))
+                        this.received.forEach(func => func.call(this, receivedAttributes));
+                    else
+                        this.received(receivedAttributes);
+                }
                 
                 // Save the new data and repaint.
                 if(Object.keys(receivedData).length > 0) {
@@ -117,13 +132,23 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             // Make sure the component knows that it has been fully rendered
             // for the first time. This makes the router work. Then call the
             // created lifecycle function.
-            if(this.created) this.created();
+            if(this.created) {
+                if(Array.isArray(this.created))
+                    this.created.forEach(func => func.call(this));
+                else
+                    this.created();
+            }
             this.initiallyRendered = true;
         }
 
         disconnectedCallback() {
             if(this.portfolio) this.portfolio.removeDependency(this);
-            if(this.willDestroy) this.willDestroy();
+            if(this.willDestroy) {
+                if(Array.isArray(this.willDestroy))
+                    this.willDestroy.forEach(func => func.call(this));
+                else
+                    this.willDestroy();
+            }
         }
 
         paint(el?: string|HTMLElement) {
@@ -153,7 +178,12 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             this.barrier = false;
             
             this.repaint();
-            if(this.updated) this.updated();
+            if(this.updated) {
+                if(Array.isArray(this.updated))
+                    this.updated.forEach(func => func.call(this));
+                else
+                    this.updated();
+            }
         }
     });
 

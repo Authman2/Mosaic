@@ -9,7 +9,7 @@
     "move-declarations": "cp ts-build/index.d.ts dist/index.d.ts && cp ts-build/options.d.ts dist/options.d.ts && cp ts-build/router.d.ts dist/router.d.ts && cp ts-build/portfolio.d.ts dist/portfolio.d.ts",
     "build": "tsc && parcel build ts-build/index.js --no-source-maps --out-dir dist --global Mosaic && npm run move-declarations && rm -f dist/index.js.map",
     "deploy": "npm publish --access=public",
-    "bnd": "npm run build && npm run deploy"
+    "bnd": "npm run build && npm run deploy && git checkout dev"
   },
   "keywords": [
     "frontend",

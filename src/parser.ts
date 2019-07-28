@@ -80,9 +80,13 @@ export function _repaint(element: HTMLElement, memories: Memory[], oldValues: an
         const component = nestedNodes[key] as MosaicComponent;
         const justData = objectFromArray(component.batches.data);
         const justAttrs = objectFromArray(component.batches.attributes);
-        console.log(justAttrs, justData);
-        if(component.received && component.batches.attributes.length > 0)
-            component.received(justAttrs);
+        
+        if(component.received && component.batches.attributes.length > 0) {
+            if(Array.isArray(component.received))
+                component.received.forEach(func => func.call(component, justAttrs));
+            else
+                component.received(justAttrs);
+        }
         if(component.batches.data.length > 0) component.set(justData);
 
         component.batches = { attributes: [], data: [] };

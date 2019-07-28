@@ -56,7 +56,17 @@ export function applyMixin(to: MosaicComponent, from: Object) {
                 let dk = dKeys[j];
                 to.data[dk] = from[k][dk];
             }
-        } else {
+        }
+        else if(k === 'created' || k === 'willUpdate' || k === 'updated' || k === 'willDestroy' || k === 'received') {
+            if(!Array.isArray(to[k])) {
+                const func = to[k];
+                to[k] = [from[k]] as any;
+                if(func) (to[k] as any).push(func);
+            } else {
+                (to[k] as any).splice(0, 0, from[k]);
+            }
+        }
+        else {
             to[k] = from[k];
         }
     }

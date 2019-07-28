@@ -160,6 +160,7 @@ export default class Memory {
         if(this.config.isComponentType === true && pointer instanceof MosaicComponent) {
             if(pointer.data.hasOwnProperty(name)) pointer.batches.data.push([name, newValue]);
             else pointer.batches.attributes.push([name, newValue]);
+            
             if(!nestedNodes[pointer.iid]) nestedNodes[pointer.iid] = pointer;
         }
     }
