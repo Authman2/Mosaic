@@ -149,18 +149,174 @@ export function changed(oldv: any, newv: any, isOTT?: boolean) {
     return false;
 }
 
-/** Finds the differences between two arrays of keys. */
-export function difference(one: string[], two: string[]) {
-    let additions: { key: string, newIndex: number }[] = [];
-    let deletions: { key: string, oldIndex: number }[] = [];
+// /** Finds the differences between two arrays of keys. */
+// export function difference(one: string[], two: string[]) {
+//     let additions: { key: string, newIndex: number }[] = [];
+//     let deletions: { key: string, oldIndex: number }[] = [];
     
-    one.forEach((item, index) => {
-        const found = two.find(obj => item === obj);
-        if(!found) deletions.push({ key: item, oldIndex: index });
-    });
-    two.forEach((item, index) => {
-        const found = one.find(obj => item === obj);
-        if(!found) additions.push({ key: item, newIndex: index });
-    });
-    return { deletions, additions };
+//     one.forEach((item, index) => {
+//         const found = two.find(obj => item === obj);
+//         if(!found) deletions.push({ key: item, oldIndex: index });
+//     });
+//     two.forEach((item, index) => {
+//         const found = one.find(obj => item === obj);
+//         if(!found) additions.push({ key: item, newIndex: index });
+//     });
+//     return { deletions, additions };
+// }
+
+/** My implementation of an efficient array patching algorithm based on keys. */
+export function MAD3(one: string[], two: string[]) {
+    const oldMap = {};
+    const newMap = {};
+    const oldIndices = {};
+    const newIndices = {};
+
+    const modifications: { key: string, newValue: string, index: number }[] = [];
+    const additions: { key: string, index: number }[] = [];
+    const deletions: { key: string, index: number }[] = [];
+
+    // Heuristic 1: If the old array is empty, then you know you 
+    // are just adding everything. Think of this as the initial work.
+    if(one.length === 0) {
+        for(let i = 0; i < two.length; i++) {
+            const item = two[i];
+            additions.push({
+                key: item,
+                index: i
+            });
+            // add(`${item} was added at index ${i}`);
+        }
+        return {
+            modifications,
+            additions,
+            deletions
+        };
+    }
+
+    // The maps use the index as the value and the key as the key.
+    // <index, item>
+    for(let i = 0; i < one.length; i++) {
+        oldMap[i] = one[i];
+        oldIndices[one[i]] = i;
+    }
+    for(let i = 0; i < two.length; i++) {
+        newMap[i] = two[i];
+        newIndices[two[i]] = i;
+    }
+
+    for(let index = 0; index < one.length; index++) {
+        const item = oldMap[index];
+        const newAtIndex = two[index];
+        if(item !== newAtIndex) {
+            // Let's see if the old item has maybe just moved.
+            const foundAtAll = newMap[index];
+            if(foundAtAll) {
+                const newIndex = two.indexOf(item);
+
+                // If the arrays are of different lengths, then you can have a deletion.
+                if(one.length !== two.length) {
+                    // If it can still be found, then it's a move.
+                    if(newIndex !== -1) {
+                        // Check if the new array is longer than the old one,
+                        // which may mean an addition.
+                        // if(two.length > one.length) {
+                        //     // See if you can find the new value in the old
+                        //     // array. If not, then you know it's an addition.
+                        //     const found = one.find(itm => itm === newAtIndex);
+                        //     if(!found)
+                        //         add(`${newAtIndex} was added at index ${index}`);
+                        // }
+                    }
+                    // Otherwise, if it can't be found, then it's a deletion.
+                    else {
+                        // You can tell a deletion from a modification by checking
+                        // if the value at the same index if just different, but still
+                        // a value or if there is no value there at all.
+                        if(!newAtIndex) {
+                            deletions.push({
+                                key: item,
+                                index: index
+                            });
+                            // del(`${item} was deleted from index ${index}`);
+                        } else {
+                            modifications.push({
+                                key: item,
+                                newValue: newAtIndex,
+                                index: index
+                            });
+                            // mod(`${item} was modified to ${newAtIndex} at index ${index}`);
+                        }
+                    }
+                }
+                // If they are the same length, then you probably just have modifcations.
+                else {
+                    // If it can still be found, then it's a move.
+                    if(newIndex !== -1) {
+                        if(item !== newAtIndex) {
+                            modifications.push({
+                                key: item,
+                                newValue: newAtIndex,
+                                index: index
+                            });
+                            // mod(`${item} was modified to ${newAtIndex} at index ${index}`);
+                        }
+                    }
+                    // Otherwise it's a modification.
+                    else {
+                        modifications.push({
+                            key: item,
+                            newValue: newAtIndex,
+                            index: index
+                        });
+                        // mod(`${item} was modified to ${newAtIndex} at index ${index}`);
+                    }
+                }
+            }
+            
+            // Ok so the old key was not found in the new array. What now?
+            else {
+                // Deletion.
+                if(two.length < one.length) {
+                    deletions.push({
+                        key: item,
+                        index: index
+                    });
+                    // del(`${item} was deleted from index ${index}`);
+                }
+                // // Addition.
+                // else if(two.length > one.length) {
+                //     add(`${item} has been added at index ${index}`);
+                // }
+            }
+        } else {
+            // Good. Same item at same index.
+        }
+    }
+    for(let index = 0; index < two.length; index++) {
+        const item = newMap[index];
+        const oldAtIndex = one[index];
+
+        // If the item is not the same at the same index
+        // and you can't find it elsewhere in the array,
+        // then you can tell that it was added.
+        if(item !== oldAtIndex) {
+            // Is that item at least somewhere in the old
+            // array? If not then it's an addition.
+            const found = oldIndices[item];
+            // const found = one.find(itm => itm === item);
+            if(!found && two.length > one.length) {
+                additions.push({
+                    key: item,
+                    index: index
+                });
+                // add(`${item} was added at index ${index}`);
+            }
+        }
+    }
+    return {
+        modifications,
+        additions,
+        deletions
+    };
 }

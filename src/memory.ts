@@ -1,4 +1,4 @@
-import { nodeMarker, insertAfter, difference, isBooleanAttribute } from './util';
+import { nodeMarker, insertAfter, isBooleanAttribute, MAD3 } from './util';
 import { MemoryOptions, MosaicComponent, BatchUpdate } from './options';
 import { OTT, _repaint } from './parser';
 
@@ -167,77 +167,156 @@ export default class Memory {
 
     /** Helper function for applying changes to arrays. */
     commitArray(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, oldValue: any, newValue: any) {
+        const oldKeys = oldValue ? oldValue.keys : [];
+        const newKeys = newValue ? newValue.keys : [];
         const oldItems = oldValue ? oldValue.items : [];
         const newItems = newValue ? newValue.items : [];
 
-        const oldKeys = oldValue ? oldValue.keys : [];
-        const newKeys = newValue ? newValue.keys : [];
+        const { modifications, additions, deletions } = MAD3(oldKeys, newKeys);
+        let modedKeys = {};
+        console.log('Modifications: ', modifications);
+        console.log('Additions: ', additions);
+        console.log('Deletions: ', deletions);
 
-        // There is an old array, so patch.
-        if(oldItems.length > 0) {
-            const { additions, deletions } = difference(oldKeys, newKeys);
-            console.log(additions, deletions);
-
-            const parent = pointer.parentElement || element;
-
-            // TODO: Find a way to account for modifications.
-
-            deletions.forEach(({ key, oldIndex }) => {
-                const found = (parent as Element).querySelector(`[key="${key}"]`);
-                if(found) {
-                    if(newItems.length === 0)
-                        found.replaceWith(document.createComment(nodeMarker));
-                    else
-                        found.remove();
-                }
-            });
-
-            additions.forEach(({ key, newIndex }) => {
-                const item = newItems[newIndex];
-                const ott = OTT(item, key);
-                const node = ott.instance;
-                _repaint(node, ott.memories, [], ott.values);
-                
-                let existingKey = oldKeys[newIndex];
-                if(existingKey) {
-                    let previous = pointer;
-                    let index = newIndex;
-                    for(let i = 0; i < index; i++) {
-                        if(previous.nextSibling) previous = previous.nextSibling;
-                        index -= 1;
-                    }
-                    parent.insertBefore(node, previous);
-                    // insertAfter(node, foundRefNode);
-                    // existingNode.replaceWith(node);
-                } else {
-                    let idx = newIndex;
-                    let refKey = oldKeys[idx];
-                    while(!refKey) {
-                        idx -= 1;
-                        refKey = oldKeys[idx];
-                    }
-                    const foundRefNode = (parent as Element).querySelector(`[key="${refKey}"]`);
-                    insertAfter(node, foundRefNode);
-                }
-            })
+        // First start with the modifications. Go through each one,
+        // find the node with the old key, then find the item with
+        // the new index, then replace the old node with the content
+        // of the new item.
+        for(let i = 0; i < modifications.length; i++) {
+            const { key, index, newValue } = modifications[i];
+            
+            // Find the node with the old key.
+            const previousNode = document.querySelector(`[key="${key}"]`);
+            
+            // Now that you know the new modification key, find that item
+            // in the new array.
+            const newItem = newItems[index];
+            
+            // Repaint that node and set the content of the previous node.
+            const ott = OTT(newItem, newValue);
+            const node = ott.instance;
+            _repaint(node, ott.memories, [], ott.values);
+            
+            if(previousNode) {
+                previousNode.replaceWith(node);
+                modedKeys[newValue] = newValue;
+            }
         }
-        // No old value, so build the entire array.
-        else {
-            let ref = pointer;
-            for(let i = 0; i < newKeys.length; i++) {
-                const item = newItems[i];
-                const key = newKeys[i];
-                const ott = OTT(item, key);
-                const node = ott.instance;
-                _repaint(node, ott.memories, [], ott.values);
-                
+
+        // For each addition, craft a new node from the item at the
+        // new index. Then, find an existing node at the index before
+        // the new one. If a node at that index exists, then insert
+        // after, otherwise just set basically.
+        let ref = pointer;
+        const parent = pointer.parentElement || element;
+        for(let i = 0; i < additions.length; i++) {
+            const { key, index } = additions[i];
+
+            // See if we already made a modification on this item,
+            // in which case we don't want to add the item since
+            // it has already technically been added through a mod.
+            if(modedKeys[key]) continue;
+
+            // Craft node.
+            const item = newItems[index];
+            const ott = OTT(item, key);
+            const node = ott.instance;
+            _repaint(node, ott.memories, [], ott.values);
+
+            // Find the node before this index. If it doesn't
+            // exist, then set the pointer node. Otherwise,
+            // insert after and set the pointer.
+            const previousKey = oldKeys[index-1];
+            if(oldItems.length === 0) {
                 if(i === 0) {
                     ref.replaceWith(node);
                     ref = node;
                 } else {
                     ref = insertAfter(node, ref);
                 }
+            } else {
+                if(previousKey) {
+                    const previousNode = document.querySelector(`[key="${previousKey}"]`);
+                    if(previousNode) ref = insertAfter(node, previousNode);
+                } else {
+                    console.log(pointer);
+                }
             }
         }
+
+        
+
+        // const oldItems = oldValue ? oldValue.items : [];
+        // const newItems = newValue ? newValue.items : [];
+
+        // const oldKeys = oldValue ? oldValue.keys : [];
+        // const newKeys = newValue ? newValue.keys : [];
+
+        // // There is an old array, so patch.
+        // if(oldItems.length > 0) {
+        //     const { additions, deletions } = difference(oldKeys, newKeys);
+        //     console.log(additions, deletions);
+
+        //     const parent = pointer.parentElement || element;
+
+        //     // TODO: Find a way to account for modifications.
+
+        //     deletions.forEach(({ key, oldIndex }) => {
+        //         const found = (parent as Element).querySelector(`[key="${key}"]`);
+        //         if(found) {
+        //             if(newItems.length === 0)
+        //                 found.replaceWith(document.createComment(nodeMarker));
+        //             else
+        //                 found.remove();
+        //         }
+        //     });
+
+        //     additions.forEach(({ key, newIndex }) => {
+        //         const item = newItems[newIndex];
+        //         const ott = OTT(item, key);
+        //         const node = ott.instance;
+        //         _repaint(node, ott.memories, [], ott.values);
+                
+        //         let existingKey = oldKeys[newIndex];
+        //         if(existingKey) {
+        //             let previous = pointer;
+        //             let index = newIndex;
+        //             for(let i = 0; i < index; i++) {
+        //                 if(previous.nextSibling) previous = previous.nextSibling;
+        //                 index -= 1;
+        //             }
+        //             parent.insertBefore(node, previous);
+        //             // insertAfter(node, foundRefNode);
+        //             // existingNode.replaceWith(node);
+        //         } else {
+        //             let idx = newIndex;
+        //             let refKey = oldKeys[idx];
+        //             while(!refKey) {
+        //                 idx -= 1;
+        //                 refKey = oldKeys[idx];
+        //             }
+        //             const foundRefNode = (parent as Element).querySelector(`[key="${refKey}"]`);
+        //             insertAfter(node, foundRefNode);
+        //         }
+        //     })
+        // }
+        // // No old value, so build the entire array.
+        // else {
+        //     let ref = pointer;
+        //     for(let i = 0; i < newKeys.length; i++) {
+        //         const item = newItems[i];
+        //         const key = newKeys[i];
+        //         const ott = OTT(item, key);
+        //         const node = ott.instance;
+        //         _repaint(node, ott.memories, [], ott.values);
+                
+        //         if(i === 0) {
+        //             ref.replaceWith(node);
+        //             ref = node;
+        //         } else {
+        //             ref = insertAfter(node, ref);
+        //         }
+        //     }
+        // }
     }
 }

@@ -10,7 +10,11 @@ export default new Mosaic({
         let str = String.fromCharCode(code);
 
         // Addition.
-        this.data.letters = this.data.letters.concat(str);
+        // this.data.letters = this.data.letters.concat(str);
+        let n = [...this.data.letters.slice(0, 1), 'x', 'y', 'z', ...this.data.letters.slice(1)];
+        console.log(n);
+        this.data.letters = n;
+
         // let half = [];
         // for(let i = 0; i < this.data.letters.length / 2; i++) half.push(this.data.letters[i]);
         // half.push(str);
