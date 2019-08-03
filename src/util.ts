@@ -165,34 +165,37 @@ export function changed(oldv: any, newv: any, isOTT?: boolean) {
 //     return { deletions, additions };
 // }
 
+function MODIFICATION(key, result, index) {
+    return {
+        key,
+        index,
+        result
+    }
+}
+function ADDITION(key, index) {
+    return {
+        key: undefined,
+        index,
+        result: key
+    }
+}
+function DELETION(key, index) {
+    return {
+        key,
+        index,
+        result: undefined
+    }
+}
 /** My implementation of an efficient array patching algorithm based on keys. */
-export function MAD3(one: string[], two: string[]) {
+export function MAD4(one: string[], two: string[]) {
     const oldMap = {};
     const newMap = {};
     const oldIndices = {};
     const newIndices = {};
 
-    const modifications: { key: string, newValue: string, index: number }[] = [];
-    const additions: { key: string, index: number }[] = [];
-    const deletions: { key: string, index: number }[] = [];
-
-    // Heuristic 1: If the old array is empty, then you know you 
-    // are just adding everything. Think of this as the initial work.
-    if(one.length === 0) {
-        for(let i = 0; i < two.length; i++) {
-            const item = two[i];
-            additions.push({
-                key: item,
-                index: i
-            });
-            // add(`${item} was added at index ${i}`);
-        }
-        return {
-            modifications,
-            additions,
-            deletions
-        };
-    }
+    const modifications = {};
+    const additions = {};
+    const deletions = {};
 
     // The maps use the index as the value and the key as the key.
     // <index, item>
@@ -220,13 +223,31 @@ export function MAD3(one: string[], two: string[]) {
                     if(newIndex !== -1) {
                         // Check if the new array is longer than the old one,
                         // which may mean an addition.
-                        // if(two.length > one.length) {
-                        //     // See if you can find the new value in the old
-                        //     // array. If not, then you know it's an addition.
-                        //     const found = one.find(itm => itm === newAtIndex);
-                        //     if(!found)
-                        //         add(`${newAtIndex} was added at index ${index}`);
-                        // }
+                        if(two.length > one.length) {
+                            // See if you can find the new value in the old
+                            // array. If not, then you know it's an addition.
+                            // const found = one.find(itm => itm === newAtIndex);
+                            // if(!found) {
+                            //     // Check if there is a modification for it.
+                            //     // console.log(item, newAtIndex, index, newIndex);
+                            //     if(index < one.length) {
+                            //         const m = MODIFICATION(item, newAtIndex, index);
+                            //         mod(m);
+                            //         modifications[newAtIndex] = m;
+                            //     }
+                            //     else {
+                            //         add(ADDITION(newAtIndex, index));
+                            //     }
+                            // }
+                        } else {
+                            const found = one.find(itm => itm === newAtIndex);
+                            if(!found) {
+                                // Check if there is a modification for it.
+                                const m = MODIFICATION(item, newAtIndex, index);
+                                // mod(m);
+                                modifications[newAtIndex] = m;
+                            }
+                        }
                     }
                     // Otherwise, if it can't be found, then it's a deletion.
                     else {
@@ -234,18 +255,13 @@ export function MAD3(one: string[], two: string[]) {
                         // if the value at the same index if just different, but still
                         // a value or if there is no value there at all.
                         if(!newAtIndex) {
-                            deletions.push({
-                                key: item,
-                                index: index
-                            });
-                            // del(`${item} was deleted from index ${index}`);
+                            const d = DELETION(item, index);
+                            // del(d);
+                            deletions[item] = d;
                         } else {
-                            modifications.push({
-                                key: item,
-                                newValue: newAtIndex,
-                                index: index
-                            });
-                            // mod(`${item} was modified to ${newAtIndex} at index ${index}`);
+                            const m = MODIFICATION(item, newAtIndex, index);
+                            // mod(m);
+                            modifications[newAtIndex] = m;
                         }
                     }
                 }
@@ -254,22 +270,16 @@ export function MAD3(one: string[], two: string[]) {
                     // If it can still be found, then it's a move.
                     if(newIndex !== -1) {
                         if(item !== newAtIndex) {
-                            modifications.push({
-                                key: item,
-                                newValue: newAtIndex,
-                                index: index
-                            });
-                            // mod(`${item} was modified to ${newAtIndex} at index ${index}`);
+                            const m = MODIFICATION(item, newAtIndex, index);
+                            // mod(m);
+                            modifications[newAtIndex] = m;
                         }
                     }
                     // Otherwise it's a modification.
                     else {
-                        modifications.push({
-                            key: item,
-                            newValue: newAtIndex,
-                            index: index
-                        });
-                        // mod(`${item} was modified to ${newAtIndex} at index ${index}`);
+                        const m = MODIFICATION(item, newAtIndex, index);
+                        // mod(m);
+                        modifications[newAtIndex] = m;
                     }
                 }
             }
@@ -278,21 +288,16 @@ export function MAD3(one: string[], two: string[]) {
             else {
                 // Deletion.
                 if(two.length < one.length) {
-                    deletions.push({
-                        key: item,
-                        index: index
-                    });
-                    // del(`${item} was deleted from index ${index}`);
+                    const d = DELETION(item, index);
+                    // del(d);
+                    deletions[item] = d;
                 }
-                // // Addition.
-                // else if(two.length > one.length) {
-                //     add(`${item} has been added at index ${index}`);
-                // }
             }
         } else {
             // Good. Same item at same index.
         }
     }
+
     for(let index = 0; index < two.length; index++) {
         const item = newMap[index];
         const oldAtIndex = one[index];
@@ -304,19 +309,28 @@ export function MAD3(one: string[], two: string[]) {
             // Is that item at least somewhere in the old
             // array? If not then it's an addition.
             const found = oldIndices[item];
-            // const found = one.find(itm => itm === item);
             if(!found && two.length > one.length) {
-                additions.push({
-                    key: item,
-                    index: index
-                });
-                // add(`${item} was added at index ${index}`);
+                // Now check if the item your adding is already
+                // present at that index as the end result of a
+                // modification.
+                const foundInMod = modifications[item];
+                if(foundInMod && foundInMod.index === index) {}
+                else {
+                    const a = ADDITION(item, index);
+                    // add(a);
+                    additions[item] = a;
+                }
             }
+
+            // else if(found) {
+            //     const sameIndexInOldArray = one[found];
+            //     console.log(found, sameIndexInOldArray, item, index);
+            // }
         }
     }
-    return {
-        modifications,
-        additions,
-        deletions
-    };
+
+    // mod(modifications);
+    // add(additions);
+    // del(deletions);
+    return { modifications, additions, deletions };
 }

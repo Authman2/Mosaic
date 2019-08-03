@@ -14,6 +14,7 @@ export default new Mosaic({
         let n = [...this.data.letters.slice(0, 1), 'x', 'y', 'z', ...this.data.letters.slice(1)];
         console.log(n);
         this.data.letters = n;
+        // this.data.letters.push(str);
 
         // let half = [];
         // for(let i = 0; i < this.data.letters.length / 2; i++) half.push(this.data.letters[i]);
@@ -25,14 +26,16 @@ export default new Mosaic({
     },
     removeSecondAndThird() {
         // Deletion.
-        let updated = this.data.letters.filter((_, index) => index !== 1 && index !== 2);
-        this.data.letters = updated;
+        // let updated = this.data.letters.filter((_, index) => index !== 1 && index !== 2);
+        // this.data.letters = updated;
+        this.data.letters.splice(1, 2);
     },
     modifySecond() {
         // Modification.
-        let replace = this.data.letters.slice();
-        replace[1] = 'x';
-        this.data.letters = replace;
+        // let replace = this.data.letters.slice();
+        // replace[1] = 'x';
+        // this.data.letters = replace;
+        this.data.letters[1] = 'x';
     },
     view() {
         return html`
@@ -48,6 +51,7 @@ export default new Mosaic({
             <button onclick='${this.addLetter}'>Push Letter</button>
             <button onclick='${this.removeSecondAndThird}'>Remove the second and third letters</button>
             <button onclick='${this.modifySecond}'>Change the second letter</button>
+            
             ${Mosaic.list(this.data.letters, (letter, index) => `${letter}-${index}`, letter => {
                 return html`<h3>${letter}</h3>`
             })}
