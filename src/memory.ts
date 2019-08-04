@@ -168,16 +168,17 @@ export default class Memory {
 
     /** Helper function for applying changes to arrays. */
     commitArray(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, oldValue: any, newValue: any) {
-        const oldKeys = oldValue ? oldValue.keys : [];
-        const newKeys = newValue ? newValue.keys : [];
-        const oldItems = oldValue ? oldValue.items : [];
+        const oldKeys = oldValue && typeof oldValue === 'object' && oldValue.__isKeyedArray ? oldValue.keys : [];
+        const newKeys = newValue && typeof newValue === 'object' && newValue.__isKeyedArray  ? newValue.keys : [];
         const newItems = newValue ? newValue.items : [];
-        let refOldKeys = oldKeys.slice();
-
-        console.log(oldKeys, newKeys);
+        let refOldKeys = oldKeys ? oldKeys.slice() : [];
+        
+        // Use "MAD" to find the differences in the arrays.
         const mad = new MAD(oldKeys, newKeys);
         const diffs = mad.diff();
         
+        // Keep track of the operation index starting from the beginning of
+        // the array. Loop through until the end of the list.
         let opIndex = 0;
         for(let i = 0; i < diffs.length; i++) {
             const { added, deleted, count, edit } = diffs[i];
@@ -204,8 +205,14 @@ export default class Memory {
                     // list, or add right after the operation index.
                     if(ref.nodeType === 8) {
                         ref = insertAfter(node, pointer);
-                        pointer.remove();
-                    } else ref = insertAfter(node, ref);
+                        // pointer.remove();
+                        // pointer.replaceWith(node);
+                        // ref = node;
+                    } else {
+                        // TODO: There is no parent node here for some reason. Maybe
+                        // you need to use a different reference node?
+                        ref = insertAfter(node, ref);
+                    }
                     
                     // Update the old key reference so we know where to add before
                     // the end of this update cycle. This is required for multiple
@@ -216,89 +223,26 @@ export default class Memory {
 
             // Handle "delete" operations.
             else if(deleted) {
-                console.log('%c Deleted: ', 'color:crimson', ''+edit, ' from index: ', opIndex);
+                // For each item in the edit, add it starting from the op index.
+                for(let j = 0; j < edit.length; j++) {
+                    const key = edit[j];
+                    const found = document.querySelector(`[key='${key}']`);
+                    if(found) {
+                        // if(newKeys.length === 0) {
+                        //     found.replaceWith(document.createComment(nodeMarker));
+                        // } else {
+                            found.remove();
+                        // }
+                    }
+                }
+
+                // When we make a deletion, we have to go back one index because
+                // the length of the array is now shorter.
                 opIndex -= count;
             }
 
             // Update the operation index as we move through the array.
             opIndex += count;
         }
-
-        // // For each addition, craft a new node from the item at the
-        // // new index. Then, find an existing node at the index before
-        // // the new one. If a node at that index exists, then insert
-        // // after, otherwise just set basically.
-        // let ref: Element|ChildNode|null = pointer;
-        // for(let i = 0; i < Object.keys(additions).length; i++) {
-        //     const _key = Object.keys(additions)[i];
-        //     const add = additions[_key];
-        //     const { key, index, result } = add;
-
-        //     if(modedKeys[result]) continue;
-
-        //     // Craft node.
-        //     const item = newItems[index];
-        //     const ott = OTT(item, result);
-        //     const node = ott.instance;
-        //     _repaint(node, ott.memories, [], ott.values);
-
-        //     // Find the node before this index. If it doesn't
-        //     // exist, then set the pointer node. Otherwise,
-        //     // insert after and set the pointer.
-        //     const previousKey = oldKeys[index-1];
-        //     if(oldItems.length === 0) {
-        //         if(!modedKeys[result]) {
-        //             if(i === 0) {
-        //                 ref!!.replaceWith(node);
-        //                 ref = node;
-        //             } else {
-        //                 ref = insertAfter(node, ref);
-        //             }
-        //         }
-        //     } else {
-        //         if(previousKey) {
-        //             const previousNode = document.querySelector(`[key="${previousKey}"]`);
-        //             if(previousNode) {
-        //                 ref = insertAfter(node, previousNode);
-        //             } else {
-        //                 let i = index;
-        //                 while((ref as Element).nextElementSibling && i > 0) {
-        //                     ref = (ref as Element).nextElementSibling;
-        //                     i -= 1;
-        //                 }
-        //                 ref = insertAfter(node, ref);
-        //             }
-        //         } else {
-        //             let i = index;
-        //             while((ref as Element).nextElementSibling && i > 0) {
-        //                 ref = (ref as Element).nextElementSibling;
-        //                 i -= 1;
-        //             }
-        //             ref = insertAfter(node, ref);
-        //         }
-        //     }
-        // }
-
-        // // Now handle deletions. Remember though, that after every
-        // // item that you delete, the indices will change with the
-        // // length of the array. So, to combat this problem, just
-        // // loop through the array of deletions backward. Think
-        // // about it, deleting a later index will not affect the
-        // // location of the ones before it, so there is no problem!
-        // for(let i = Object.keys(deletions).length - 1; i >= 0; i--) {
-        //     const _key = Object.keys(deletions)[i];
-        //     const del = deletions[_key];
-        //     const { key, index, result } = del;
-
-        //     if(modedKeys[key]) continue;
-            
-        //     const foundNode = document.querySelector(`[key="${key}"]`);
-        //     if(foundNode) {
-        //         if(newKeys.length === 0)
-        //             foundNode.replaceWith(document.createComment(nodeMarker));
-        //         else
-        //             foundNode.remove();
-        //     }
-        // }
     }
 }

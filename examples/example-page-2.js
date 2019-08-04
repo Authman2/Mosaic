@@ -1,59 +1,28 @@
 import Mosaic from '../src/index';
 
-let code = 100;
+let code = 97;
 let randomKey = () => Math.random().toString(36).slice(2);
 export default new Mosaic({
     name: 'example-page-2',
     data: {
-        letters: [{
-            letter: 'a',
-            key: randomKey()
-        },{
-            letter: 'b',
-            key: randomKey()
-        },{
-            letter: 'c',
-            key: randomKey()
-        }]
+        letters: []
     },
     addLetter() {
         let str = String.fromCharCode(code);
 
         // Addition.
-        // this.data.letters = this.data.letters.concat({
-        //     letter: str,
-        //     key: randomKey()
-        // });
         this.data.letters.push({
             letter: str,
             key: randomKey()
         });
-        // this.data.letters = [...this.data.letters.slice(0, 1), {
-        //     letter: 'x',
-        //     key: randomKey()
-        // },{
-        //     letter: 'y',
-        //     key: randomKey()
-        // },{
-        //     letter: 'z',
-        //     key: randomKey()
-        // }, ...this.data.letters.slice(1)];
         code += 1;
     },
     removeSecondAndThird() {
         // Deletion.
-        // let updated = this.data.letters.filter((_, index) => index !== 1 && index !== 2);
-        // this.data.letters = updated;
-        this.data.letters.splice(1, 2);
+        this.data.letters.splice(0, 2);
     },
     modifySecond() {
         // Modification.
-        // let replace = this.data.letters.slice();
-        // replace[1] = {
-        //     letter: 'x',
-        //     key: randomKey()
-        // };
-        // this.data.letters = replace;
         this.data.letters[1] = {
             letter: 'x',
             key: randomKey()
