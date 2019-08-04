@@ -1,27 +1,33 @@
 import Mosaic from '../src/index';
 
 let code = 100;
+let randomKey = () => Math.random().toString(36).slice(2);
 export default new Mosaic({
     name: 'example-page-2',
     data: {
-        letters: ['a', 'b', 'c']
+        letters: [{
+            letter: 'a',
+            key: randomKey()
+        },{
+            letter: 'b',
+            key: randomKey()
+        },{
+            letter: 'c',
+            key: randomKey()
+        }]
     },
     addLetter() {
         let str = String.fromCharCode(code);
 
         // Addition.
-        // this.data.letters = this.data.letters.concat(str);
-        let n = [...this.data.letters.slice(0, 1), 'x', 'y', 'z', ...this.data.letters.slice(1)];
-        console.log(n);
-        this.data.letters = n;
-        // this.data.letters.push(str);
-
-        // let half = [];
-        // for(let i = 0; i < this.data.letters.length / 2; i++) half.push(this.data.letters[i]);
-        // half.push(str);
-        // for(let i = half.length; i < this.data.letters.length; i++) half.push(this.data.letters[i]);
-        // this.data.letters = half;
-
+        // this.data.letters = this.data.letters.concat({
+        //     letter: str,
+        //     key: randomKey()
+        // });
+        this.data.letters.push({
+            letter: str,
+            key: randomKey()
+        });
         code += 1;
     },
     removeSecondAndThird() {
@@ -33,9 +39,15 @@ export default new Mosaic({
     modifySecond() {
         // Modification.
         // let replace = this.data.letters.slice();
-        // replace[1] = 'x';
+        // replace[1] = {
+        //     letter: 'x',
+        //     key: randomKey()
+        // };
         // this.data.letters = replace;
-        this.data.letters[1] = 'x';
+        this.data.letters[1] = {
+            letter: 'x',
+            key: randomKey()
+        }
     },
     view() {
         return html`
@@ -52,8 +64,8 @@ export default new Mosaic({
             <button onclick='${this.removeSecondAndThird}'>Remove the second and third letters</button>
             <button onclick='${this.modifySecond}'>Change the second letter</button>
             
-            ${Mosaic.list(this.data.letters, (letter, index) => `${letter}-${index}`, letter => {
-                return html`<h3>${letter}</h3>`
+            ${Mosaic.list(this.data.letters, obj => obj.key, obj => {
+                return html`<h3>${obj.letter}</h3>`
             })}
         </section>
         `

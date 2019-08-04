@@ -149,22 +149,6 @@ export function changed(oldv: any, newv: any, isOTT?: boolean) {
     return false;
 }
 
-// /** Finds the differences between two arrays of keys. */
-// export function difference(one: string[], two: string[]) {
-//     let additions: { key: string, newIndex: number }[] = [];
-//     let deletions: { key: string, oldIndex: number }[] = [];
-    
-//     one.forEach((item, index) => {
-//         const found = two.find(obj => item === obj);
-//         if(!found) deletions.push({ key: item, oldIndex: index });
-//     });
-//     two.forEach((item, index) => {
-//         const found = one.find(obj => item === obj);
-//         if(!found) additions.push({ key: item, newIndex: index });
-//     });
-//     return { deletions, additions };
-// }
-
 function MODIFICATION(key, result, index) {
     return {
         key,
@@ -187,150 +171,263 @@ function DELETION(key, index) {
     }
 }
 /** My implementation of an efficient array patching algorithm based on keys. */
-export function MAD4(one: string[], two: string[]) {
-    const oldMap = {};
-    const newMap = {};
-    const oldIndices = {};
-    const newIndices = {};
+// export function MAD4(one: string[], two: string[]) {
+//     const oldMap = {};
+//     const newMap = {};
+//     const oldIndices = {};
+//     const newIndices = {};
 
-    const modifications = {};
-    const additions = {};
-    const deletions = {};
+//     const modifications = {};
+//     const additions = {};
+//     const deletions = {};
 
-    // The maps use the index as the value and the key as the key.
-    // <index, item>
-    for(let i = 0; i < one.length; i++) {
-        oldMap[i] = one[i];
-        oldIndices[one[i]] = i;
-    }
-    for(let i = 0; i < two.length; i++) {
-        newMap[i] = two[i];
-        newIndices[two[i]] = i;
-    }
+//     // The maps use the index as the value and the key as the key.
+//     // <index, item>
+//     for(let i = 0; i < one.length; i++) {
+//         oldMap[i] = one[i];
+//         oldIndices[one[i]] = i;
+//     }
+//     for(let i = 0; i < two.length; i++) {
+//         newMap[i] = two[i];
+//         newIndices[two[i]] = i;
+//     }
 
-    for(let index = 0; index < one.length; index++) {
-        const item = oldMap[index];
-        const newAtIndex = two[index];
-        if(item !== newAtIndex) {
-            // Let's see if the old item has maybe just moved.
-            const foundAtAll = newMap[index];
-            if(foundAtAll) {
-                const newIndex = two.indexOf(item);
+//     for(let index = 0; index < one.length; index++) {
+//         const item = oldMap[index];
+//         const newAtIndex = two[index];
+//         if(item !== newAtIndex) {
+//             // Let's see if the old item has maybe just moved.
+//             const foundAtAll = newMap[index];
+//             if(foundAtAll) {
+//                 const newIndex = two.indexOf(item);
 
-                // If the arrays are of different lengths, then you can have a deletion.
-                if(one.length !== two.length) {
-                    // If it can still be found, then it's a move.
-                    if(newIndex !== -1) {
-                        // Check if the new array is longer than the old one,
-                        // which may mean an addition.
-                        if(two.length > one.length) {
-                            // See if you can find the new value in the old
-                            // array. If not, then you know it's an addition.
-                            // const found = one.find(itm => itm === newAtIndex);
-                            // if(!found) {
-                            //     // Check if there is a modification for it.
-                            //     // console.log(item, newAtIndex, index, newIndex);
-                            //     if(index < one.length) {
-                            //         const m = MODIFICATION(item, newAtIndex, index);
-                            //         mod(m);
-                            //         modifications[newAtIndex] = m;
-                            //     }
-                            //     else {
-                            //         add(ADDITION(newAtIndex, index));
-                            //     }
-                            // }
-                        } else {
-                            const found = one.find(itm => itm === newAtIndex);
-                            if(!found) {
-                                // Check if there is a modification for it.
-                                const m = MODIFICATION(item, newAtIndex, index);
-                                // mod(m);
-                                modifications[newAtIndex] = m;
-                            }
-                        }
-                    }
-                    // Otherwise, if it can't be found, then it's a deletion.
-                    else {
-                        // You can tell a deletion from a modification by checking
-                        // if the value at the same index if just different, but still
-                        // a value or if there is no value there at all.
-                        if(!newAtIndex) {
-                            const d = DELETION(item, index);
-                            // del(d);
-                            deletions[item] = d;
-                        } else {
-                            const m = MODIFICATION(item, newAtIndex, index);
-                            // mod(m);
-                            modifications[newAtIndex] = m;
-                        }
-                    }
-                }
-                // If they are the same length, then you probably just have modifcations.
-                else {
-                    // If it can still be found, then it's a move.
-                    if(newIndex !== -1) {
-                        if(item !== newAtIndex) {
-                            const m = MODIFICATION(item, newAtIndex, index);
-                            // mod(m);
-                            modifications[newAtIndex] = m;
-                        }
-                    }
-                    // Otherwise it's a modification.
-                    else {
-                        const m = MODIFICATION(item, newAtIndex, index);
-                        // mod(m);
-                        modifications[newAtIndex] = m;
-                    }
-                }
-            }
+//                 // If the arrays are of different lengths, then you can have a deletion.
+//                 if(one.length !== two.length) {
+//                     // If it can still be found, then it's a move.
+//                     if(newIndex !== -1) {
+//                         // Check if the new array is longer than the old one,
+//                         // which may mean an addition.
+//                         if(two.length > one.length) {
+//                             // See if you can find the new value in the old
+//                             // array. If not, then you know it's an addition.
+//                             // const found = one.find(itm => itm === newAtIndex);
+//                             // if(!found) {
+//                             //     // Check if there is a modification for it.
+//                             //     // console.log(item, newAtIndex, index, newIndex);
+//                             //     if(index < one.length) {
+//                             //         const m = MODIFICATION(item, newAtIndex, index);
+//                             //         mod(m);
+//                             //         modifications[newAtIndex] = m;
+//                             //     }
+//                             //     else {
+//                             //         add(ADDITION(newAtIndex, index));
+//                             //     }
+//                             // }
+//                         } else {
+//                             const found = one.find(itm => itm === newAtIndex);
+//                             if(!found) {
+//                                 // Check if there is a modification for it.
+//                                 const m = MODIFICATION(item, newAtIndex, index);
+//                                 // mod(m);
+//                                 modifications[newAtIndex] = m;
+//                             }
+//                         }
+//                     }
+//                     // Otherwise, if it can't be found, then it's a deletion.
+//                     else {
+//                         // You can tell a deletion from a modification by checking
+//                         // if the value at the same index if just different, but still
+//                         // a value or if there is no value there at all.
+//                         if(!newAtIndex) {
+//                             const d = DELETION(item, index);
+//                             // del(d);
+//                             deletions[item] = d;
+//                         } else {
+//                             const m = MODIFICATION(item, newAtIndex, index);
+//                             // mod(m);
+//                             modifications[newAtIndex] = m;
+//                         }
+//                     }
+//                 }
+//                 // If they are the same length, then you probably just have modifcations.
+//                 else {
+//                     // If it can still be found, then it's a move.
+//                     if(newIndex !== -1) {
+//                         if(item !== newAtIndex) {
+//                             const m = MODIFICATION(item, newAtIndex, index);
+//                             // mod(m);
+//                             modifications[newAtIndex] = m;
+//                         }
+//                     }
+//                     // Otherwise it's a modification.
+//                     else {
+//                         const m = MODIFICATION(item, newAtIndex, index);
+//                         // mod(m);
+//                         modifications[newAtIndex] = m;
+//                     }
+//                 }
+//             }
             
-            // Ok so the old key was not found in the new array. What now?
-            else {
-                // Deletion.
-                if(two.length < one.length) {
-                    const d = DELETION(item, index);
-                    // del(d);
-                    deletions[item] = d;
-                }
-            }
-        } else {
-            // Good. Same item at same index.
-        }
-    }
+//             // Ok so the old key was not found in the new array. What now?
+//             else {
+//                 // Deletion.
+//                 if(two.length < one.length) {
+//                     const d = DELETION(item, index);
+//                     // del(d);
+//                     deletions[item] = d;
+//                 }
+//             }
+//         } else {
+//             // Good. Same item at same index.
+//         }
+//     }
 
-    for(let index = 0; index < two.length; index++) {
-        const item = newMap[index];
-        const oldAtIndex = one[index];
+//     for(let index = 0; index < two.length; index++) {
+//         const item = newMap[index];
+//         const oldAtIndex = one[index];
 
-        // If the item is not the same at the same index
-        // and you can't find it elsewhere in the array,
-        // then you can tell that it was added.
-        if(item !== oldAtIndex) {
-            // Is that item at least somewhere in the old
-            // array? If not then it's an addition.
-            const found = oldIndices[item];
-            if(!found && two.length > one.length) {
-                // Now check if the item your adding is already
-                // present at that index as the end result of a
-                // modification.
-                const foundInMod = modifications[item];
-                if(foundInMod && foundInMod.index === index) {}
-                else {
-                    const a = ADDITION(item, index);
-                    // add(a);
-                    additions[item] = a;
-                }
-            }
+//         // If the item is not the same at the same index
+//         // and you can't find it elsewhere in the array,
+//         // then you can tell that it was added.
+//         if(item !== oldAtIndex) {
+//             // Is that item at least somewhere in the old
+//             // array? If not then it's an addition.
+//             const found = oldIndices[item];
+//             if(!found && two.length > one.length) {
+//                 // Now check if the item your adding is already
+//                 // present at that index as the end result of a
+//                 // modification.
+//                 const foundInMod = modifications[item];
+//                 if(foundInMod && foundInMod.index === index) {}
+//                 else {
+//                     const a = ADDITION(item, index);
+//                     // add(a);
+//                     additions[item] = a;
+//                 }
+//             }
 
-            // else if(found) {
-            //     const sameIndexInOldArray = one[found];
-            //     console.log(found, sameIndexInOldArray, item, index);
-            // }
-        }
-    }
+//             // else if(found) {
+//             //     const sameIndexInOldArray = one[found];
+//             //     console.log(found, sameIndexInOldArray, item, index);
+//             // }
+//         }
+//     }
 
-    // mod(modifications);
-    // add(additions);
-    // del(deletions);
-    return { modifications, additions, deletions };
-}
+//     // mod(modifications);
+//     // add(additions);
+//     // del(deletions);
+//     return { modifications, additions, deletions };
+// }
+// export function MAD5(one: string[], two: string[]) {
+//     const oldMap = {};
+//     const newMap = {};
+//     const oldIndices = {};
+//     const newIndices = {};
+
+//     const modifications = {};
+//     const additions = {};
+//     const deletions = {};
+
+//     // The maps use the index as the value and the key as the key.
+//     // <index, item>
+//     for(let i = 0; i < one.length; i++) {
+//         oldMap[i] = one[i];
+//         oldIndices[one[i]] = i;
+//     }
+//     for(let i = 0; i < two.length; i++) {
+//         newMap[i] = two[i];
+//         newIndices[two[i]] = i;
+//     }
+
+//     for(let index = 0; index < one.length; index++) {
+//         const item = oldMap[index];
+//         const newAtIndex = two[index];
+//         if(item !== newAtIndex) {
+//             // Let's see if the old item has maybe just moved.
+//             const foundAtAll = newMap[index];
+//             if(foundAtAll) {
+//                 const newIndex = two.indexOf(item);
+
+//                 // If the arrays are of different lengths, then you can have a deletion.
+//                 if(one.length !== two.length) {
+//                     // Check here for a deletion.
+//                     if(two.length < one.length && newIndex < 0) {
+//                         const d = DELETION(item, index);
+//                         deletions[item] = d;
+//                     }
+
+//                     // If it can still be found, then it's a move.
+//                     if(newIndex !== -1) {
+//                         // Check if the new array is longer than the old one,
+//                         // which may mean an addition.
+//                         if(two.length > one.length) {}
+//                         else {
+//                             const found = one.find(itm => itm === newAtIndex);
+//                             if(!found) {
+//                                 // Check if there is a modification for it.
+//                                 const m = MODIFICATION(item, newAtIndex, index);
+//                                 modifications[newAtIndex] = m;
+//                             }
+//                         }
+//                     }
+//                 }
+//                 // If they are the same length, then you probably just have modifcations.
+//                 else {
+//                     // If it can still be found, then it's a move.
+//                     if(newIndex !== -1) {
+//                         if(item !== newAtIndex) {
+//                             const m = MODIFICATION(item, newAtIndex, index);
+//                             modifications[newAtIndex] = m;
+//                         }
+//                     }
+//                     // Otherwise it's a modification.
+//                     else {
+//                         const m = MODIFICATION(item, newAtIndex, index);
+//                         modifications[newAtIndex] = m;
+//                     }
+//                 }
+//             }
+            
+//             // Ok so the old key was not found in the new array. What now?
+//             else {
+//                 // Deletion.
+//                 if(two.length < one.length) {
+//                     const foundNew = two.find(itm => itm === item);
+//                     if(!foundNew) {
+//                         const d = DELETION(item, index);
+//                         deletions[item] = d;
+//                     }
+//                 }
+//             }
+//         } else {
+//             // Good. Same item at same index.
+//         }
+//     }
+
+//     for(let index = 0; index < two.length; index++) {
+//         const item = newMap[index];
+//         const oldAtIndex = one[index];
+
+//         // If the item is not the same at the same index
+//         // and you can't find it elsewhere in the array,
+//         // then you can tell that it was added.
+//         if(item !== oldAtIndex) {
+//             // Is that item at least somewhere in the old
+//             // array? If not then it's an addition.
+//             const found = oldIndices[item];
+//             if(!found && two.length > one.length) {
+//                 // Now check if the item your adding is already
+//                 // present at that index as the end result of a
+//                 // modification.
+//                 const foundInMod = modifications[item];
+//                 if(foundInMod && foundInMod.index === index) {}
+//                 else {
+//                     const a = ADDITION(item, index);
+//                     additions[item] = a;
+//                 }
+//             }
+//         }
+//     }
+
+//     return { modifications, additions, deletions };
+// }

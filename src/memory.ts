@@ -1,6 +1,7 @@
-import { nodeMarker, insertAfter, isBooleanAttribute, MAD4 } from './util';
+import { nodeMarker, insertAfter, isBooleanAttribute } from './util';
 import { MemoryOptions, MosaicComponent, BatchUpdate } from './options';
 import { OTT, _repaint } from './parser';
+import MAD from './MAD';
 
 /** Represents a piece of dynamic content in the markup. */
 export default class Memory {
@@ -172,114 +173,137 @@ export default class Memory {
         const oldItems = oldValue ? oldValue.items : [];
         const newItems = newValue ? newValue.items : [];
 
-        const { modifications, additions, deletions } = MAD4(oldKeys, newKeys);
-        let modedKeys = {};
-        console.log('Modifications: ', modifications);
-        console.log('Additions: ', additions);
-        console.log('Deletions: ', deletions);
-
-        // First start with the modifications. Go through each one,
-        // find the node with the old key, then find the item with
-        // the new index, then replace the old node with the content
-        // of the new item.
-        for(let i = 0; i < Object.keys(modifications).length; i++) {
-            const _key = Object.keys(modifications)[i];
-            const mod = modifications[_key];
-            const { key, index, result } = mod;
+        console.log(oldKeys, newKeys);
+        const mad = new MAD(oldKeys, newKeys);
+        const diffs = mad.diff();
+        
+        let opIndex = 0;
+        for(let i = 0; i < diffs.length; i++) {
+            const { added, deleted, count, edit } = diffs[i];
             
-            // Find the node with the old key.
-            const previousNode = document.querySelector(`[key="${key}"]`);
-            
-            // Now that you know the new modification key, find that item
-            // in the new array.
-            const newItem = newItems[index];
-            
-            // Repaint that node and set the content of the previous node.
-            const ott = OTT(newItem, result);
-            const node = ott.instance;
-            _repaint(node, ott.memories, [], ott.values);
-            
-            if(previousNode) {
-                previousNode.replaceWith(node);
-                modedKeys[result] = result;
+            // Handle "add" operations.
+            if(added) {
+                console.log('%c Added: ', 'color:mediumseagreen', ''+edit, ' at index: ', opIndex);
             }
+
+            // Handle "delete" operations.
+            else if(deleted) {
+                console.log('%c Deleted: ', 'color:crimson', ''+edit, ' from index: ', opIndex);
+                opIndex -= count;
+            }
+
+            // Update the operation index as we move through the array.
+            opIndex += count;
         }
 
-        // For each addition, craft a new node from the item at the
-        // new index. Then, find an existing node at the index before
-        // the new one. If a node at that index exists, then insert
-        // after, otherwise just set basically.
-        let ref: Element|ChildNode|null = pointer;
-        for(let i = 0; i < Object.keys(additions).length; i++) {
-            const _key = Object.keys(additions)[i];
-            const add = additions[_key];
-            const { key, index, result } = add;
+        // const { modifications, additions, deletions } = MAD5(oldKeys, newKeys);
+        // let modedKeys = {};
+        // console.log('Modifications: ', modifications);
+        // console.log('Additions: ', additions);
+        // console.log('Deletions: ', deletions);
 
-            if(modedKeys[result]) continue;
-
-            // Craft node.
-            const item = newItems[index];
-            const ott = OTT(item, result);
-            const node = ott.instance;
-            _repaint(node, ott.memories, [], ott.values);
-
-            // Find the node before this index. If it doesn't
-            // exist, then set the pointer node. Otherwise,
-            // insert after and set the pointer.
-            const previousKey = oldKeys[index-1];
-            if(oldItems.length === 0) {
-                if(!modedKeys[result]) {
-                    if(i === 0) {
-                        ref!!.replaceWith(node);
-                        ref = node;
-                    } else {
-                        ref = insertAfter(node, ref);
-                    }
-                }
-            } else {
-                if(previousKey) {
-                    const previousNode = document.querySelector(`[key="${previousKey}"]`);
-                    if(previousNode) {
-                        ref = insertAfter(node, previousNode);
-                    } else {
-                        let i = index;
-                        while((ref as Element).nextElementSibling && i > 0) {
-                            ref = (ref as Element).nextElementSibling;
-                            i -= 1;
-                        }
-                        ref = insertAfter(node, ref);
-                    }
-                } else {
-                    let i = index;
-                    while((ref as Element).nextElementSibling && i > 0) {
-                        ref = (ref as Element).nextElementSibling;
-                        i -= 1;
-                    }
-                    ref = insertAfter(node, ref);
-                }
-            }
-        }
-
-        // Now handle deletions. Remember though, that after every
-        // item that you delete, the indices will change with the
-        // length of the array. So, to combat this problem, just
-        // loop through the array of deletions backward. Think
-        // about it, deleting a later index will not affect the
-        // location of the ones before it, so there is no problem!
-        for(let i = Object.keys(deletions).length - 1; i >= 0; i--) {
-            const _key = Object.keys(deletions)[i];
-            const del = deletions[_key];
-            const { key, index, result } = del;
-
-            if(modedKeys[key]) continue;
+        // // First start with the modifications. Go through each one,
+        // // find the node with the old key, then find the item with
+        // // the new index, then replace the old node with the content
+        // // of the new item.
+        // for(let i = 0; i < Object.keys(modifications).length; i++) {
+        //     const _key = Object.keys(modifications)[i];
+        //     const mod = modifications[_key];
+        //     const { key, index, result } = mod;
             
-            const foundNode = document.querySelector(`[key="${key}"]`);
-            if(foundNode) {
-                if(newKeys.length === 0)
-                    foundNode.replaceWith(document.createComment(nodeMarker));
-                else
-                    foundNode.remove();
-            }
-        }
+        //     // Find the node with the old key.
+        //     const previousNode = document.querySelector(`[key="${key}"]`);
+            
+        //     // Now that you know the new modification key, find that item
+        //     // in the new array.
+        //     const newItem = newItems[index];
+            
+        //     // Repaint that node and set the content of the previous node.
+        //     const ott = OTT(newItem, result);
+        //     const node = ott.instance;
+        //     _repaint(node, ott.memories, [], ott.values);
+            
+        //     if(previousNode) {
+        //         previousNode.replaceWith(node);
+        //         modedKeys[result] = result;
+        //     }
+        // }
+
+        // // For each addition, craft a new node from the item at the
+        // // new index. Then, find an existing node at the index before
+        // // the new one. If a node at that index exists, then insert
+        // // after, otherwise just set basically.
+        // let ref: Element|ChildNode|null = pointer;
+        // for(let i = 0; i < Object.keys(additions).length; i++) {
+        //     const _key = Object.keys(additions)[i];
+        //     const add = additions[_key];
+        //     const { key, index, result } = add;
+
+        //     if(modedKeys[result]) continue;
+
+        //     // Craft node.
+        //     const item = newItems[index];
+        //     const ott = OTT(item, result);
+        //     const node = ott.instance;
+        //     _repaint(node, ott.memories, [], ott.values);
+
+        //     // Find the node before this index. If it doesn't
+        //     // exist, then set the pointer node. Otherwise,
+        //     // insert after and set the pointer.
+        //     const previousKey = oldKeys[index-1];
+        //     if(oldItems.length === 0) {
+        //         if(!modedKeys[result]) {
+        //             if(i === 0) {
+        //                 ref!!.replaceWith(node);
+        //                 ref = node;
+        //             } else {
+        //                 ref = insertAfter(node, ref);
+        //             }
+        //         }
+        //     } else {
+        //         if(previousKey) {
+        //             const previousNode = document.querySelector(`[key="${previousKey}"]`);
+        //             if(previousNode) {
+        //                 ref = insertAfter(node, previousNode);
+        //             } else {
+        //                 let i = index;
+        //                 while((ref as Element).nextElementSibling && i > 0) {
+        //                     ref = (ref as Element).nextElementSibling;
+        //                     i -= 1;
+        //                 }
+        //                 ref = insertAfter(node, ref);
+        //             }
+        //         } else {
+        //             let i = index;
+        //             while((ref as Element).nextElementSibling && i > 0) {
+        //                 ref = (ref as Element).nextElementSibling;
+        //                 i -= 1;
+        //             }
+        //             ref = insertAfter(node, ref);
+        //         }
+        //     }
+        // }
+
+        // // Now handle deletions. Remember though, that after every
+        // // item that you delete, the indices will change with the
+        // // length of the array. So, to combat this problem, just
+        // // loop through the array of deletions backward. Think
+        // // about it, deleting a later index will not affect the
+        // // location of the ones before it, so there is no problem!
+        // for(let i = Object.keys(deletions).length - 1; i >= 0; i--) {
+        //     const _key = Object.keys(deletions)[i];
+        //     const del = deletions[_key];
+        //     const { key, index, result } = del;
+
+        //     if(modedKeys[key]) continue;
+            
+        //     const foundNode = document.querySelector(`[key="${key}"]`);
+        //     if(foundNode) {
+        //         if(newKeys.length === 0)
+        //             foundNode.replaceWith(document.createComment(nodeMarker));
+        //         else
+        //             foundNode.remove();
+        //     }
+        // }
     }
 }
