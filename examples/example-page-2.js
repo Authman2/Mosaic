@@ -28,6 +28,16 @@ export default new Mosaic({
             letter: str,
             key: randomKey()
         });
+        // this.data.letters = [...this.data.letters.slice(0, 1), {
+        //     letter: 'x',
+        //     key: randomKey()
+        // },{
+        //     letter: 'y',
+        //     key: randomKey()
+        // },{
+        //     letter: 'z',
+        //     key: randomKey()
+        // }, ...this.data.letters.slice(1)];
         code += 1;
     },
     removeSecondAndThird() {

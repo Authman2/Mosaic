@@ -172,6 +172,7 @@ export default class Memory {
         const newKeys = newValue ? newValue.keys : [];
         const oldItems = oldValue ? oldValue.items : [];
         const newItems = newValue ? newValue.items : [];
+        let refOldKeys = oldKeys.slice();
 
         console.log(oldKeys, newKeys);
         const mad = new MAD(oldKeys, newKeys);
@@ -183,7 +184,34 @@ export default class Memory {
             
             // Handle "add" operations.
             if(added) {
-                console.log('%c Added: ', 'color:mediumseagreen', ''+edit, ' at index: ', opIndex);
+                // For each item in the edit, add it starting from the op index.
+                let ref = pointer;
+                for(let j = 0; j < edit.length; j++) {
+                    const key = edit[j];
+                    const item = newItems[opIndex + j];
+                    const ott = OTT(item, key);
+                    const node = ott.instance;
+                    _repaint(node, ott.memories, [], ott.values);
+
+                    // Look for the reference node.
+                    const prevKey = refOldKeys[opIndex + j - 1];
+                    if(prevKey) {
+                        const _ref = document.querySelector(`[key='${prevKey}']`);
+                        if(_ref) ref = _ref;
+                    }
+
+                    // Either replace the pointer if it is the first item in the
+                    // list, or add right after the operation index.
+                    if(ref.nodeType === 8) {
+                        ref = insertAfter(node, pointer);
+                        pointer.remove();
+                    } else ref = insertAfter(node, ref);
+                    
+                    // Update the old key reference so we know where to add before
+                    // the end of this update cycle. This is required for multiple
+                    // additions.
+                    refOldKeys.splice(opIndex + j, 0, key);
+                }
             }
 
             // Handle "delete" operations.
@@ -195,39 +223,6 @@ export default class Memory {
             // Update the operation index as we move through the array.
             opIndex += count;
         }
-
-        // const { modifications, additions, deletions } = MAD5(oldKeys, newKeys);
-        // let modedKeys = {};
-        // console.log('Modifications: ', modifications);
-        // console.log('Additions: ', additions);
-        // console.log('Deletions: ', deletions);
-
-        // // First start with the modifications. Go through each one,
-        // // find the node with the old key, then find the item with
-        // // the new index, then replace the old node with the content
-        // // of the new item.
-        // for(let i = 0; i < Object.keys(modifications).length; i++) {
-        //     const _key = Object.keys(modifications)[i];
-        //     const mod = modifications[_key];
-        //     const { key, index, result } = mod;
-            
-        //     // Find the node with the old key.
-        //     const previousNode = document.querySelector(`[key="${key}"]`);
-            
-        //     // Now that you know the new modification key, find that item
-        //     // in the new array.
-        //     const newItem = newItems[index];
-            
-        //     // Repaint that node and set the content of the previous node.
-        //     const ott = OTT(newItem, result);
-        //     const node = ott.instance;
-        //     _repaint(node, ott.memories, [], ott.values);
-            
-        //     if(previousNode) {
-        //         previousNode.replaceWith(node);
-        //         modedKeys[result] = result;
-        //     }
-        // }
 
         // // For each addition, craft a new node from the item at the
         // // new index. Then, find an existing node at the index before
