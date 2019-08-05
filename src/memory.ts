@@ -104,7 +104,9 @@ export default class Memory {
         // string so that on the next dynamic attribute it goes to the next
         // position to replace (notice how the new value gets converted to a
         // string first. This ensures attribute safety).
-        const newAttributeValue = attribute.value.replace(nodeMarker, ''+newValue);
+        const newAttributeValue = attribute.value
+            .replace(nodeMarker, ''+newValue)
+            .replace(oldValue, ''+newValue);
         const setValue = newAttributeValue.length > 0 ? newAttributeValue : newValue;
         (pointer as Element).setAttribute(name, setValue);
         
