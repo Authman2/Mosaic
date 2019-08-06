@@ -180,7 +180,7 @@ export default class Memory {
         // the same operation on everything.
         // All Additions:
         if(oldKeys.length === 0 && newKeys.length > 0) {
-            let ref = pointer;
+            let frag = document.createDocumentFragment();
             for(let i = 0; i < newKeys.length; i++) {
                 const key = newKeys[i];
                 const item = newItems[i];
@@ -188,20 +188,15 @@ export default class Memory {
                 const node = ott.instance;
                 _repaint(node, ott.memories, [], ott.values);
 
-                // Either replace the pointer if it is the first item in the
-                // list, or add right after the operation index.
-                if(ref.nodeType === 8) {
-                    ref = insertAfter(node, pointer);
-                    ref = node;
-                } else {
-                    ref = insertAfter(node, ref);
-                }
+                // Add each item to a document fragment, then set all of it
+                // at the end for improved DOM performance.
+                frag.appendChild(node);
             }
+            insertAfter(frag, pointer);
             return;
         }
         // All Deletions:
         if(oldKeys.length > 0 && newKeys.length === 0) {
-            let ref = pointer;
             for(let i = 0; i < oldKeys.length; i++) {
                 // Find the node and remove it from the DOM.
                 const key = oldKeys[i];
@@ -210,7 +205,6 @@ export default class Memory {
             }
             return;
         }
-
         
         // Use "MAD" to find the differences in the arrays.
         const mad = new MAD(oldKeys, newKeys);
