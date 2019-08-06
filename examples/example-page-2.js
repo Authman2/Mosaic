@@ -19,7 +19,7 @@ export default new Mosaic({
     },
     removeSecondAndThird() {
         // Deletion.
-        this.data.letters.splice(0, 2);
+        this.data.letters.splice(1, 2);
     },
     modifySecond() {
         // Modification.

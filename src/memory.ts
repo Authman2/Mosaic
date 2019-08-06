@@ -1,7 +1,7 @@
 import { nodeMarker, insertAfter, isBooleanAttribute } from './util';
 import { MemoryOptions, MosaicComponent, BatchUpdate } from './options';
 import { OTT, _repaint } from './parser';
-import MAD from './MAD';
+import MAD from './mad';
 
 /** Represents a piece of dynamic content in the markup. */
 export default class Memory {
@@ -174,6 +174,43 @@ export default class Memory {
         const newKeys = newValue && typeof newValue === 'object' && newValue.__isKeyedArray  ? newValue.keys : [];
         const newItems = newValue ? newValue.items : [];
         let refOldKeys = oldKeys ? oldKeys.slice() : [];
+
+        // Heuristics: For repaints that contain only additions or deletions
+        // don't bother going through the MAD algorithm. Instead, just perform
+        // the same operation on everything.
+        // All Additions:
+        if(oldKeys.length === 0 && newKeys.length > 0) {
+            let ref = pointer;
+            for(let i = 0; i < newKeys.length; i++) {
+                const key = newKeys[i];
+                const item = newItems[i];
+                const ott = OTT(item, key);
+                const node = ott.instance;
+                _repaint(node, ott.memories, [], ott.values);
+
+                // Either replace the pointer if it is the first item in the
+                // list, or add right after the operation index.
+                if(ref.nodeType === 8) {
+                    ref = insertAfter(node, pointer);
+                    ref = node;
+                } else {
+                    ref = insertAfter(node, ref);
+                }
+            }
+            return;
+        }
+        // All Deletions:
+        if(oldKeys.length > 0 && newKeys.length === 0) {
+            let ref = pointer;
+            for(let i = 0; i < oldKeys.length; i++) {
+                // Find the node and remove it from the DOM.
+                const key = oldKeys[i];
+                const found = document.querySelector(`[key='${key}']`);
+                if(found) found.remove();
+            }
+            return;
+        }
+
         
         // Use "MAD" to find the differences in the arrays.
         const mad = new MAD(oldKeys, newKeys);
@@ -229,13 +266,7 @@ export default class Memory {
                 for(let j = 0; j < edit.length; j++) {
                     const key = edit[j];
                     const found = document.querySelector(`[key='${key}']`);
-                    if(found) {
-                        // if(newKeys.length === 0) {
-                        //     found.replaceWith(document.createComment(nodeMarker));
-                        // } else {
-                            found.remove();
-                        // }
-                    }
+                    if(found) found.remove();
                 }
 
                 // When we make a deletion, we have to go back one index because
