@@ -10,7 +10,6 @@ import './portfolio-label';
 
 import './index.css';
 
-
 const router = new Router('root');
 router.addRoute('/', Home);
 router.addRoute('/example-page-1', ExamplePage1);

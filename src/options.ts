@@ -28,7 +28,7 @@ export class MosaicComponent extends HTMLElement {
     descendants: DocumentFragment = document.createDocumentFragment();
     batches: { attributes: BatchUpdate[], data: BatchUpdate[] } = { attributes: [], data: [] };
 
-    paint(el?: string|Element) {};
+    paint(arg?: string|HTMLElement|Object) {};
     repaint() {};
     set(data: Object) {};
 }
@@ -44,9 +44,9 @@ export interface MosaicOptions {
     router: HTMLElement;
     portfolio: Portfolio;
     willDestroy: Function;
-    element: string|Element;
     descendants: DocumentFragment;
     willUpdate: (old: Object) => void;
+    element: string|Element|HTMLElement;
     received?: (attributes: Object) => void;
     view: (self?: MosaicComponent) => ViewFunction;
 }

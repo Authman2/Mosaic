@@ -151,8 +151,28 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             }
         }
 
-        paint(el?: string|HTMLElement) {
-            let look = el ? el : copyOptions.element;
+        paint(arg?: string|HTMLElement|Object) {
+            let isElement: boolean = typeof arg === 'string' || arg instanceof HTMLElement;
+            let look: string|Element|HTMLElement|undefined|null = copyOptions.element;
+
+            // Check if the user is injecting into the base element here.
+            if(isElement) {
+                if(typeof arg === 'string') look = document.getElementById(arg);
+                else if(arg instanceof HTMLElement) look = arg;
+            }
+            // Look for an injection of data.
+            else if(typeof arg === 'object') {
+                this.barrier = true;
+                let keys = Object.keys(arg);
+                for(let i = 0; i < keys.length; i++) {
+                    const key = keys[i];
+                    const val = arg[key];
+                    this.data[key] = val;
+                }
+                this.barrier = false;
+            }
+
+            // Paint into the base element.
             let element = typeof look === 'string' ? document.getElementById(look) : look; 
             if(!element)
                 throw new Error(`Could not find the base element: ${copyOptions.element}.`);
