@@ -181,18 +181,26 @@ export default class Memory {
         // All Additions:
         if(oldKeys.length === 0 && newKeys.length > 0) {
             let frag = document.createDocumentFragment();
+            let refs: Object[] = [];
             for(let i = 0; i < newKeys.length; i++) {
                 const key = newKeys[i];
                 const item = newItems[i];
                 const ott = OTT(item, key);
                 const node = ott.instance;
-                _repaint(node, ott.memories, [], ott.values, true);
+                refs.push(ott);
+                // _repaint(node, ott.memories, [], ott.values, true);
 
                 // Add each item to a document fragment, then set all of it
                 // at the end for improved DOM performance.
                 frag.appendChild(node);
             }
             insertAfter(frag, pointer);
+
+            // Go back and repaint everything once it's in the DOM.
+            for(let i = 0; i < refs.length; i++) {
+                const ott = refs[i];
+                _repaint((ott as any).instance, (ott as any).memories, [], (ott as any).values, true);
+            }
             return;
         }
         // All Deletions:
@@ -225,7 +233,7 @@ export default class Memory {
                     const item = newItems[opIndex + j];
                     const ott = OTT(item, key);
                     const node = ott.instance;
-                    _repaint(node, ott.memories, [], ott.values, true);
+                    // _repaint(node, ott.memories, [], ott.values, true);
 
                     // Look for the reference node.
                     const prevKey = refOldKeys[opIndex + j - 1];
@@ -246,6 +254,9 @@ export default class Memory {
                         // you need to use a different reference node?
                         ref = insertAfter(node, ref);
                     }
+
+                    // Repaint here, after it has entered the DOM.
+                    _repaint(node, ott.memories, [], ott.values, true);
                     
                     // Update the old key reference so we know where to add before
                     // the end of this update cycle. This is required for multiple
