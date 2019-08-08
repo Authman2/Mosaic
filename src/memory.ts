@@ -155,7 +155,7 @@ export default class Memory {
         }
 
         // Remove the attribute from the DOM tree to avoid clutter.
-        if(pointer.nodeType !== 3 && (pointer as Element).hasAttribute(name))
+        if((pointer as Element).hasAttribute(name))
             (pointer as Element).removeAttribute(name);
 
         // Batch the pointer element and the attribute [name, value] pair together so that
