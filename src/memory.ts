@@ -155,7 +155,7 @@ export default class Memory {
         }
 
         // Remove the attribute from the DOM tree to avoid clutter.
-        if((pointer as Element).hasAttribute(name))
+        if(pointer.nodeType !== 3 && (pointer as Element).hasAttribute(name))
             (pointer as Element).removeAttribute(name);
 
         // Batch the pointer element and the attribute [name, value] pair together so that
@@ -186,7 +186,7 @@ export default class Memory {
                 const item = newItems[i];
                 const ott = OTT(item, key);
                 const node = ott.instance;
-                _repaint(node, ott.memories, [], ott.values);
+                _repaint(node, ott.memories, [], ott.values, true);
 
                 // Add each item to a document fragment, then set all of it
                 // at the end for improved DOM performance.
@@ -225,7 +225,7 @@ export default class Memory {
                     const item = newItems[opIndex + j];
                     const ott = OTT(item, key);
                     const node = ott.instance;
-                    _repaint(node, ott.memories, [], ott.values);
+                    _repaint(node, ott.memories, [], ott.values, true);
 
                     // Look for the reference node.
                     const prevKey = refOldKeys[opIndex + j - 1];
