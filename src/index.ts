@@ -153,7 +153,7 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
 
         paint(arg?: string|HTMLElement|Object) {
             let isElement: boolean = typeof arg === 'string' || arg instanceof HTMLElement;
-            let look: string|Element|HTMLElement|undefined|null = copyOptions.element;
+            let look: string|Element|HTMLElement|undefined|null = copyOptions.element || (this as any).element;
 
             // Check if the user is injecting into the base element here.
             if(isElement) {
