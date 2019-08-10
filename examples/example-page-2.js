@@ -1,4 +1,5 @@
 import Mosaic from '../src/index';
+import './round-button';
 
 let code = 97;
 let randomKey = () => Math.random().toString(36).slice(2);

@@ -209,8 +209,10 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
         set(data: Object) {
             this.barrier = true;
             const keys = Object.keys(data);
-            for(let i = 0; i < keys.length; i++)
-                this.data[keys[i]] = data[keys[i]];
+            for(let i = 0; i < keys.length; i++) {
+                const key = keys[i];
+                this.data[key] = data[key];
+            }
             this.barrier = false;
             
             this.repaint();

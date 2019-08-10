@@ -87,7 +87,19 @@ export function _repaint(element: HTMLElement, memories: Memory[], oldValues: an
             else
                 component.received(justAttrs);
         }
-        if(component.batches.data.length > 0) component.set(justData);
+
+        if(component.batches.data.length > 0) {
+            component.barrier = true;
+            let keys = Object.keys(justData);
+            for(let i = 0; i < keys.length; i++) {
+                const key = keys[i];
+                const val = justData[key];
+                component.data[key] = val;
+            }
+            component.barrier = false;
+            if(isOTT === false) component.repaint();
+            // component.set(justData);
+        }
 
         component.batches = { attributes: [], data: [] };
     }
@@ -154,7 +166,7 @@ function parseAttributes(node: Element, steps: number[]): Memory[] {
                     type: 'attribute',
                     steps,
                     isComponentType: defined,
-                    isEvent: name.startsWith('on'),
+                    isEvent: name.startsWith('on') && name.length > 2,
                     attribute: { name },
                 }));
             }

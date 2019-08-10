@@ -27,7 +27,7 @@
   "homepage": "https://mosaicjs.site",
   "devDependencies": {
     "parcel-bundler": "^1.12.3",
-    "typescript": "^3.3.4000"
+    "typescript": "^3.5.3"
   },
   "dependencies": {},
   "types": "dist/index.d.ts"
