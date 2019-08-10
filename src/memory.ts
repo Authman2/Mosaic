@@ -1,7 +1,7 @@
 import { nodeMarker, insertAfter, isBooleanAttribute } from './util';
 import { MemoryOptions, MosaicComponent, BatchUpdate } from './options';
 import { OTT, _repaint } from './parser';
-import MAD from './_mad';
+import MAD from './mad';
 
 /** Represents a piece of dynamic content in the markup. */
 export default class Memory {

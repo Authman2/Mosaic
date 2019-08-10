@@ -122,8 +122,24 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                 if(Object.keys(receivedData).length > 0) {
                     this.barrier = true;
                     const keys = Object.keys(receivedData);
-                    for(let i = 0; i < keys.length; i++)
-                        this.data[keys[i]] = receivedData[keys[i]];
+                    for(let i = 0; i < keys.length; i++) {
+                        const key = keys[i];
+                        // If the attribute type is a string, but the initial
+                        // value in the component is something else, try to
+                        // parse it as such.
+                        if(typeof receivedData[key] === 'string') {
+                            if(typeof this.data[key] === 'number')
+                                this.data[key] = parseFloat(receivedData[key]);
+                            else if(typeof this.data[key] === 'bigint')
+                                this.data[key] = parseInt(receivedData[key]);
+                            else if(typeof this.data[key] === 'boolean')
+                                this.data[key] = receivedData[key] === 'true' ? true : false;
+                            else if(typeof this.data[key] === 'object')
+                                this.data[key] = JSON.parse(receivedData[key]);
+                        } else {
+                            this.data[key] = receivedData[key];
+                        }
+                    }
                     this.barrier = false;
                     this.repaint();
                 }
