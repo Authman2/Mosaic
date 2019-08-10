@@ -19,7 +19,7 @@ that there is no need to call "setState" or anything like that to update a compo
 
 🌐 **State Manager**: Comes with a built-in global state manager called *Portfolio*.
 
-👌 **Lightweight**: The minified Mosaic library comes in at a size of 24KB.
+👌 **Lightweight**: The minified Mosaic library comes in at a size of 25KB.
 
 🔖 **Tagged Template Literals**: Views are written using tagged template literals, which means there is no need for a compiler:
 ```javascript
