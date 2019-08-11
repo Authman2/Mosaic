@@ -218,12 +218,35 @@ export default class Memory {
         let opIndex = 0;
         for(let i = 0; i < diffs.length; i++) {
             const { added, deleted, count, edit } = diffs[i];
+
+            // Modification.
+            if(deleted && (i + 1) < diffs.length && diffs[i+1].added && count === diffs[i+1].count) {
+                // There could be more than one modification at a time, so run
+                // through each one and replace the node at the old index with
+                // a rendered OTT at the same index.
+                for(let j = 0; j < edit.length; j++) {
+                    const modKey = edit[j];
+                    const modRef = document.querySelector(`[key="${modKey}"]`);
+
+                    const newKey = newKeys[opIndex + j];
+                    const newItem = newItems[opIndex + j];
+                    const ott = OTT(newItem, newValue.templateKey, newKey);
+                    const node = ott.instance;
+                    _repaint(node, ott.memories, [], ott.values, true);
+
+                    if(modRef) modRef.replaceWith(node);
+                }
+
+                // You now have to skip over the next operation, which is technically
+                // an addition. This addition is no longer necessary since we determined
+                // that it was really a modification.
+                i += 1;
+            }
             
             // Handle "add" operations.
-            if(added) {
+            else if(added) {
                 // For each item in the edit, add it starting from the op index.
                 let ref: HTMLElement|ChildNode|null = pointer;
-                console.log(opIndex, i, oldKeys[opIndex]);
                 
                 // First we have to make sure we have the right insertion index.
                 // Sometimes you are inserting items into the middle of an array,
@@ -246,8 +269,7 @@ export default class Memory {
                     //     if(_ref) ref = _ref;
                     // }
 
-                    // Either replace the pointer if it is the first item in the
-                    // list, or add right after the operation index.
+                    // Append to a document fragment for faster repainting.
                     frag.appendChild(node);
                     // ref = insertAfter(node, ref);
                     
@@ -257,10 +279,7 @@ export default class Memory {
                     // refOldKeys.splice(opIndex + j, 0, key);
                 }
 
-                // TODO: Now we're having a problem with modifications. But maybe
-                // this would be a good chance to modify the MAD algorithm to
-                // account for modifications (places where you have an addition
-                // and deletion at the same index).
+                // Insert the fragment into the reference spot.
                 ref = insertAfter(frag, ref);
             }
 

@@ -39,17 +39,17 @@ export default new Mosaic({
     modifySecond() {
         // Modification.
         const start = performance.now();
-        this.data.letters[1] = {
-            letter: 'x',
-            key: randomKey()
-        }
-        // const n = new Array(1000);
-        // for(let i = 0; i < 1000; i++)
-        //     n[i] = {
-        //         letter: 'b',
-        //         key: randomKey()
-        //     }
-        // this.data.letters = this.data.letters.concat(n);
+        // this.data.letters[1] = {
+        //     letter: 'x',
+        //     key: randomKey()
+        // }
+        const n = new Array(1000);
+        for(let i = 0; i < 1000; i++)
+            n[i] = {
+                letter: 'b',
+                key: randomKey()
+            }
+        this.data.letters = this.data.letters.concat(n);
         // this.data.letters = [...this.data.letters.slice(0, 10), {
         //     letter: 'c',
         //     key: randomKey()
