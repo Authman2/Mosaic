@@ -233,7 +233,8 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
 Mosaic.list = function(items, key: Function, map: Function): KeyedArray {
     const keys = items.map((itm, index) => key(itm, index));
     const mapped = items.map((itm, index) => map(itm, index));
-    return { keys, items: mapped, __isKeyedArray: true };
+    const templateKey = randomKey();
+    return { keys, items: mapped, templateKey, __isKeyedArray: true };
 }
 
 declare global {

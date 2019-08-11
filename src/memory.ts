@@ -1,4 +1,4 @@
-import { nodeMarker, insertAfter, isBooleanAttribute } from './util';
+import { nodeMarker, insertAfter, isBooleanAttribute, randomKey } from './util';
 import { MemoryOptions, MosaicComponent, BatchUpdate } from './options';
 import { OTT, _repaint } from './parser';
 import MAD from './mad';
@@ -175,19 +175,20 @@ export default class Memory {
         const newItems = newValue ? newValue.items : [];
         let refOldKeys = oldKeys ? oldKeys.slice() : [];
 
+        // Set the template key so it persists between renders.
+        if(oldValue) newValue.templateKey = oldValue.templateKey;
+
         // Heuristics: For repaints that contain only additions or deletions
         // don't bother going through the MAD algorithm. Instead, just perform
         // the same operation on everything.
         // All Additions:
         if(oldKeys.length === 0 && newKeys.length > 0) {
             let frag = document.createDocumentFragment();
-            let refs: Object[] = [];
             for(let i = 0; i < newKeys.length; i++) {
                 const key = newKeys[i];
                 const item = newItems[i];
-                const ott = OTT(item, key);
+                const ott = OTT(item, newValue.templateKey, key);
                 const node = ott.instance;
-                refs.push(ott);
                 _repaint(node, ott.memories, [], ott.values, true);
 
                 // Add each item to a document fragment, then set all of it
@@ -207,7 +208,7 @@ export default class Memory {
             }
             return;
         }
-        
+
         // Use "MAD" to find the differences in the arrays.
         const mad = new MAD(oldKeys, newKeys);
         const diffs = mad.diff();
@@ -221,30 +222,46 @@ export default class Memory {
             // Handle "add" operations.
             if(added) {
                 // For each item in the edit, add it starting from the op index.
-                let ref = pointer;
+                let ref: HTMLElement|ChildNode|null = pointer;
+                console.log(opIndex, i, oldKeys[opIndex]);
+                
+                // First we have to make sure we have the right insertion index.
+                // Sometimes you are inserting items into the middle of an array,
+                // and other times you are appending to the end of the array.
+                if(oldKeys.length > 0) ref = document.querySelector(`[key="${oldKeys[opIndex]}"]`);
+                if(!ref) ref = document.querySelector(`[key="${oldKeys[oldKeys.length - 1]}"]`);
+                
+                let frag = document.createDocumentFragment();
                 for(let j = 0; j < edit.length; j++) {
                     const key = edit[j];
                     const item = newItems[opIndex + j];
-                    const ott = OTT(item, key);
+                    const ott = OTT(item, newValue.templateKey, key);
                     const node = ott.instance;
                     _repaint(node, ott.memories, [], ott.values, true);
 
                     // Look for the reference node.
-                    const prevKey = refOldKeys[opIndex + j - 1];
-                    if(prevKey) {
-                        const _ref = document.querySelector(`[key='${prevKey}']`);
-                        if(_ref) ref = _ref;
-                    }
+                    // const prevKey = refOldKeys[opIndex + j - 1];
+                    // if(prevKey) {
+                    //     const _ref = document.querySelector(`[key='${prevKey}']`);
+                    //     if(_ref) ref = _ref;
+                    // }
 
                     // Either replace the pointer if it is the first item in the
                     // list, or add right after the operation index.
-                    ref = insertAfter(node, ref);
+                    frag.appendChild(node);
+                    // ref = insertAfter(node, ref);
                     
                     // Update the old key reference so we know where to add before
                     // the end of this update cycle. This is required for multiple
                     // additions.
-                    refOldKeys.splice(opIndex + j, 0, key);
+                    // refOldKeys.splice(opIndex + j, 0, key);
                 }
+
+                // TODO: Now we're having a problem with modifications. But maybe
+                // this would be a good chance to modify the MAD algorithm to
+                // account for modifications (places where you have an addition
+                // and deletion at the same index).
+                ref = insertAfter(frag, ref);
             }
 
             // Handle "delete" operations.

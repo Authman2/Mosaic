@@ -13,22 +13,49 @@ export function getTemplate(component: MosaicComponent): HTMLTemplateElement {
         template.id = component.tid;
         template.innerHTML = buildHTML(strings);
         (template as any).memories = memorize.call(template);
+        document.body.appendChild(template);
         return template;
     }
 }
 
 /** Renders a One Time Template. Still requires repainting. */
-export function OTT(view: ViewFunction, key?: string) {
+export function OTT(view: ViewFunction, templateKey?: string, key?: string) {
     // Create and memorize the template.
-    const template = document.createElement('template');
-    template.innerHTML = buildHTML(view.strings);
-    (template as any).memories = memorize.call(template);
+    let cloned;
+    let template = templateKey ?
+        document.getElementById(templateKey) as HTMLTemplateElement
+        : document.createElement('template');
 
-    const instance = document.importNode(template.content, true).firstChild as HTMLElement;
-    if(key) instance.setAttribute('key', key);
+    // Only run through this block of code if you have a template key.
+    if(templateKey) {
+        if(template) {
+            cloned = document.importNode(template.content, true).firstChild as HTMLElement;
+        } else {
+            template = document.createElement('template');
+            template.id = templateKey;
+            template.innerHTML = buildHTML(view.strings);
+            (template as any).memories = memorize.call(template);
+
+            cloned = document.importNode(template.content, true).firstChild as HTMLElement;
+            document.body.appendChild(template);
+        }
+    }
+    // Otherwise, just make a new template in the moment, but don't save it.
+    else {
+        template.innerHTML = buildHTML(view.strings);
+        (template as any).memories = memorize.call(template);
+        cloned = document.importNode(template.content, true).firstChild as HTMLElement;
+    }
+
+    // const instance = cloned || document.importNode(template.content, true).firstChild as HTMLElement;
+    // console.log(instance);
+    // if(key) instance.setAttribute('key', key);
+    if(key && cloned) {
+        cloned.setAttribute('key', key);
+    }
     
     return {
-        instance,
+        instance: cloned,
         values: view.values,
         memories: (template as any).memories,
     };

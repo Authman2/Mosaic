@@ -64,6 +64,7 @@ export interface MemoryOptions {
 export interface KeyedArray {
     keys: Function;
     items: Function;
+    templateKey: string;
     __isKeyedArray: boolean;
 }
 
