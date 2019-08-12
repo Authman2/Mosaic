@@ -203,6 +203,11 @@ export default class MAD {
     }
 
     private equals(one: ViewFunction, two: ViewFunction): boolean {
-        return (''+one.values === ''+two.values);
+        const sameValues = (''+one.values === ''+two.values);
+        const sameKey =((one as any).key && (two as any).key && (one as any).key === (two as any).key);
+        
+        // Deletions should not necessarily go through each item again.
+        if(this.first.length > this.second.length) return sameValues || sameKey;
+        else return sameValues;
     }
 }

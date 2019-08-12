@@ -45,7 +45,7 @@ export default new Mosaic({
             
             <table>
                 <tbody>
-                    ${Mosaic.list(this.data.letters, obj => obj.key, obj => {
+                    ${Mosaic.list(this.data.letters, obj => obj.key, (obj,index) => {
                         return html`<h3>${obj.letter}</td></h3>`
                     })}
                 </tbody>
