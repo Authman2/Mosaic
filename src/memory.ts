@@ -1,4 +1,4 @@
-import { nodeMarker, insertAfter, isBooleanAttribute, randomKey } from './util';
+import { nodeMarker, insertAfter, isBooleanAttribute, randomKey, objectFromArray } from './util';
 import { MemoryOptions, MosaicComponent, BatchUpdate } from './options';
 import { OTT, _repaint } from './parser';
 import MAD from './mad';
@@ -7,9 +7,58 @@ import MAD from './mad';
 export default class Memory {
     constructor(public config: MemoryOptions) {}
 
+    /** Batches an update together with other component updates so that
+    * later on they can all perform a single repaint. */
+    batch(component: MosaicComponent, batchName: string, batchValue: any, isOTT: boolean = false) {
+        // Add the (name, value) pair as a batch operation to be carried out
+        // at the end of the parent component's repaint cycle.
+        if(component.data.hasOwnProperty(batchName))
+            component.batches.data.push([batchName, batchValue]);
+        else component.batches.attributes.push([batchName, batchValue]);
+        
+        // Check if the number of batches matches up to the number of
+        // attributes present on the HTML element tag. Checking this number
+        // is fine because you don't split up attributes from data until
+        // the end of this step.
+        const totalLength = this.config.trackedAttributeCount || 0;
+        const attrsLength = component.batches.attributes.length;
+        const dataLength = component.batches.data.length;
+        if(attrsLength + dataLength === totalLength) {
+            // Go through the immediately nested nodes and update them with the
+            // new data, while also sending over the parsed attributes. Then
+            // clear the batch when you are done.
+            const justData = objectFromArray(component.batches.data);
+            const justAttrs = objectFromArray(component.batches.attributes);
+                
+            // Make the component receive the HTML attributes.
+            if(component.received && component.batches.attributes.length > 0) {
+                if(Array.isArray(component.received))
+                    component.received.forEach(func => func.call(component, justAttrs));
+                else
+                    component.received(justAttrs);
+            }
+
+            // Set the data on the component then repaint it.
+            if(component.batches.data.length > 0) {
+                component.barrier = true;
+                let keys = Object.keys(justData);
+                for(let i = 0; i < keys.length; i++) {
+                    const key = keys[i];
+                    const val = justData[key];
+                    component.data[key] = val;
+                }
+                component.barrier = false;
+                if(isOTT === false) component.repaint();
+            }
+
+            // When you are done performing the batcehd updates, clear
+            // the batch so you can do it again for the next update.
+            component.batches = { attributes: [], data: [] };
+        }
+    }
 
     /** Applies the changes to the appropriate DOM nodes when data changes. */
-    commit(element: ChildNode|Element, pointer: ChildNode|Element, oldValue: any, newValue: any, nestedNodes: Object) {
+    commit(element: ChildNode|Element, pointer: ChildNode|Element, oldValue: any, newValue: any) {
         // console.log(element, pointer, oldValue, newValue, this);
         switch(this.config.type) {
             case 'node':
@@ -19,8 +68,8 @@ export default class Memory {
                 if(!this.config.attribute) break;
                 const { name } = this.config.attribute;
                 if(this.config.isEvent === true)
-                    this.commitEvent(element, pointer, name, oldValue, newValue, nestedNodes);
-                else this.commitAttribute(element, pointer, name, oldValue, newValue, nestedNodes);
+                    this.commitEvent(element, pointer, name, oldValue, newValue);
+                else this.commitAttribute(element, pointer, name, oldValue, newValue);
                 break;
         }
     }
@@ -86,7 +135,7 @@ export default class Memory {
 
     /** Applies attribtue and event listener changes. */
     commitAttribute(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, 
-            name: string, oldValue: any, newValue: any, nestedNodes: Object)
+            name: string, oldValue: any, newValue: any)
         {
 
         const attribute = (pointer as Element).attributes.getNamedItem(name);
@@ -124,17 +173,13 @@ export default class Memory {
 
         // Batch the pointer element and the attribute [name, value] pair together so that
         // it can be update all at once at the end of the repaint cycle.
-        if(this.config.isComponentType === true && pointer instanceof MosaicComponent) {
-            if(pointer.data.hasOwnProperty(name)) pointer.batches.data.push([name, newValue]);
-            else pointer.batches.attributes.push([name, newValue]);
-            
-            if(!nestedNodes[pointer.iid]) nestedNodes[pointer.iid] = pointer;
-        }
+        if(this.config.isComponentType === true && pointer instanceof MosaicComponent)
+            this.batch(pointer, name, newValue);
     }
 
     /** Applies event changes such as adding/removing listeners. */
     commitEvent(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, 
-            name: string, oldValue: any, newValue: any, nestedNodes: Object)
+            name: string, oldValue: any, newValue: any)
         {
         const events = (pointer as any).eventHandlers || {};
         const shortName = name.substring(2);
@@ -160,12 +205,8 @@ export default class Memory {
 
         // Batch the pointer element and the attribute [name, value] pair together so that
         // it can be update all at once at the end of the repaint cycle.
-        if(this.config.isComponentType === true && pointer instanceof MosaicComponent) {
-            if(pointer.data.hasOwnProperty(name)) pointer.batches.data.push([name, newValue]);
-            else pointer.batches.attributes.push([name, newValue]);
-
-            if(!nestedNodes[pointer.iid]) nestedNodes[pointer.iid] = pointer;
-        }
+        if(this.config.isComponentType === true && pointer instanceof MosaicComponent)
+            this.batch(pointer, name, newValue);
     }
 
     /** Helper function for applying changes to arrays. */

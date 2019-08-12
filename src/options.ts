@@ -58,6 +58,7 @@ export interface MemoryOptions {
     attribute?: { name: string };
     isEvent?: boolean;
     isComponentType?: boolean;
+    trackedAttributeCount?: number;
 }
 
 /** A custom type for efficient arrays. */

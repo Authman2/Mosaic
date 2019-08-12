@@ -1,5 +1,18 @@
 import Mosaic from '../src/index';
 
+new Mosaic({
+    name: 'test-comp',
+    data: {
+        letter: ''
+    },
+    useShadow: true,
+    view() {
+        return html`<h1>WOrking</h1>
+        <h2>Another tag</h2>
+        <h3>${this.descendants}</h3>`
+    }
+})
+
 let code = 97;
 let randomKey = () => Math.random().toString(36).slice(2);
 export default new Mosaic({
@@ -46,7 +59,8 @@ export default new Mosaic({
             <table>
                 <tbody>
                     ${Mosaic.list(this.data.letters, obj => obj.key, (obj,index) => {
-                        return html`<h3>${obj.letter}</td></h3>`
+                        return html`<test-comp>${obj.letter}</test-comp>`
+                        // return html`<h3>${obj.letter}</td></h3>`
                     })}
                 </tbody>
             </table>

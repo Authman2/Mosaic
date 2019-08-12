@@ -57,14 +57,6 @@ export function OTT(view: ViewFunction, templateKey?: string, key?: string) {
 
 /** A global repaint function, which can be used for templates and components. */
 export function _repaint(element: HTMLElement, memories: Memory[], oldValues: any[], newValues: any[], isOTT: boolean = false) {
-    // TODO: Instead of batching the nodes, why don't you just wait
-    // until the number of batched updates equals the number of
-    // attributes on the element + the number of dynamic descendants
-    // being added? That way you don't have to loop through literally
-    // each child node after every update just to see if it even has
-    // a single batched update at all.
-    let nestedNodes: Object = {};
-
     for(let i = 0; i < memories.length; i++) {
         const mem: Memory = memories[i];
 
@@ -95,40 +87,7 @@ export function _repaint(element: HTMLElement, memories: Memory[], oldValues: an
         
         // Compare and commit.
         if(changed(oldv, newv, alwaysUpdateFunction))
-            mem.commit(element, pointer, oldv, newv, nestedNodes);
-    }
-
-    // Go through the immediately nested nodes and update them with the
-    // new data, while also sending over the parsed attributes. Then
-    // clear the batch when you are done.
-    const keys = Object.keys(nestedNodes);
-    for(let i = 0; i < keys.length; i++) {
-        const key = keys[i];
-        const component = nestedNodes[key] as MosaicComponent;
-        const justData = objectFromArray(component.batches.data);
-        const justAttrs = objectFromArray(component.batches.attributes);
-        
-        if(component.received && component.batches.attributes.length > 0) {
-            if(Array.isArray(component.received))
-                component.received.forEach(func => func.call(component, justAttrs));
-            else
-                component.received(justAttrs);
-        }
-
-        if(component.batches.data.length > 0) {
-            component.barrier = true;
-            let keys = Object.keys(justData);
-            for(let i = 0; i < keys.length; i++) {
-                const key = keys[i];
-                const val = justData[key];
-                component.data[key] = val;
-            }
-            component.barrier = false;
-            if(isOTT === false) component.repaint();
-            // component.set(justData);
-        }
-
-        component.batches = { attributes: [], data: [] };
+            mem.commit(element, pointer, oldv, newv);
     }
 }
 
@@ -174,6 +133,10 @@ function parseAttributes(node: Element, steps: number[]): Memory[] {
     let ret: Memory[] = [];
     const defined = customElements.get(node.nodeName.toLowerCase()) !== undefined;
     
+    // Make sure to keep track of how many dynamic attributes are needed
+    // to trigger a repaint from a Memory perspective.
+    let trackedAttributeCount = 0;
+
     const regex = new RegExp(`[a-z|A-Z| ]*${nodeMarker}[a-z|A-Z| ]*`, 'g');
     for(let i = 0; i < node.attributes.length; i++) {
         const { name, value } = node.attributes[i];
@@ -189,12 +152,14 @@ function parseAttributes(node: Element, steps: number[]): Memory[] {
             
             // Make sure you only add memories for dynamic attributes.
             if(isDynamic) {
+                trackedAttributeCount += 1;
                 ret.push(new Memory({
                     type: 'attribute',
                     steps,
                     isComponentType: defined,
                     isEvent: name.startsWith('on') && name.length > 2,
                     attribute: { name },
+                    trackedAttributeCount
                 }));
             }
         }
