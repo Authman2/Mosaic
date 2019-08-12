@@ -1,6 +1,6 @@
 {
   "name": "mosaic-framework",
-  "version": "0.7.7",
+  "version": "0.7.8",
   "description": "A front-end JavaScript library for creating user interfaces",
   "main": "dist/index.js",
   "scripts": {

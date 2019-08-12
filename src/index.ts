@@ -136,6 +136,8 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                                 this.data[key] = receivedData[key] === 'true' ? true : false;
                             else if(typeof this.data[key] === 'object')
                                 this.data[key] = JSON.parse(receivedData[key]);
+                            else
+                                this.data[key] = receivedData[key];
                         } else {
                             this.data[key] = receivedData[key];
                         }

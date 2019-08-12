@@ -47,13 +47,7 @@ export function OTT(view: ViewFunction, templateKey?: string, key?: string) {
         cloned = document.importNode(template.content, true).firstChild as HTMLElement;
     }
 
-    // const instance = cloned || document.importNode(template.content, true).firstChild as HTMLElement;
-    // console.log(instance);
-    // if(key) instance.setAttribute('key', key);
-    if(key && cloned) {
-        cloned.setAttribute('key', key);
-    }
-    
+    if(key && cloned) cloned.setAttribute('key', key);    
     return {
         instance: cloned,
         values: view.values,
@@ -63,6 +57,12 @@ export function OTT(view: ViewFunction, templateKey?: string, key?: string) {
 
 /** A global repaint function, which can be used for templates and components. */
 export function _repaint(element: HTMLElement, memories: Memory[], oldValues: any[], newValues: any[], isOTT: boolean = false) {
+    // TODO: Instead of batching the nodes, why don't you just wait
+    // until the number of batched updates equals the number of
+    // attributes on the element + the number of dynamic descendants
+    // being added? That way you don't have to loop through literally
+    // each child node after every update just to see if it even has
+    // a single batched update at all.
     let nestedNodes: Object = {};
 
     for(let i = 0; i < memories.length; i++) {
