@@ -170,10 +170,10 @@ export default class Memory {
 
     /** Helper function for applying changes to arrays. */
     commitArray(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, oldValue: any, newValue: any) {
-        const oldKeys = oldValue && typeof oldValue === 'object' && oldValue.__isKeyedArray ? oldValue.keys : [];
-        const newKeys = newValue && typeof newValue === 'object' && newValue.__isKeyedArray  ? newValue.keys : [];
-        const newItems = newValue ? newValue.items : [];
-        let refOldKeys = oldKeys ? oldKeys.slice() : [];
+        const oldItems = oldValue && typeof oldValue === 'object' && oldValue.__isKeyedArray 
+            ? oldValue.items : [];
+        const newItems = newValue && typeof newValue === 'object' && newValue.__isKeyedArray 
+            ? newValue.items : [];
 
         // Set the template key so it persists between renders.
         if(oldValue) newValue.templateKey = oldValue.templateKey;
@@ -182,12 +182,11 @@ export default class Memory {
         // don't bother going through the MAD algorithm. Instead, just perform
         // the same operation on everything.
         // All Additions:
-        if(oldKeys.length === 0 && newKeys.length > 0) {
+        if(oldItems.length === 0 && newItems.length > 0) {
             let frag = document.createDocumentFragment();
-            for(let i = 0; i < newKeys.length; i++) {
-                const key = newKeys[i];
+            for(let i = 0; i < newItems.length; i++) {
                 const item = newItems[i];
-                const ott = OTT(item, newValue.templateKey, key);
+                const ott = OTT(item, newValue.templateKey, item.key);
                 const node = ott.instance;
                 _repaint(node, ott.memories, [], ott.values, true);
 
@@ -199,10 +198,10 @@ export default class Memory {
             return;
         }
         // All Deletions:
-        if(oldKeys.length > 0 && newKeys.length === 0) {
-            for(let i = 0; i < oldKeys.length; i++) {
+        if(oldItems.length > 0 && newItems.length === 0) {
+            for(let i = 0; i < oldItems.length; i++) {
                 // Find the node and remove it from the DOM.
-                const key = oldKeys[i];
+                const key = oldItems[i].key;
                 const found = document.querySelector(`[key='${key}']`);
                 if(found) found.remove();
             }
@@ -210,7 +209,7 @@ export default class Memory {
         }
 
         // Use "MAD" to find the differences in the arrays.
-        const mad = new MAD(oldKeys, newKeys);
+        const mad = new MAD(oldItems, newItems);
         const diffs = mad.diff();
         
         // Keep track of the operation index starting from the beginning of
@@ -225,12 +224,11 @@ export default class Memory {
                 // through each one and replace the node at the old index with
                 // a rendered OTT at the same index.
                 for(let j = 0; j < edit.length; j++) {
-                    const modKey = edit[j];
-                    const modRef = document.querySelector(`[key="${modKey}"]`);
+                    const modItem = edit[j];
+                    const modRef = document.querySelector(`[key="${modItem.key}"]`);
 
-                    const newKey = newKeys[opIndex + j];
-                    const newItem = newItems[opIndex + j];
-                    const ott = OTT(newItem, newValue.templateKey, newKey);
+                    const newItem = diffs[i+1].edit[j];
+                    const ott = OTT(newItem, newValue.templateKey, newItem.key);
                     const node = ott.instance;
                     _repaint(node, ott.memories, [], ott.values, true);
 
@@ -251,32 +249,18 @@ export default class Memory {
                 // First we have to make sure we have the right insertion index.
                 // Sometimes you are inserting items into the middle of an array,
                 // and other times you are appending to the end of the array.
-                if(oldKeys.length > 0) ref = document.querySelector(`[key="${oldKeys[opIndex]}"]`);
-                if(!ref) ref = document.querySelector(`[key="${oldKeys[oldKeys.length - 1]}"]`);
+                if(oldItems.length > 0) ref = document.querySelector(`[key="${oldItems[opIndex - 1].key}"]`);
+                if(!ref) ref = document.querySelector(`[key="${oldItems[oldItems.length - 1].key}"]`);
                 
                 let frag = document.createDocumentFragment();
                 for(let j = 0; j < edit.length; j++) {
-                    const key = edit[j];
-                    const item = newItems[opIndex + j];
-                    const ott = OTT(item, newValue.templateKey, key);
+                    const addition = edit[j];
+                    const ott = OTT(addition, newValue.templateKey, addition.key);
                     const node = ott.instance;
                     _repaint(node, ott.memories, [], ott.values, true);
-
-                    // Look for the reference node.
-                    // const prevKey = refOldKeys[opIndex + j - 1];
-                    // if(prevKey) {
-                    //     const _ref = document.querySelector(`[key='${prevKey}']`);
-                    //     if(_ref) ref = _ref;
-                    // }
-
+                    
                     // Append to a document fragment for faster repainting.
                     frag.appendChild(node);
-                    // ref = insertAfter(node, ref);
-                    
-                    // Update the old key reference so we know where to add before
-                    // the end of this update cycle. This is required for multiple
-                    // additions.
-                    // refOldKeys.splice(opIndex + j, 0, key);
                 }
 
                 // Insert the fragment into the reference spot.
@@ -287,8 +271,8 @@ export default class Memory {
             else if(deleted) {
                 // For each item in the edit, add it starting from the op index.
                 for(let j = 0; j < edit.length; j++) {
-                    const key = edit[j];
-                    const found = document.querySelector(`[key='${key}']`);
+                    const obj = edit[j];
+                    const found = document.querySelector(`[key='${obj.key}']`);
                     if(found) found.remove();
                 }
 

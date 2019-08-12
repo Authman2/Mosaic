@@ -62,9 +62,10 @@ export interface MemoryOptions {
 
 /** A custom type for efficient arrays. */
 export interface KeyedArray {
-    keys: Function;
-    items: Function;
+    keys: any[];
+    items: any[];
     templateKey: string;
+    stringified: string[];
     __isKeyedArray: boolean;
 }
 

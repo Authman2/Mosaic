@@ -1,5 +1,4 @@
 import Mosaic from '../src/index';
-import './round-button';
 
 let code = 97;
 let randomKey = () => Math.random().toString(36).slice(2);
@@ -26,7 +25,7 @@ export default new Mosaic({
         // Modification.
         this.data.letters[1] = {
             letter: 'x',
-            key: randomKey()
+            key: this.data.letters[1].key,
         }
     },
     view() {

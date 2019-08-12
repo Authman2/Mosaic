@@ -1,12 +1,13 @@
+import { ViewFunction } from "./options";
+
 /** An array diffing algorithm that gives back the fewest number of 
 modifications, additions, and deletions from one array of strings
 to another. Based on the implementation by the JSDiff library. */
 export default class MAD {
 
-    constructor(private first: string[], private second: string[], private comparator?: ((one: any, two: any) => true)) {
+    constructor(private first: ViewFunction[], private second: ViewFunction[]) {
         this.first = first;
         this.second = second;
-        this.comparator = comparator;
     }
 
 
@@ -120,9 +121,9 @@ export default class MAD {
 
         let commonCount = 0;
 
-        while(newPos + 1 < newLength 
-                && oldPos + 1 < oldLength 
-                && this.equals(this.second[newPos + 1], this.first[oldPos + 1])) {
+        while(newPos + 1 < newLength
+            && oldPos + 1 < oldLength
+            && this.equals(this.second[newPos + 1], this.first[oldPos + 1])) {
             
             newPos += 1;
             oldPos += 1;
@@ -201,8 +202,7 @@ export default class MAD {
         return components;
     }
 
-    private equals(one, two) {
-        if(this.comparator) return this.comparator(one, two);
-        else return one === two;
+    private equals(one: ViewFunction, two: ViewFunction): boolean {
+        return (''+one.values === ''+two.values);
     }
 }
