@@ -65,7 +65,6 @@ export interface MemoryOptions {
 export interface KeyedArray {
     keys: any[];
     items: any[];
-    templateKey: string;
     stringified: string[];
     __isKeyedArray: boolean;
 }

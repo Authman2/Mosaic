@@ -1,5 +1,5 @@
-import { KeyedArray, MosaicComponent } from "./options";
-import { OTT, _repaint } from "./parser";
+import { MosaicComponent } from "./options";
+import { _repaint } from "./parser";
 
 // The placeholders in the HTML.
 export const nodeMarker = `<!--{{m-${String(Math.random()).slice(2)}}}-->`;
@@ -73,7 +73,7 @@ export function applyMixin(to: MosaicComponent, from: Object) {
 }
 
 /** Steps down through the child nodes until it reaches the last step. */
-export function step(parent: ChildNode|Element, steps: number[]) {
+export function step(parent: ChildNode|Element|ShadowRoot, steps: number[]) {
     let child = parent;
     for(let i = 0; i < steps.length; i++) {
         let next: number = steps[i];

@@ -1,5 +1,5 @@
-import { nodeMarker, insertAfter, isBooleanAttribute, randomKey, objectFromArray } from './util';
-import { MemoryOptions, MosaicComponent, BatchUpdate } from './options';
+import { nodeMarker, insertAfter, isBooleanAttribute, objectFromArray } from './util';
+import { MemoryOptions, MosaicComponent } from './options';
 import { OTT, _repaint } from './parser';
 import MAD from './mad';
 
@@ -58,7 +58,7 @@ export default class Memory {
     }
 
     /** Applies the changes to the appropriate DOM nodes when data changes. */
-    commit(element: ChildNode|Element, pointer: ChildNode|Element, oldValue: any, newValue: any) {
+    commit(element: ChildNode|Element|ShadowRoot, pointer: ChildNode|Element, oldValue: any, newValue: any) {
         // console.log(element, pointer, oldValue, newValue, this);
         switch(this.config.type) {
             case 'node':
@@ -75,7 +75,7 @@ export default class Memory {
     }
 
     /** Applies changes to memories of type "node." */
-    commitNode(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, oldValue: any, newValue: any) {
+    commitNode(element: HTMLElement|ChildNode|ShadowRoot, pointer: HTMLElement|ChildNode, oldValue: any, newValue: any) {
         // If you come across a node inside of a Mosaic component, then do not
         // actually add it to the DOM. Instead, let it be rendered by the
         // constructor and set into the "descendants" property so the component
@@ -134,7 +134,7 @@ export default class Memory {
     }
 
     /** Applies attribtue and event listener changes. */
-    commitAttribute(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, 
+    commitAttribute(element: HTMLElement|ChildNode|ShadowRoot, pointer: HTMLElement|ChildNode, 
             name: string, oldValue: any, newValue: any)
         {
 
@@ -178,7 +178,7 @@ export default class Memory {
     }
 
     /** Applies event changes such as adding/removing listeners. */
-    commitEvent(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, 
+    commitEvent(element: HTMLElement|ChildNode|ShadowRoot, pointer: HTMLElement|ChildNode, 
             name: string, oldValue: any, newValue: any)
         {
         const events = (pointer as any).eventHandlers || {};
@@ -210,14 +210,11 @@ export default class Memory {
     }
 
     /** Helper function for applying changes to arrays. */
-    commitArray(element: HTMLElement|ChildNode, pointer: HTMLElement|ChildNode, oldValue: any, newValue: any) {
+    commitArray(element: HTMLElement|ChildNode|ShadowRoot, pointer: HTMLElement|ChildNode, oldValue: any, newValue: any) {
         const oldItems = oldValue && typeof oldValue === 'object' && oldValue.__isKeyedArray 
             ? oldValue.items : [];
         const newItems = newValue && typeof newValue === 'object' && newValue.__isKeyedArray 
             ? newValue.items : [];
-
-        // Set the template key so it persists between renders.
-        if(oldValue) newValue.templateKey = oldValue.templateKey;
 
         // Heuristics: For repaints that contain only additions or deletions
         // don't bother going through the MAD algorithm. Instead, just perform
@@ -227,7 +224,7 @@ export default class Memory {
             let frag = document.createDocumentFragment();
             for(let i = 0; i < newItems.length; i++) {
                 const item = newItems[i];
-                const ott = OTT(item, newValue.templateKey, item.key);
+                const ott = OTT(item, item.key);
                 const node = ott.instance;
                 _repaint(node, ott.memories, [], ott.values, true);
 
@@ -269,7 +266,7 @@ export default class Memory {
                     const modRef = document.querySelector(`[key="${modItem.key}"]`);
 
                     const newItem = diffs[i+1].edit[j];
-                    const ott = OTT(newItem, newValue.templateKey, newItem.key);
+                    const ott = OTT(newItem, newItem.key);
                     const node = ott.instance;
                     _repaint(node, ott.memories, [], ott.values, true);
 
@@ -296,7 +293,7 @@ export default class Memory {
                 let frag = document.createDocumentFragment();
                 for(let j = 0; j < edit.length; j++) {
                     const addition = edit[j];
-                    const ott = OTT(addition, newValue.templateKey, addition.key);
+                    const ott = OTT(addition, addition.key);
                     const node = ott.instance;
                     _repaint(node, ott.memories, [], ott.values, true);
                     

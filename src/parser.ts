@@ -1,5 +1,5 @@
-import { MosaicComponent, ViewFunction, BatchUpdate } from "./options";
-import { lastAttributeNameRegex, nodeMarker, traverse, changed, step, objectFromArray } from "./util";
+import { MosaicComponent, ViewFunction } from "./options";
+import { lastAttributeNameRegex, nodeMarker, traverse, changed, step } from "./util";
 import Memory from "./memory";
 
 /** Finds or creates the template associated with a component. */
@@ -19,9 +19,10 @@ export function getTemplate(component: MosaicComponent): HTMLTemplateElement {
 }
 
 /** Renders a One Time Template. Still requires repainting. */
-export function OTT(view: ViewFunction, templateKey?: string, key?: string) {
+export function OTT(view: ViewFunction, key?: string) {
     // Create and memorize the template.
     let cloned;
+    const templateKey = encodeURIComponent(view.strings.join(''));
     let template = templateKey ?
         document.getElementById(templateKey) as HTMLTemplateElement
         : document.createElement('template');
@@ -47,6 +48,7 @@ export function OTT(view: ViewFunction, templateKey?: string, key?: string) {
         cloned = document.importNode(template.content, true).firstChild as HTMLElement;
     }
 
+    // Set the key of the element and return it.
     if(key && cloned) cloned.setAttribute('key', key);    
     return {
         instance: cloned,
@@ -56,7 +58,7 @@ export function OTT(view: ViewFunction, templateKey?: string, key?: string) {
 }
 
 /** A global repaint function, which can be used for templates and components. */
-export function _repaint(element: HTMLElement, memories: Memory[], oldValues: any[], newValues: any[], isOTT: boolean = false) {
+export function _repaint(element: HTMLElement|ShadowRoot, memories: Memory[], oldValues: any[], newValues: any[], isOTT: boolean = false) {
     for(let i = 0; i < memories.length; i++) {
         const mem: Memory = memories[i];
 
@@ -64,12 +66,7 @@ export function _repaint(element: HTMLElement, memories: Memory[], oldValues: an
         // We have to splice the array for OTTs because they do not have
         // a holding container such as <custom-element>.
         let pointer;
-        if((element as any).useShadow === true && (element as any).shadowRoot) {
-            const host = (element as any).shadowRoot;
-            const regularSteps = mem.config.steps.slice();
-            pointer = step(host, regularSteps);
-        }
-        else if(isOTT === true) {
+        if(isOTT === true) {
             const OTTsteps = mem.config.steps.slice();
             OTTsteps.splice(0, 1);
             pointer = step(element, OTTsteps);

@@ -203,7 +203,8 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
 
             if(!this.view) return;
             const newValues = this.view(this).values;
-            _repaint(this, memories, this.oldValues, newValues);
+            const repaintNode = this._shadow ? this._shadow : this;
+            _repaint(repaintNode, memories, this.oldValues, newValues);
 
             this.oldValues = newValues;
         }
@@ -241,8 +242,7 @@ Mosaic.list = function(items, key: Function, map: Function): KeyedArray {
         }
     });
     const stringified = mapped.map(json => JSON.stringify(json));
-    const templateKey = randomKey();
-    return { keys, items: mapped, stringified, templateKey, __isKeyedArray: true };
+    return { keys, items: mapped, stringified, __isKeyedArray: true };
 }
 
 declare global {
