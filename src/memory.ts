@@ -173,8 +173,10 @@ export default class Memory {
 
         // Batch the pointer element and the attribute [name, value] pair together so that
         // it can be update all at once at the end of the repaint cycle.
-        if(this.config.isComponentType === true && pointer instanceof MosaicComponent)
-            this.batch(pointer, name, newValue);
+        if(this.config.isComponentType === true && pointer instanceof MosaicComponent) {
+            const isOTT = (pointer as any).hasOwnProperty('isOTT');
+            this.batch(pointer, name, newValue, isOTT);
+        }
     }
 
     /** Applies event changes such as adding/removing listeners. */
@@ -205,8 +207,10 @@ export default class Memory {
 
         // Batch the pointer element and the attribute [name, value] pair together so that
         // it can be update all at once at the end of the repaint cycle.
-        if(this.config.isComponentType === true && pointer instanceof MosaicComponent)
-            this.batch(pointer, name, newValue);
+        if(this.config.isComponentType === true && pointer instanceof MosaicComponent) {
+            const isOTT = (pointer as any).hasOwnProperty('isOTT');
+            this.batch(pointer, name, newValue, isOTT);
+        }
     }
 
     /** Helper function for applying changes to arrays. */

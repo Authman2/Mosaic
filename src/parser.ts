@@ -48,8 +48,11 @@ export function OTT(view: ViewFunction, key?: string) {
         cloned = document.importNode(template.content, true).firstChild as HTMLElement;
     }
 
-    // Set the key of the element and return it.
-    if(key && cloned) cloned.setAttribute('key', key);    
+    // Set the key of the element and return it. Also set a special attribute
+    // on the instance so that we always know that it is a OTT.
+    if(key && cloned) cloned.setAttribute('key', key);  
+    if(cloned) cloned.isOTT = true;
+    
     return {
         instance: cloned,
         values: view.values,
@@ -109,7 +112,7 @@ export function buildHTML(strings) {
 }
 
 /** Memorizes parts of a DOM tree that contain dynamic content
-* and returns a list of memories of whether those parts are. */
+* and returns a list of memories of where those parts are. */
 export function memorize() {
     let ret: any[] = [];
     const fragment: HTMLTemplateElement = document.importNode(this, true);
