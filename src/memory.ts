@@ -85,32 +85,19 @@ export default class Memory {
 
         if(Array.isArray(newValue)) {
             let items = newValue;
-            const otts: any[] = [];
+            let frag = document.createDocumentFragment();
             for(let i = 0; i < items.length; i++) {
                 let item = items[i];
-                const rendered = OTT(item);
-                otts.push(rendered);
-            }
-            
-            // Add each item to the DOM.
-            const frag = document.createDocumentFragment();
-            for(let i = 0; i < otts.length; i++) {
-                const ott = otts[i];
-                const instance = ott.instance;
-                frag.append(instance);
+                let ott = OTT(item);
+                let node = ott.instance;
+                _repaint(node, ott.memories, [], ott.values, true);
+
+                frag.append(node);
             }
 
             let addition = document.createElement('div');
             addition.appendChild(frag);
             pointer.replaceWith(addition);
-            
-            // Repaint each node.
-            for(let i = 0; i < otts.length; i++) {
-                const ott = otts[i];
-                const instance = ott.instance;
-                const mems = ott.memories;
-                _repaint(instance, mems, [], ott.values, true);
-            }
         }
         if(typeof newValue === 'object' && newValue.__isTemplate) {
             const ott = OTT(newValue);

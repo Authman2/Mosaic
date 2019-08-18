@@ -39,14 +39,20 @@ export default new Mosaic({
                 updates to lists. The example below uses letters and indices as keys to
                 make fast updates whenever there is an addition, removal, or modification.
             </h3>
-            <button onclick='${this.addLetter}'>Push Letter</button>
-            <button onclick='${this.removeSecondAndThird}'>Remove the second and third letters</button>
-            <button onclick='${this.modifySecond}'>Change the second letter</button>
+            <round-button type='primary' onclick='${this.addLetter}' style='display:inline-block'>
+                Push Letter
+            </round-button>
+            <round-button type='danger' onclick='${this.removeSecondAndThird}' style='display:inline-block'>
+                Remove items 2 and 3
+            </round-button>
+            <round-button type='warning' onclick='${this.modifySecond}' style='display:inline-block'>
+                Change item 2
+            </round-button>
             
             <table>
                 <tbody>
                     ${Mosaic.list(this.data.letters, obj => obj.key, obj => {
-                        return html`<h3>${obj.letter}</td></h3>`
+                        return html`<h3>${obj.letter}</h3>`
                     })}
                 </tbody>
             </table>
