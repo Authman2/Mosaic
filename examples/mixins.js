@@ -6,7 +6,6 @@ const MyMixin = {
     },
     created: function() {
         console.log("Created this from a mixin!");
-        console.dir(this);
 
         this.timer = setInterval(() => {
             this.data.count = Math.floor(Math.random() * 1000);

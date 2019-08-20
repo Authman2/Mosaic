@@ -57,7 +57,8 @@ export function applyMixin(to: MosaicComponent, from: Object) {
                 to.data[dk] = from[k][dk];
             }
         }
-        else if(k === 'created' || k === 'willUpdate' || k === 'updated' || k === 'willDestroy' || k === 'received') {
+        else if(k === 'created' || k === 'willUpdate' || k === 'updated' 
+        || k === 'willDestroy' || k === 'received') {
             if(!Array.isArray(to[k])) {
                 const func = to[k];
                 to[k] = [from[k]] as any;
@@ -71,6 +72,17 @@ export function applyMixin(to: MosaicComponent, from: Object) {
         }
     }
 }
+
+/** Performs a particular lifecycle function on a Mosaic. Accounts for the
+* possible array of lifecycle functions that come with mixins. */
+export function runLifecycle(name: string, component: MosaicComponent, ...args) {
+    if(component[name]) {
+        if(Array.isArray(component[name])) 
+            component[name].forEach(func => func.call(component, ...args));
+        else component[name](...args);
+    }
+}
+
 
 /** Steps down through the child nodes until it reaches the last step. */
 export function step(parent: ChildNode|Element|ShadowRoot, steps: number[]) {

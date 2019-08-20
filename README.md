@@ -8,7 +8,7 @@
 # <a target='_blank' rel='noopener noreferrer' href='https://mosaicjs.site'>Mosaic</a>
 Mosaic is a declarative front-end JavaScript library for building user interfaces!
 
-💠 **(Web) Component-Based**: Mosaic uses the Custom Elements API to create web components that can keep track of their own data, actions, and more, and can be included in other components to create single page applications.
+💠 **(Web) Component-Based**: Mosaic uses the Custom Elements API to create web components that can keep track of their own data, actions, and more, and can be included in other components to create front-end web applications.
 
 ⚡️ **Observable Data**: Mosaic uses Observables to keep track of changes to a component's data. This means 
 that there is no need to call "setState" or anything like that to update a component - instead just change the data directly.

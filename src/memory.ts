@@ -1,4 +1,4 @@
-import { nodeMarker, insertAfter, isBooleanAttribute, objectFromArray } from './util';
+import { nodeMarker, insertAfter, isBooleanAttribute, objectFromArray, runLifecycle } from './util';
 import { MemoryOptions, MosaicComponent } from './options';
 import { OTT, _repaint } from './parser';
 import MAD from './mad';
@@ -31,12 +31,8 @@ export default class Memory {
             const justAttrs = objectFromArray(component.batches.attributes);
                 
             // Make the component receive the HTML attributes.
-            if(component.received && component.batches.attributes.length > 0) {
-                if(Array.isArray(component.received))
-                    component.received.forEach(func => func.call(component, justAttrs));
-                else
-                    component.received(justAttrs);
-            }
+            if(component.batches.attributes.length > 0)
+                runLifecycle('received', component, justAttrs);
 
             // Set the data on the component then repaint it.
             if(component.batches.data.length > 0) {
@@ -91,10 +87,8 @@ export default class Memory {
                 let ott = OTT(item);
                 let node = ott.instance;
                 _repaint(node, ott.memories, [], ott.values, true);
-
                 frag.append(node);
             }
-
             let addition = document.createElement('div');
             addition.appendChild(frag);
             pointer.replaceWith(addition);

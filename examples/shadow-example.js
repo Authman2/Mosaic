@@ -5,9 +5,12 @@ export default new Mosaic({
     data: { count: 0 },
     useShadow: true,
     created() {
-        setInterval(() => {
+        this.timer = setInterval(() => {
             this.data.count = Math.floor(Math.random() * 1000);
         }, 1000);
+    },
+    willDestroy() {
+        clearInterval(this.timer);
     },
     showSomething() {
         alert("Hi from the shadow dom!");

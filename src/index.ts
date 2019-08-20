@@ -2,7 +2,7 @@ import { MosaicComponent, MosaicOptions, ViewFunction, KeyedArray } from './opti
 import Observable from './observable';
 import Router from './router';
 import Portfolio from './portfolio';
-import { randomKey, nodeMarker, goUpToConfigureRouter, applyMixin } from './util';
+import { randomKey, nodeMarker, goUpToConfigureRouter, applyMixin, runLifecycle } from './util';
 import { getTemplate, _repaint } from './parser';
 
 export default function Mosaic(options: MosaicOptions): MosaicComponent {
@@ -13,6 +13,8 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
     // Error checking.
     if(typeof copyOptions.name !== 'string')
         throw new Error('Name must be specified and must be a string.');
+    if(copyOptions.descendants)
+        throw new Error('You cannot directly set the "descendants" property on a component.');
 
     // Define the custom element.
     customElements.define(copyOptions.name, class extends MosaicComponent {
@@ -27,35 +29,23 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             this.iid = randomKey();
             this.data = new Observable(Object.assign({}, copyOptions.data || {}), old => {
                 if(this.barrier === true) return;
-                if(this.willUpdate) {
-                    if(Array.isArray(this.willUpdate))
-                        this.willUpdate.forEach(func => func.call(this, old));
-                    else
-                        this.willUpdate(old);
-                }
+                runLifecycle('willUpdate', this, old);
             }, () => {
                 if(this.barrier === true) return;
                 this.repaint();
-
-                if(this.updated) {
-                    if(Array.isArray(this.updated))
-                        this.updated.forEach(func => func.call(this));
-                    else
-                        this.updated();
-                }
+                runLifecycle('updated', this);
             });
 
             // Configure all of the properties if they exist.
             let _options = Object.keys(copyOptions);
             for(let i = 0; i < _options.length; i++) {
                 let key = _options[i];
-
                 if(key === 'element') continue;
                 else if(key === 'data') continue;
-                else if(key === 'descendants')
-                    throw new Error('You cannot directly set the "descendants" property on a component.');
                 else this[key] = options[key];
             }
+
+            // Apply any mixins that are present in the options.
             if(copyOptions.mixins) {
                 for(let i = 0; i < copyOptions.mixins.length; i++) {
                     this.barrier = true;
@@ -111,12 +101,8 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                 }
                 
                 // Send the attributes through lifecycle functions.
-                if(this.received && Object.keys(receivedAttributes).length > 0) {
-                    if(Array.isArray(this.received))
-                        this.received.forEach(func => func.call(this, receivedAttributes));
-                    else
-                        this.received(receivedAttributes);
-                }
+                if(Object.keys(receivedAttributes).length > 0)
+                    runLifecycle('received', this, receivedAttributes);
                 
                 // Save the new data and repaint.
                 if(Object.keys(receivedData).length > 0) {
@@ -127,14 +113,18 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                         // If the attribute type is a string, but the initial
                         // value in the component is something else, try to
                         // parse it as such.
-                        if(typeof receivedData[key] === 'string') {
+                         if(typeof receivedData[key] === 'string') {
                             if(typeof this.data[key] === 'number')
                                 this.data[key] = parseFloat(receivedData[key]);
                             else if(typeof this.data[key] === 'bigint')
                                 this.data[key] = parseInt(receivedData[key]);
                             else if(typeof this.data[key] === 'boolean')
                                 this.data[key] = receivedData[key] === 'true' ? true : false;
-                            else if(typeof this.data[key] === 'object')
+                            else if(Array.isArray(this.data[key])) {
+                                const condensed = receivedData[key].replace(/'/gi, '"');
+                                const parsed = JSON.parse(condensed);
+                                this.data[key] = parsed;
+                            } else if(typeof this.data[key] === 'object')
                                 this.data[key] = JSON.parse(receivedData[key]);
                             else
                                 this.data[key] = receivedData[key];
@@ -150,23 +140,13 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             // Make sure the component knows that it has been fully rendered
             // for the first time. This makes the router work. Then call the
             // created lifecycle function.
-            if(this.created) {
-                if(Array.isArray(this.created))
-                    this.created.forEach(func => func.call(this));
-                else
-                    this.created();
-            }
+            runLifecycle('created', this);
             this.initiallyRendered = true;
         }
 
         disconnectedCallback() {
             if(this.portfolio) this.portfolio.removeDependency(this);
-            if(this.willDestroy) {
-                if(Array.isArray(this.willDestroy))
-                    this.willDestroy.forEach(func => func.call(this));
-                else
-                    this.willDestroy();
-            }
+            runLifecycle('willDestroy', this);
         }
 
         paint(arg?: string|HTMLElement|Object) {
@@ -217,14 +197,8 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                 this.data[key] = data[key];
             }
             this.barrier = false;
-            
             this.repaint();
-            if(this.updated) {
-                if(Array.isArray(this.updated))
-                    this.updated.forEach(func => func.call(this));
-                else
-                    this.updated();
-            }
+            runLifecycle('updated', this);
         }
     });
 
