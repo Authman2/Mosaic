@@ -51,7 +51,6 @@ export default new Mosaic({
             
             <table>
                 <tbody>
-                    <!-- TODO: Test ternary operator and conditional rendering with keyed arrays. -->
                     ${Mosaic.list(this.data.letters, obj => obj.key, obj => {
                         return html`<h3>${obj.letter}</h3>`
                     })}
