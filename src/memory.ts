@@ -116,8 +116,7 @@ export default class Memory {
 
     /** Applies attribtue and event listener changes. */
     commitAttribute(element: HTMLElement|ChildNode|ShadowRoot, pointer: HTMLElement|ChildNode, 
-            name: string, oldValue: any, newValue: any)
-        {
+            name: string, oldValue: any, newValue: any) {
 
         const attribute = (pointer as Element).attributes.getNamedItem(name);
         
@@ -148,9 +147,7 @@ export default class Memory {
         
         // Remove the function attribute so it's not cluttered. The event
         // listener will still exist on the element, though.
-        if(typeof newValue === 'function') {
-            (pointer as Element).removeAttribute(name);
-        }
+        if(typeof newValue === 'function') (pointer as Element).removeAttribute(name);
 
         // Batch the pointer element and the attribute [name, value] pair together so that
         // it can be update all at once at the end of the repaint cycle.
@@ -162,8 +159,8 @@ export default class Memory {
 
     /** Applies event changes such as adding/removing listeners. */
     commitEvent(element: HTMLElement|ChildNode|ShadowRoot, pointer: HTMLElement|ChildNode, 
-            name: string, oldValue: any, newValue: any)
-        {
+            name: string, oldValue: any, newValue: any) {
+
         const events = (pointer as any).eventHandlers || {};
         const shortName = name.substring(2);
 

@@ -207,7 +207,7 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
 }
 
 /** A function for efficiently rendering a list in a component. */
-Mosaic.list = function(items, key: Function, map: Function): KeyedArray {
+Mosaic.list = function(items: any[], key: Function, map: Function): KeyedArray {
     const keys = items.map((itm, index) => key(itm, index));
     const mapped = items.map((itm, index) => {
         return {

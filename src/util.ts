@@ -83,7 +83,6 @@ export function runLifecycle(name: string, component: MosaicComponent, ...args) 
     }
 }
 
-
 /** Steps down through the child nodes until it reaches the last step. */
 export function step(parent: ChildNode|Element|ShadowRoot, steps: number[]) {
     let child = parent;
@@ -113,7 +112,7 @@ export function goUpToConfigureRouter() {
         }
         parent = parent.parentNode;
         i += 1;
-        if(i > 1000) break;
+        if(i > 100000) break;
     }
     if(parent && parent.firstChild && (parent.firstChild as any).router)
         this.router = (parent.firstChild as any).router;

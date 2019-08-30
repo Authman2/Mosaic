@@ -1,8 +1,44 @@
 import Mosaic from '../src/index';
 
+// Styles can be grouped into separate components.
+new Mosaic({
+    name: 'shadow-styles',
+    view: _ => html`<style>
+        :host > div {
+            color: white;
+            padding: 10px;
+            font-size: 20px;
+            border-radius: 10px;
+            background-color: lightsalmon;
+        }
+        :host > h4, :host > h5 {
+            margin: 0px;
+            padding: 0px;
+        }
+        :host button {
+            border: none;
+            color: white;
+            padding: 15px;
+            outline: none;
+            cursor: pointer;
+            font-size: 14px;
+            background: none;
+            border-radius: 10px;
+            background-color: green;
+        }
+        :host button:hover {
+            color: darkgreen;
+            background-color: lightgreen;
+        }
+    </style>`
+})
+
+// Export the shadow dom example.
 export default new Mosaic({
     name: 'shadow-example',
-    data: { count: 0 },
+    data: {
+        count: 0
+    },
     useShadow: true,
     created() {
         this.timer = setInterval(() => {
@@ -17,34 +53,8 @@ export default new Mosaic({
     },
     view() {
         return html`
-        <style>
-            :host > div {
-                color: white;
-                padding: 10px;
-                font-size: 20px;
-                border-radius: 10px;
-                background-color: lightsalmon;
-            }
-            :host > h4, :host > h5 {
-                margin: 0px;
-                padding: 0px;
-            }
-            :host button {
-                border: none;
-                color: white;
-                padding: 15px;
-                outline: none;
-                cursor: pointer;
-                font-size: 14px;
-                background: none;
-                border-radius: 10px;
-                background-color: green;
-            }
-            :host button:hover {
-                color: darkgreen;
-                background-color: lightgreen;
-            }
-        </style>
+        <shadow-styles></shadow-styles>
+        
         <div>
             <h2>Shadow DOM</h2>
             <h5>This component is being rendered using the Shadow DOM!</h5>
