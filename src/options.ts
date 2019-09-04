@@ -14,41 +14,41 @@ export class MosaicComponent extends HTMLElement {
     created?: Function;
     updated?: Function;
     router?: HTMLElement;
-    oldValues: any[] = [];
     portfolio?: Portfolio;
-    mixins: Object[] = [];
     willUpdate?: Function;
     willDestroy?: Function;
     barrier: boolean = false;
     useShadow: boolean = true;
-    initiallyRendered: boolean = false;
+    protected _shadow?: ShadowRoot;
+    protected mixins: Object[] = [];
+    protected oldValues: any[] = [];
     data: Observable = new Observable({});
     received?: (attributes: Object) => void;
+    protected initiallyRendered: boolean = false;
     view?: (self?: MosaicComponent) => ViewFunction;
     descendants: DocumentFragment = document.createDocumentFragment();
-    batches: { attributes: BatchUpdate[], data: BatchUpdate[] } = { attributes: [], data: [] };
+    protected batches: { attributes: BatchUpdate[], data: BatchUpdate[] } = { attributes: [], data: [] };
 
-    paint(arg?: string|HTMLElement|Object) {};
-    repaint() {};
-    set(data: Object) {};
+    public paint(arg?: string|HTMLElement|Object) {};
+    public repaint() {};
+    public set(data: Object) {};
 }
 
 /** The configuration options for a Mosaic component. */
 export interface MosaicOptions {
     name: string;
-    data: Object;
-    mixins: Object[];
-    created: Function;
-    updated: Function;
-    useShadow: boolean;
-    router: HTMLElement;
-    portfolio: Portfolio;
-    willDestroy: Function;
-    descendants: DocumentFragment;
-    willUpdate: (old: Object) => void;
-    element: string|Element|HTMLElement;
+    data?: Object;
+    mixins?: Object[];
+    created?: Function;
+    updated?: Function;
+    useShadow?: boolean;
+    router?: HTMLElement;
+    portfolio?: Portfolio;
+    willDestroy?: Function;
+    willUpdate?: (old: Object) => void;
+    element?: string|Element|HTMLElement;
     received?: (attributes: Object) => void;
-    view: (self?: MosaicComponent) => ViewFunction;
+    view?: (self?: MosaicComponent) => ViewFunction;
 }
 
 /** Config options for a memory. */

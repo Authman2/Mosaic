@@ -13,13 +13,11 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
     // Error checking.
     if(typeof copyOptions.name !== 'string')
         throw new Error('Name must be specified and must be a string.');
-    if(copyOptions.descendants)
+    if((copyOptions as any).descendants)
         throw new Error('You cannot directly set the "descendants" property on a component.');
 
     // Define the custom element.
     customElements.define(copyOptions.name, class extends MosaicComponent {
-        _shadow?: ShadowRoot;
-
         constructor() {
             super();
             
