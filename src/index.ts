@@ -3,7 +3,7 @@ import Observable from './observable';
 import Router from './router';
 import Portfolio from './portfolio';
 import { randomKey, nodeMarker, goUpToConfigureRouter, applyMixin, runLifecycle } from './util';
-import { getTemplate, _repaint } from './parser';
+import { getTemplate, _repaint } from './templating';
 
 export default function Mosaic(options: MosaicOptions): MosaicComponent {
     // Configure some basic properties.

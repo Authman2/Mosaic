@@ -1,5 +1,5 @@
 import { MosaicComponent } from "./options";
-import { _repaint } from "./parser";
+import { _repaint } from "./templating";
 
 // The placeholders in the HTML.
 export const nodeMarker = `<!--{{m-${String(Math.random()).slice(2)}}}-->`;

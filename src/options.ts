@@ -29,9 +29,24 @@ export class MosaicComponent extends HTMLElement {
     descendants: DocumentFragment = document.createDocumentFragment();
     protected batches: { attributes: BatchUpdate[], data: BatchUpdate[] } = { attributes: [], data: [] };
 
+    // Methods for the developer.
     public paint(arg?: string|HTMLElement|Object) {};
     public repaint() {};
     public set(data: Object) {};
+
+    // Internal methods that should not be used by the developer.
+    public _batchData(name: string, value: any) {
+        this.batches.data.push([name, value]);
+    }
+    public _batchAttribute(name: string, value: any) {
+        this.batches.attributes.push([name, value]);
+    }
+    public _getBatches() {
+        return this.batches;
+    }
+    public _resetBatches() {
+        this.batches = { attributes: [], data: [] };
+    }
 }
 
 /** The configuration options for a Mosaic component. */

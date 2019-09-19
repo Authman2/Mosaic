@@ -95,15 +95,15 @@ portfolio-label {
     display: inline-block;
 }
 
-example-page-1, example-page-2 {
+example-page-1, example-page-2, example-page-3 {
     color: #4341AE;
     font-family: Avenir;
 }
-example-page-1 > h1, example-page-2 > h1 {
+example-page-1 > h1, example-page-2 > h1, example-page-3 > h1 {
     margin-left: 5%;
     margin-right: 5%;
 }
-example-page-1 > section, example-page-2 > section {
+example-page-1 > section, example-page-2 > section, example-page-3 > section {
     margin-left: 5%;
     margin-right: 5%;
 }

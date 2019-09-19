@@ -6,7 +6,9 @@ import portfolio from './portfolio';
 export default new Mosaic({
     element: 'root',
     name: 'home-page',
-    data: { num: 0 },
+    data: {
+        num: 0
+    },
     created() {
         this.timer = setInterval(() => {
             this.data.num = Math.floor(Math.random() * 1000);
@@ -105,6 +107,9 @@ export default new Mosaic({
             </round-button>
             <round-button type='primary' click='${() => self.router.send('/example-page-2')}'>
                 Example Page 2
+            </round-button>
+            <round-button type='primary' click='${() => self.router.send('/example-page-3')}'>
+                Example Page 3
             </round-button>
         </section>
     `

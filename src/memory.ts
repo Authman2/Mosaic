@@ -1,6 +1,6 @@
 import { nodeMarker, insertAfter, isBooleanAttribute, objectFromArray, runLifecycle } from './util';
 import { MemoryOptions, MosaicComponent } from './options';
-import { OTT, _repaint } from './parser';
+import { OTT, _repaint } from './templating';
 import MAD from './mad';
 
 /** Represents a piece of dynamic content in the markup. */
@@ -9,33 +9,39 @@ export default class Memory {
 
     /** Batches an update together with other component updates so that
     * later on they can all perform a single repaint. */
+    // TODO: You can't put the batch operation in Memories because memories do not always
+    // get triggered. If you have 3 attributes, and only 2 of them are dynamic, then the
+    // batches will not run because techincally the "attrsLength" and "dataLength" are less
+    // than the "totalLength." Maybe just move it back into the parsing stage?
     batch(component: MosaicComponent, batchName: string, batchValue: any, isOTT: boolean = false) {
         // Add the (name, value) pair as a batch operation to be carried out
         // at the end of the parent component's repaint cycle.
-        if(component.data.hasOwnProperty(batchName))
-            component.batches.data.push([batchName, batchValue]);
-        else component.batches.attributes.push([batchName, batchValue]);
+        if(component.data.hasOwnProperty(batchName)) component._batchData(batchName, batchValue);
+        else component._batchAttribute(batchName, batchValue);
+        console.log(component, component.attributes.length);
         
         // Check if the number of batches matches up to the number of
         // attributes present on the HTML element tag. Checking this number
         // is fine because you don't split up attributes from data until
         // the end of this step.
+        const bts = component._getBatches();
+
         const totalLength = this.config.trackedAttributeCount || 0;
-        const attrsLength = component.batches.attributes.length;
-        const dataLength = component.batches.data.length;
-        if(attrsLength + dataLength === totalLength) {
+        const attrsLength = bts.attributes.length;
+        const dataLength = bts.data.length;
+        if(attrsLength + dataLength >= totalLength) {
             // Go through the immediately nested nodes and update them with the
             // new data, while also sending over the parsed attributes. Then
             // clear the batch when you are done.
-            const justData = objectFromArray(component.batches.data);
-            const justAttrs = objectFromArray(component.batches.attributes);
+            const justData = objectFromArray(bts.data);
+            const justAttrs = objectFromArray(bts.attributes);
                 
             // Make the component receive the HTML attributes.
-            if(component.batches.attributes.length > 0)
+            if(bts.attributes.length > 0)
                 runLifecycle('received', component, justAttrs);
 
             // Set the data on the component then repaint it.
-            if(component.batches.data.length > 0) {
+            if(bts.data.length > 0) {
                 component.barrier = true;
                 let keys = Object.keys(justData);
                 for(let i = 0; i < keys.length; i++) {
@@ -49,7 +55,7 @@ export default class Memory {
 
             // When you are done performing the batcehd updates, clear
             // the batch so you can do it again for the next update.
-            component.batches = { attributes: [], data: [] };
+            component._resetBatches();
         }
     }
 
@@ -141,13 +147,31 @@ export default class Memory {
         
         // Add or remove boolean attributes.
         if(isBooleanAttribute(name)) {
-            if(newValue === true) (pointer as Element).setAttribute(name, 'true');
-            else (pointer as Element).removeAttribute(name);
+            if(newValue === true) {
+                (pointer as Element).setAttribute(name, 'true');
+                if(this.config.trackedAttributeCount)
+                    this.config.trackedAttributeCount -= 1;
+            } else {
+                (pointer as Element).removeAttribute(name);
+
+                // TODO: Experiment with constantly modifying the tracked attribute count
+                // whenever you remove attributes.
+                if(this.config.trackedAttributeCount)
+                    this.config.trackedAttributeCount -= 1;
+            }
         }
         
         // Remove the function attribute so it's not cluttered. The event
         // listener will still exist on the element, though.
-        if(typeof newValue === 'function') (pointer as Element).removeAttribute(name);
+        if(typeof newValue === 'function') {
+            // TODO: Again, experiment with updating the tracked attribute
+            // count whenever you remove an attribute. This may be important
+            // so that the memory knows not to look for it when performing
+            // batched updates.
+            (pointer as Element).removeAttribute(name);
+            if(this.config.trackedAttributeCount)
+                this.config.trackedAttributeCount -= 1;
+        }
 
         // Batch the pointer element and the attribute [name, value] pair together so that
         // it can be update all at once at the end of the repaint cycle.
@@ -180,8 +204,13 @@ export default class Memory {
         }
 
         // Remove the attribute from the DOM tree to avoid clutter.
-        if((pointer as Element).hasAttribute(name))
+        if((pointer as Element).hasAttribute(name)) {
+            // TODO: Third times the charm! Decrement the tracked attribute
+            // count one more time when removing an attribute.
             (pointer as Element).removeAttribute(name);
+            if(this.config.trackedAttributeCount)
+                this.config.trackedAttributeCount -= 1;
+        }
 
         // Batch the pointer element and the attribute [name, value] pair together so that
         // it can be update all at once at the end of the repaint cycle.
