@@ -49,12 +49,12 @@ For a more detailed example, run the project inside the "example" folder.
 // Import Mosaic
 import Mosaic from 'mosaic-framework';
 
-// The "text" data property gets injected by 
-// the parent component so we need to specify
-// that in the "data" option with a default value.
+// Create components
 new Mosaic({
     name: 'my-label',
-    data: { text: '' },
+    data: {
+        text: ''
+    },
     view: self => {
         return html`
             <h2>${ self.data.text }</h2>
@@ -63,13 +63,12 @@ new Mosaic({
         `;
     }
 });
-
-// Create an app component. Note how components
-// do not need to be nested under a single div.
 const app = new Mosaic({
     name: 'my-app',
     element: 'root',
-    data: { title: "Mosaic App" },
+    data: {
+        title: "Mosaic App"
+    },
     sayHello: function() {
         console.log("Hello World!!");
         console.log("This component is ", this);

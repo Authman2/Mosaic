@@ -46,7 +46,6 @@ function parseAttributes(node: Element, steps: number[]): Memory[] {
     // Make sure to keep track of how many dynamic attributes are needed
     // to trigger a repaint from a Memory perspective.
     let trackedAttributeCount = 0;
-    console.log(node.attributes);
 
     const regex = new RegExp(`[a-z|A-Z| ]*${nodeMarker}[a-z|A-Z| ]*`, 'g');
     for(let i = 0; i < node.attributes.length; i++) {

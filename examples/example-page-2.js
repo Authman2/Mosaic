@@ -49,20 +49,12 @@ export default new Mosaic({
                 Change item 2
             </round-button>
 
-            
-            <round-button style='color: mediumseagreen; font-weight: ${0 % 2 === 0 ? "bolder" : "100"};' 
-                    click='${() => console.log("A!!!")}'>
-                ${"A"}
-            </round-button>
-            
             <table>
                 <tbody>
-                    ${Mosaic.list(this.data.letters, obj => obj.key, (obj, index) => {
-                        return html`<round-button style='color: mediumseagreen; 
-                                    font-weight: ${index % 2 === 0 ? "bolder" : "100"};' 
-                                click='${() => console.log(obj)}'>
+                    ${Mosaic.list(this.data.letters, obj => obj.key, obj => {
+                        return html`<h3 style='cursor:pointer;' onclick='${() => console.log(obj)}'>
                             ${obj.letter}
-                        </round-button>`
+                        </h3>`
                     })}
                 </tbody>
             </table>

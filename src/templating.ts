@@ -39,7 +39,7 @@ export function OTT(view: ViewFunction, key?: string) {
             template.id = templateKey;
             template.innerHTML = buildHTML(view.strings);
             (template as any).memories = memorize(template);
-
+            
             cloned = document.importNode(template.content, true).firstChild as HTMLElement;
             document.body.appendChild(template);
         }

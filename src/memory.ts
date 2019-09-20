@@ -9,16 +9,11 @@ export default class Memory {
 
     /** Batches an update together with other component updates so that
     * later on they can all perform a single repaint. */
-    // TODO: You can't put the batch operation in Memories because memories do not always
-    // get triggered. If you have 3 attributes, and only 2 of them are dynamic, then the
-    // batches will not run because techincally the "attrsLength" and "dataLength" are less
-    // than the "totalLength." Maybe just move it back into the parsing stage?
-    batch(component: MosaicComponent, batchName: string, batchValue: any, isOTT: boolean = false) {
+    batch(component: MosaicComponent, batchName: string, batchValue: any) {
         // Add the (name, value) pair as a batch operation to be carried out
         // at the end of the parent component's repaint cycle.
         if(component.data.hasOwnProperty(batchName)) component._batchData(batchName, batchValue);
         else component._batchAttribute(batchName, batchValue);
-        console.log(component, component.attributes.length);
         
         // Check if the number of batches matches up to the number of
         // attributes present on the HTML element tag. Checking this number
@@ -50,7 +45,7 @@ export default class Memory {
                     component.data[key] = val;
                 }
                 component.barrier = false;
-                if(isOTT === false) component.repaint();
+                component.repaint();
             }
 
             // When you are done performing the batcehd updates, clear
@@ -145,17 +140,16 @@ export default class Memory {
         const setValue = newAttributeValue.length > 0 ? newAttributeValue : newValue;
         (pointer as Element).setAttribute(name, setValue);
         
-        // Add or remove boolean attributes.
+        // Add or remove boolean attributes. Make sure to also the tracked
+        // attribute count so that you know how many attributes to check
+        // for at any given time of an update cycle.
         if(isBooleanAttribute(name)) {
             if(newValue === true) {
                 (pointer as Element).setAttribute(name, 'true');
                 if(this.config.trackedAttributeCount)
-                    this.config.trackedAttributeCount -= 1;
+                    this.config.trackedAttributeCount += 1;
             } else {
                 (pointer as Element).removeAttribute(name);
-
-                // TODO: Experiment with constantly modifying the tracked attribute count
-                // whenever you remove attributes.
                 if(this.config.trackedAttributeCount)
                     this.config.trackedAttributeCount -= 1;
             }
@@ -164,21 +158,19 @@ export default class Memory {
         // Remove the function attribute so it's not cluttered. The event
         // listener will still exist on the element, though.
         if(typeof newValue === 'function') {
-            // TODO: Again, experiment with updating the tracked attribute
-            // count whenever you remove an attribute. This may be important
-            // so that the memory knows not to look for it when performing
-            // batched updates.
             (pointer as Element).removeAttribute(name);
+
+            // Since you're removing the function as an attribute, be sure
+            // to update the tracked attribute count so we're not always
+            // looking for it during a batched update.
             if(this.config.trackedAttributeCount)
                 this.config.trackedAttributeCount -= 1;
         }
 
         // Batch the pointer element and the attribute [name, value] pair together so that
         // it can be update all at once at the end of the repaint cycle.
-        if(this.config.isComponentType === true && pointer instanceof MosaicComponent) {
-            const isOTT = (pointer as any).hasOwnProperty('isOTT');
-            this.batch(pointer, name, newValue, isOTT);
-        }
+        if(this.config.isComponentType === true && pointer instanceof MosaicComponent)
+            this.batch(pointer, name, newValue);
     }
 
     /** Applies event changes such as adding/removing listeners. */
@@ -205,8 +197,6 @@ export default class Memory {
 
         // Remove the attribute from the DOM tree to avoid clutter.
         if((pointer as Element).hasAttribute(name)) {
-            // TODO: Third times the charm! Decrement the tracked attribute
-            // count one more time when removing an attribute.
             (pointer as Element).removeAttribute(name);
             if(this.config.trackedAttributeCount)
                 this.config.trackedAttributeCount -= 1;
@@ -214,10 +204,8 @@ export default class Memory {
 
         // Batch the pointer element and the attribute [name, value] pair together so that
         // it can be update all at once at the end of the repaint cycle.
-        if(this.config.isComponentType === true && pointer instanceof MosaicComponent) {
-            const isOTT = (pointer as any).hasOwnProperty('isOTT');
-            this.batch(pointer, name, newValue, isOTT);
-        }
+        if(this.config.isComponentType === true && pointer instanceof MosaicComponent)
+            this.batch(pointer, name, newValue);
     }
 
     /** Helper function for applying changes to arrays. */
@@ -243,6 +231,11 @@ export default class Memory {
                 // at the end for improved DOM performance.
                 frag.appendChild(node);
             }
+
+            // TODO: The reason that dynamic descendants won't work is bc
+            // these nodes need to be repainted AFTER they have been added
+            // to the dom. The problem though is that this will significantly
+            // decrease the speed of the array algorithm.
             insertAfter(frag, pointer);
             return;
         }
