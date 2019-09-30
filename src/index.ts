@@ -66,16 +66,16 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                     this.descendants.append(...this.childNodes);
             }
 
-            // Add portfolio dependency.
+            // 2.) Add portfolio dependency.
             if(this.portfolio) this.portfolio.addDependency(this);
             
-            // Clear any existing content that was in there before.
+            // 3.) Clear any existing content that was in there before.
             if(!this.initiallyRendered) this.innerHTML = '';
 
-            // Make sure we have the router property.
+            // 4.) Make sure we have the router property.
             goUpToConfigureRouter.call(this);
 
-            // 2.) Find the template for this component, clone it, and repaint.
+            // 5.) Find the template for this component, clone it, and repaint.
             const template = getTemplate(this);
             const cloned = document.importNode(template.content, true);
             if(!this.initiallyRendered) {
@@ -84,7 +84,7 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             }
             this.repaint();
             
-            // 3.) If there are any attributes present on this element at
+            // 6.) If there are any attributes present on this element at
             // connection time and they are not dynamic (i.e. their value does
             // not match the nodeMarker) then you can receive them as data.
             if(this.initiallyRendered === false) {
@@ -102,7 +102,7 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                 if(Object.keys(receivedAttributes).length > 0)
                     runLifecycle('received', this, receivedAttributes);
                 
-                // Save the new data and repaint.
+                // 7.) Save the new data and repaint.
                 if(Object.keys(receivedData).length > 0) {
                     this.barrier = true;
                     const keys = Object.keys(receivedData);
@@ -135,16 +135,16 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                 }
             }
 
-            // If you come here as a OTT from an array, then be sure to
+            // 8.) If you come here as a OTT from an array, then be sure to
             // repaint again. This is because with the way that the keyed
             // array patcher is currently set up, it will insert all the
             // nodes from a fragment.
-            if(this.hasOwnProperty('isOTT') && this.view) {
+            if(this.hasOwnProperty('isArrayOTT') && this.view) {
                 const vals = this.view(this).values;
                 _repaint(this, (template as any).memories, [], vals);
             }
             
-            // Make sure the component knows that it has been fully rendered
+            // 9.) Make sure the component knows that it has been fully rendered
             // for the first time. This makes the router work. Then call the
             // created lifecycle function.
             runLifecycle('created', this);

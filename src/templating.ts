@@ -74,8 +74,14 @@ export function _repaint(element: HTMLElement|ShadowRoot, memories: Memory[], ol
         let pointer;
         if(isOTT === true) {
             const OTTsteps = mem.config.steps.slice();
-            OTTsteps.splice(0, 1);
-            pointer = step(element, OTTsteps);
+
+            // If it is note a component and is just a regular HTML tags,
+            // then you need to remove the first step so the renderer
+            // doesn't think the custom element is another step.
+            if(!(element instanceof MosaicComponent))
+                OTTsteps.splice(0, 1);
+            
+            pointer = step(element, OTTsteps, true);
         } else {
             const regularSteps = mem.config.steps.slice();
             pointer = step(element, regularSteps);

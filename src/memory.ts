@@ -226,6 +226,7 @@ export default class Memory {
                 const item = newItems[i];
                 const ott = OTT(item, item.key);
                 const node = ott.instance;
+                node.isArrayOTT = true;
                 _repaint(node, ott.memories, [], ott.values, true);
 
                 // Add each item to a document fragment, then set all of it
@@ -268,6 +269,7 @@ export default class Memory {
                     const newItem = diffs[i+1].edit[j];
                     const ott = OTT(newItem, newItem.key);
                     const node = ott.instance;
+                    node.isArrayOTT = true;
                     _repaint(node, ott.memories, [], ott.values, true);
 
                     if(modRef) modRef.replaceWith(node);
@@ -295,6 +297,7 @@ export default class Memory {
                     const addition = edit[j];
                     const ott = OTT(addition, addition.key);
                     const node = ott.instance;
+                    node.isArrayOTT = true;
                     _repaint(node, ott.memories, [], ott.values, true);
                     
                     // Append to a document fragment for faster repainting.

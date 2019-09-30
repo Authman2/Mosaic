@@ -52,11 +52,9 @@ export default new Mosaic({
             <table>
                 <tbody>
                     ${Mosaic.list(this.data.letters, obj => obj.key, (obj, index) => {
-                        return html`<round-button type='${index % 2 === 0 ? 'primary' : 'success'}' 
-                            style='cursor:pointer;' 
-                            click='${() => console.log(obj)}'>
-                            <p>${obj.letter}</p>
-                        </round-button>`
+                        return html`<h3 style='cursor:pointer;' onclick='${() => console.log(obj)}'>
+                            ${obj.letter}
+                        </h3>`
                     })}
                 </tbody>
             </table>
