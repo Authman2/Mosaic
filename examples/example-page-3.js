@@ -1,6 +1,5 @@
 import Mosaic from '../src/index';
 
-
 export default new Mosaic({
     name: 'example-page-3',
     view: function() {

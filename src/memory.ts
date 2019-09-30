@@ -209,7 +209,8 @@ export default class Memory {
     }
 
     /** Helper function for applying changes to arrays. */
-    commitArray(element: HTMLElement|ChildNode|ShadowRoot, pointer: HTMLElement|ChildNode, oldValue: any, newValue: any) {
+    commitArray(element: HTMLElement|ChildNode|ShadowRoot, pointer: HTMLElement|ChildNode, 
+            oldValue: any, newValue: any) {
         const oldItems = oldValue && typeof oldValue === 'object' && oldValue.__isKeyedArray 
             ? oldValue.items : [];
         const newItems = newValue && typeof newValue === 'object' && newValue.__isKeyedArray 
@@ -231,11 +232,6 @@ export default class Memory {
                 // at the end for improved DOM performance.
                 frag.appendChild(node);
             }
-
-            // TODO: The reason that dynamic descendants won't work is bc
-            // these nodes need to be repainted AFTER they have been added
-            // to the dom. The problem though is that this will significantly
-            // decrease the speed of the array algorithm.
             insertAfter(frag, pointer);
             return;
         }

@@ -1,4 +1,4 @@
-import { MosaicComponent, MosaicOptions, ViewFunction, KeyedArray } from './options';
+import { MosaicComponent, MosaicOptions, ViewFunction, KeyedArray, InjectionPoint } from './options';
 import Observable from './observable';
 import Router from './router';
 import Portfolio from './portfolio';
@@ -134,6 +134,15 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                     this.repaint();
                 }
             }
+
+            // If you come here as a OTT from an array, then be sure to
+            // repaint again. This is because with the way that the keyed
+            // array patcher is currently set up, it will insert all the
+            // nodes from a fragment.
+            if(this.hasOwnProperty('isOTT') && this.view) {
+                const vals = this.view(this).values;
+                _repaint(this, (template as any).memories, [], vals);
+            }
             
             // Make sure the component knows that it has been fully rendered
             // for the first time. This makes the router work. Then call the
@@ -149,7 +158,7 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
 
         paint(arg?: string|HTMLElement|Object) {
             let isElement: boolean = typeof arg === 'string' || arg instanceof HTMLElement;
-            let look: string|Element|HTMLElement|undefined|null = copyOptions.element || (this as any).element;
+            let look: InjectionPoint = copyOptions.element || (this as any).element;
 
             // Check if the user is injecting into the base element here.
             if(isElement) {

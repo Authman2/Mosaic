@@ -93,3 +93,6 @@ export type ViewFunction = {
     values: any[],
     __isTemplate: true
 };
+
+/** A helper type for shorter syntax. */
+export type InjectionPoint = string|Element|HTMLElement|undefined|null;
