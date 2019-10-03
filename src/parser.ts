@@ -79,10 +79,8 @@ function parseAttributes(node: Element, steps: number[]): Memory[] {
     return ret;
 }
 function parseNode(node: Text, steps: number[]): Memory[] {
-    // const check = nodeMarker.replace('<!--','').replace('-->','');
-    // if(node.textContent !== check) return [];
-    const regex = new RegExp(nodeMarker, 'gi');
-    if(regex.test(node.data)) return [];
+    const check = nodeMarker.replace('<!--','').replace('-->','');
+    if(node.textContent !== check) return [];
 
     // Check if the parent element is defined as a Mosaic component.
     let defined = customElements.get(node.nodeName.toLowerCase()) !== undefined;
