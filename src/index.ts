@@ -138,10 +138,13 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             // 8.) If you come here as a OTT from an array, then be sure to
             // repaint again. This is because with the way that the keyed
             // array patcher is currently set up, it will insert all the
-            // nodes from a fragment.
-            if(this.hasOwnProperty('isArrayOTT') && this.view) {
-                const vals = this.view(this).values;
-                _repaint(this, (template as any).memories, [], vals);
+            // nodes from a fragment (i.e. not in the DOM yet).
+            if(this.hasOwnProperty('arrayOTT') && this.view) {
+                const ott = this['arrayOTT'];
+                const node = ott.instance;
+                const mems = ott.memories;
+                const vals = ott.values;
+                _repaint(node, mems, [], vals, true);
             }
             
             // 9.) Make sure the component knows that it has been fully rendered

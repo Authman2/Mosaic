@@ -1,7 +1,29 @@
 import Mosaic from '../src/index';
 
+Mosaic({
+    name: 'temp-comp',
+    data: {
+        title: ''
+    },
+    view: function() {
+        return html`
+        <label>${this.data.title}</label>
+        <br>
+        <input type='${this.type || 'text'}'/>
+        `
+    }
+})
+
 export default new Mosaic({
     name: 'example-page-3',
+    data: {
+        count: 0
+    },
+    created: function() {
+        setInterval(() => {
+            this.data.count += 1;
+        }, 1000);
+    },
     view: function() {
         return html`
         <h1>More Examples (cont.)</h1>
@@ -21,6 +43,14 @@ export default new Mosaic({
                 attribute string.
             </h2>
         </section>
+
+        ${
+            html`<temp-comp title='Something!!!' onclick='${_ => console.log(this.data.count)}'>
+                <p>
+                    <b>${'some text goes here: ' + this.data.count}</b>
+                </p>
+            </temp-comp>`
+        }
         `
     }
 })

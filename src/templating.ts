@@ -25,31 +25,29 @@ export function getTemplate(component: MosaicComponent): HTMLTemplateElement {
 export function OTT(view: ViewFunction, key?: string) {
     // Create and memorize the template.
     let cloned;
-    const templateKey = encodeURIComponent(view.strings.join(''));
+    const templateKey = key || encodeURIComponent(view.strings.join(''));
     let template = templateKey ?
         document.getElementById(templateKey) as HTMLTemplateElement
-        : document.createElement('template');
+        :
+        document.createElement('template');
 
     // Only run through this block of code if you have a template key.
     if(templateKey) {
-        if(template) {
-            cloned = document.importNode(template.content, true).firstChild as HTMLElement;
-        } else {
+        // If there's no template, then create one.
+        if(!template) {
             template = document.createElement('template');
             template.id = templateKey;
             template.innerHTML = buildHTML(view.strings);
             (template as any).memories = memorize(template);
-            
-            cloned = document.importNode(template.content, true).firstChild as HTMLElement;
-            document.body.appendChild(template);
         }
     }
     // Otherwise, just make a new template in the moment, but don't save it.
     else {
         template.innerHTML = buildHTML(view.strings);
         (template as any).memories = memorize(template);
-        cloned = document.importNode(template.content, true).firstChild as HTMLElement;
     }
+    cloned = document.importNode(template.content, true).firstChild as HTMLElement;
+    document.body.appendChild(template);
 
     // Set the key of the element and return it. Also set a special attribute
     // on the instance so that we always know that it is a OTT.
@@ -64,28 +62,16 @@ export function OTT(view: ViewFunction, key?: string) {
 }
 
 /** A global repaint function, which can be used for templates and components. */
-export function _repaint(element: HTMLElement|ShadowRoot, memories: Memory[], oldValues: any[], newValues: any[], isOTT: boolean = false) {
+export function _repaint(element: HTMLElement|ShadowRoot, memories: Memory[], 
+                        oldValues: any[], newValues: any[], isOTT: boolean = false) {
     for(let i = 0; i < memories.length; i++) {
         const mem: Memory = memories[i];
 
         // Get the reference to the true node that you are pointing at.
         // We have to splice the array for OTTs because they do not have
         // a holding container such as <custom-element>.
-        let pointer;
-        if(isOTT === true) {
-            const OTTsteps = mem.config.steps.slice();
-
-            // If it is note a component and is just a regular HTML tags,
-            // then you need to remove the first step so the renderer
-            // doesn't think the custom element is another step.
-            if(!(element instanceof MosaicComponent))
-                OTTsteps.splice(0, 1);
-            
-            pointer = step(element, OTTsteps, true);
-        } else {
-            const regularSteps = mem.config.steps.slice();
-            pointer = step(element, regularSteps);
-        }
+        let steps = mem.config.steps.slice();
+        let pointer = step(element, steps, isOTT) as ChildNode;
         
         // Get the old and new values.
         let oldv = oldValues[i];

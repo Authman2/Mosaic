@@ -86,17 +86,12 @@ export function runLifecycle(name: string, component: MosaicComponent, ...args) 
 /** Steps down through the child nodes until it reaches the last step. */
 export function step(parent: ChildNode|Element|ShadowRoot, steps: number[], isOTT: boolean = false) {    
     let child = parent;
-    for(let i = 0; i < steps.length; i++) {
+    let start = isOTT ? 1 : 0;
+    
+    for(let i = start; i < steps.length; i++) {
         let next: number = steps[i];
         if(child.childNodes.length >= next) {
-            let nextChild = child.childNodes[next];
-            
-            // Skip over text nodes.
-            if(nextChild.nodeType === 3) {
-                if(child.nextSibling) nextChild = child.nextSibling;
-                continue;
-            }
-            
+            let nextChild = child.childNodes[next];            
             if(nextChild) child = child.childNodes[next];
             else continue;
         }

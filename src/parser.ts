@@ -30,6 +30,7 @@ export function memorize(t: HTMLTemplateElement): Memory[] {
         // console.dir(node);
         switch(node.nodeType) {
             case 1: ret = ret.concat(parseAttributes(node, steps)); break;
+            case 3: ret = ret.concat(parseText((node as any), steps)); break;
             case 8: ret = ret.concat(parseNode(node as any, steps)); break;
             default: break;
         }
@@ -78,9 +79,12 @@ function parseAttributes(node: Element, steps: number[]): Memory[] {
     return ret;
 }
 function parseNode(node: Text, steps: number[]): Memory[] {
-    const check = nodeMarker.replace('<!--','').replace('-->','');
-    if(node.textContent !== check) return [];
+    // const check = nodeMarker.replace('<!--','').replace('-->','');
+    // if(node.textContent !== check) return [];
+    const regex = new RegExp(nodeMarker, 'gi');
+    if(regex.test(node.data)) return [];
 
+    // Check if the parent element is defined as a Mosaic component.
     let defined = customElements.get(node.nodeName.toLowerCase()) !== undefined;
     let defined2 = false;
     if(node.parentElement)
@@ -91,4 +95,39 @@ function parseNode(node: Text, steps: number[]): Memory[] {
         steps,
         isComponentType: defined || defined2
     })];
+}
+function parseText(node: Text, steps: number[]): Memory[] {
+    let ret: Memory[] = [];
+    let parent = node.parentNode;
+    let strings = node.data.split(nodeMarker);
+    let len = strings.length - 1;
+
+    // Check if the parent element is defined as a Mosaic component.
+    let defined = customElements.get(node.nodeName.toLowerCase()) !== undefined;
+    let defined2 = false;
+    if(node.parentElement)
+        defined2 = customElements.get(node.parentElement.nodeName.toLowerCase()) !== undefined;
+
+    for(let i = 0; i < len; i++) {
+        let insert: Node;
+        let str = strings[i];
+
+        if(str === '') insert = document.createComment('');
+        else {
+            const match = lastAttributeNameRegex.exec(str);
+            if(match !== null)
+                str = str.slice(0, match.index) + match[1] + match[2].slice(0, -len) + match[3];
+            insert = document.createTextNode(str);
+        }
+
+        if(parent) {
+            parent.insertBefore(insert, node);
+            ret.push(new Memory({
+                type: 'node',
+                steps,
+                isComponentType: defined || defined2,
+            }));
+        }
+    }
+    return ret;
 }

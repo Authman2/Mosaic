@@ -52,9 +52,9 @@ export default new Mosaic({
             <table>
                 <tbody>
                     ${Mosaic.list(this.data.letters, obj => obj.key, (obj, index) => {
-                        return html`<h3 style='cursor:pointer;' onclick='${() => console.log(obj)}'>
-                            ${obj.letter}
-                        </h3>`
+                        return html`<div style='cursor:pointer;' onclick='${() => console.log(obj)}'>
+                            <p>${index + 1}.) ${obj.letter}</p>
+                        </div>`
                     })}
                 </tbody>
             </table>

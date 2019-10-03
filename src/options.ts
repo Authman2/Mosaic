@@ -18,7 +18,7 @@ export class MosaicComponent extends HTMLElement {
     willUpdate?: Function;
     willDestroy?: Function;
     barrier: boolean = false;
-    useShadow: boolean = true;
+    useShadow: boolean = false;
     protected _shadow?: ShadowRoot;
     protected mixins: Object[] = [];
     protected oldValues: any[] = [];
