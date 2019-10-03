@@ -56,6 +56,22 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             // See if you need to attach the shadow dom based on the options.
             if(copyOptions.useShadow === true)
                 this._shadow = this.attachShadow({ mode: 'open' });
+
+            // Adoptable stylesheets.
+            if(copyOptions.stylesheets && this._shadow) {
+                let sheets: CSSStyleSheet[] = [];
+                for(let i = 0; i < copyOptions.stylesheets.length; i++) {
+                    const ss = copyOptions.stylesheets[i];
+                    if(ss instanceof CSSStyleSheet)
+                        sheets.push(ss);
+                    else if(typeof ss === 'string') {
+                        const sheet = new CSSStyleSheet();
+                        (sheet as any).replaceSync(ss);
+                        sheets.push(sheet);
+                    }
+                }
+                (this._shadow as any).adoptedStyleSheets = sheets;
+            }
         }
 
         connectedCallback() {

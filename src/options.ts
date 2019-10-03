@@ -24,6 +24,7 @@ export class MosaicComponent extends HTMLElement {
     protected oldValues: any[] = [];
     data: Observable = new Observable({});
     received?: (attributes: Object) => void;
+    stylesheets?: string[]|CSSStyleSheet[] = [];
     protected initiallyRendered: boolean = false;
     view?: (self?: MosaicComponent) => ViewFunction;
     descendants: DocumentFragment = document.createDocumentFragment();
@@ -62,6 +63,7 @@ export interface MosaicOptions {
     willDestroy?: Function;
     willUpdate?: (old: Object) => void;
     element?: string|Element|HTMLElement;
+    stylesheets?: string[]|CSSStyleSheet[];
     received?: (attributes: Object) => void;
     view?: (self?: MosaicComponent) => ViewFunction;
 }

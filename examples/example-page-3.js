@@ -12,7 +12,41 @@ Mosaic({
         <input type='${this.type || 'text'}'/>
         `
     }
-})
+});
+
+const sheet = new CSSStyleSheet();
+const color = 'lightcoral;'
+const ss = `
+h1 {
+    color: ${color};
+    font-style: italic;
+}
+button {
+    border: none;
+    outline: none;
+    padding: 20px;
+    cursor: pointer;
+    transition-duration: 0.15s;
+    background-color: mediumseagreen;
+}
+button:hover {
+    background-color: seagreen;
+}
+`
+sheet.replaceSync(ss);
+Mosaic({
+    name: 'test-stylesheet',
+    useShadow: true,
+    stylesheets: [sheet],
+    view: function() {
+        return html`
+            <h1>Here is an example using a constructable stylesheet!</h1>
+            <button onclick='${() => alert("Hello from the shadow dom with external styles!")}'>
+                Click Me!
+            </button>
+        `
+    }
+});
 
 export default new Mosaic({
     name: 'example-page-3',
@@ -51,6 +85,8 @@ export default new Mosaic({
                 </p>
             </temp-comp>`
         }
+
+        <test-stylesheet></test-stylesheet>
         `
     }
 })
