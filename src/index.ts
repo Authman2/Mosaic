@@ -226,6 +226,17 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             this.repaint();
             runLifecycle('updated', this);
         }
+
+        setAttribute(qualifiedName: string, value: any) {
+            super.setAttribute(qualifiedName, value);
+            
+            // Overload the setAttribute function so that people
+            // using Mosaic components a DOM nodes can still have
+            // the "received" lifecycle function called.
+            let obj = {};
+            obj[qualifiedName] = value;
+            runLifecycle('received', this, obj);
+        }
     });
 
     const component = document.createElement(copyOptions.name);

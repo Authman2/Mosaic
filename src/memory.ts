@@ -12,8 +12,9 @@ export default class Memory {
     batch(component: MosaicComponent, batchName: string, batchValue: any) {
         // Add the (name, value) pair as a batch operation to be carried out
         // at the end of the parent component's repaint cycle.
-        if(component.data.hasOwnProperty(batchName)) component._batchData(batchName, batchValue);
-        else component._batchAttribute(batchName, batchValue);
+        const isData = component.data.hasOwnProperty(batchName);
+        const batchFunc = isData ? '_batchData' : '_batchAttribute';
+        component[batchFunc](batchName, batchValue);
         
         // Check if the number of batches matches up to the number of
         // attributes present on the HTML element tag. Checking this number
@@ -64,9 +65,9 @@ export default class Memory {
             case 'attribute':
                 if(!this.config.attribute) break;
                 const { name } = this.config.attribute;
-                if(this.config.isEvent === true)
-                    this.commitEvent(element, pointer, name, oldValue, newValue);
-                else this.commitAttribute(element, pointer, name, oldValue, newValue);
+                const func = this.config.isEvent ? 
+                    this.commitEvent.bind(this) : this.commitAttribute.bind(this);
+                func(element, pointer, name, oldValue, newValue);
                 break;
         }
     }
@@ -115,7 +116,7 @@ export default class Memory {
         }
     }
 
-    /** Applies attribtue and event listener changes. */
+    /** Applies attributee changes. */
     commitAttribute(element: HTMLElement|ChildNode|ShadowRoot, pointer: HTMLElement|ChildNode, 
             name: string, oldValue: any, newValue: any) {
 
