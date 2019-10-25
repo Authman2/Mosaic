@@ -1,7 +1,7 @@
-import Mosaic from '../src/index';
+import Mosaic, { html } from '../src/index';
 
 // Styles can be grouped into separate components.
-new Mosaic({
+Mosaic({
     name: 'shadow-styles',
     view: _ => html`<style>
         :host > div {
@@ -34,7 +34,7 @@ new Mosaic({
 })
 
 // Export the shadow dom example.
-export default new Mosaic({
+export default Mosaic({
     name: 'shadow-example',
     data: {
         count: 0

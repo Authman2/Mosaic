@@ -3,7 +3,7 @@ import Mosaic from '../src/index';
 import portfolio from './portfolio';
 
 
-export default new Mosaic({
+export default Mosaic({
     name: 'portfolio-label',
     portfolio,
     view() {

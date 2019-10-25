@@ -3,7 +3,7 @@ import Logo from '../MosaicLogo.png';
 
 import portfolio from './portfolio';
 
-export default new Mosaic({
+export default Mosaic({
     element: 'root',
     name: 'home-page',
     data: {

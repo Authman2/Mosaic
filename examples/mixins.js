@@ -16,7 +16,7 @@ const MyMixin = {
     }
 }
 
-export const m1 = new Mosaic({
+export const m1 = Mosaic({
     mixins: [MyMixin],
     name: 'mixin-one',
     data: {
@@ -35,7 +35,7 @@ export const m1 = new Mosaic({
         </div>`
     }
 });
-export const m2 = new Mosaic({
+export const m2 = Mosaic({
     mixins: [MyMixin],
     name: 'mixin-two',
     view() {

@@ -1,6 +1,6 @@
 import Mosaic from '../src/index';
 
-new Mosaic({
+Mosaic({
     name: 'router-card-bottom',
     useRouter() {
         this.router.send('/example-page-2');
@@ -12,7 +12,7 @@ new Mosaic({
     </span>`
 });
 
-export default new Mosaic({
+export default Mosaic({
     name: 'router-card',
     view() {
         return html`<div>

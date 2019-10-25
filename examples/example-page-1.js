@@ -5,7 +5,7 @@ import './mixins';
 import './shadow-example';
 
 
-export default new Mosaic({
+export default Mosaic({
     name: 'example-page-1',
     created() {
         window.scrollTo({ top: 0 });

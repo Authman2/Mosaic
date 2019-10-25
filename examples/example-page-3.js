@@ -48,7 +48,7 @@ Mosaic({
     }
 });
 
-export default new Mosaic({
+export default Mosaic({
     name: 'example-page-3',
     data: {
         count: 0

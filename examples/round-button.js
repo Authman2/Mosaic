@@ -1,6 +1,6 @@
 import Mosaic from '../src/index';
 
-export default new Mosaic({
+export default Mosaic({
     name: 'round-button',
     data: {
         click: () => {}

@@ -47,10 +47,10 @@ For a more detailed example, run the project inside the "example" folder.
 **index.js**:
 ```js
 // Import Mosaic
-import Mosaic from 'mosaic-framework';
+import Mosaic, { html } from 'mosaic-framework';
 
 // Create components
-new Mosaic({
+Mosaic({
     name: 'my-label',
     data: {
         text: ''
@@ -63,7 +63,7 @@ new Mosaic({
         `;
     }
 });
-const app = new Mosaic({
+const app = Mosaic({
     name: 'my-app',
     element: 'root',
     data: {
@@ -94,6 +94,9 @@ app.paint();
 The easiest way to use Mosaic is to first install the npm package by using:
 ```shell
 npm install --save mosaic-framework
+```
+```shell
+yarn add mosaic-framework --save
 ```
 or with a script tag.
 ```html

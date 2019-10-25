@@ -6,7 +6,7 @@
   "scripts": {
     "test": "parcel -p 3000 examples/index.html --out-dir dist-examples",
     "clean": "rm -rf .cache dist dist-examples ts-build",
-    "move-declarations": "cp ts-build/index.d.ts dist/index.d.ts && cp ts-build/options.d.ts dist/options.d.ts && cp ts-build/router.d.ts dist/router.d.ts && cp ts-build/portfolio.d.ts dist/portfolio.d.ts",
+    "move-declarations": "cp ts-build/index.d.ts dist/index.d.ts && cp ts-build/observable.d.ts dist/observable.d.ts && cp ts-build/options.d.ts dist/options.d.ts && cp ts-build/router.d.ts dist/router.d.ts && cp ts-build/portfolio.d.ts dist/portfolio.d.ts",
     "build": "tsc && parcel build ts-build/index.js --no-source-maps --out-dir dist --global Mosaic && npm run move-declarations && rm -f dist/index.js.map",
     "deploy": "npm publish --access=public",
     "bnd": "npm run build && npm run deploy && git checkout dev"

@@ -1,6 +1,9 @@
 import Portfolio from "./portfolio";
 import Observable from './observable';
 
+/** A type that can be used to clear Typescript errors with objects. */
+type Any = any;
+
 /** A batched update during the rendering cycle. */
 export type BatchUpdate = [
     string,
@@ -51,7 +54,7 @@ export class MosaicComponent extends HTMLElement {
 }
 
 /** The configuration options for a Mosaic component. */
-export interface MosaicOptions {
+export interface MosaicOptions extends Any {
     name: string;
     data?: Object;
     mixins?: Object[];

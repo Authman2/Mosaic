@@ -58,6 +58,8 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                 this._shadow = this.attachShadow({ mode: 'open' });
 
             // Adoptable stylesheets.
+            // TODO: The array of stylesheets should be dynamic, so when you
+            // add/remove from the array it should trigegr a repaint.
             if(copyOptions.stylesheets && this._shadow) {
                 let sheets: CSSStyleSheet[] = [];
                 for(let i = 0; i < copyOptions.stylesheets.length; i++) {
@@ -215,7 +217,7 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             this.oldValues = newValues;
         }
 
-        set(data: Object) {
+        set(data: {}) {
             this.barrier = true;
             const keys = Object.keys(data);
             for(let i = 0; i < keys.length; i++) {
@@ -258,10 +260,9 @@ Mosaic.list = function(items: any[], key: Function, map: Function): KeyedArray {
 
 declare global {
     interface Window {
-        html: any;
         Mosaic: typeof Mosaic;
     }
 }
-window.html = (strings, ...values): ViewFunction => ({ strings, values, __isTemplate: true });
+const html = (strings, ...values): ViewFunction => ({ strings, values, __isTemplate: true });
 window.Mosaic = Mosaic;
-export { Router, Portfolio };
+export { html, Router, Portfolio };

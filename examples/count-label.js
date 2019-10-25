@@ -1,6 +1,6 @@
 import Mosaic from '../src/index';
 
-export default new Mosaic({
+export default Mosaic({
     name: 'count-label',
     data: { count: 0 },
     created() {
