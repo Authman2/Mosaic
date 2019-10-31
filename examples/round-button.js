@@ -1,4 +1,4 @@
-import Mosaic from '../src/index';
+import Mosaic, { html } from '../src/index';
 
 export default Mosaic({
     name: 'round-button',

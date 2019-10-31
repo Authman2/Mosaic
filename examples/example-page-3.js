@@ -1,4 +1,4 @@
-import Mosaic from '../src/index';
+import Mosaic, { html } from '../src/index';
 
 Mosaic({
     name: 'temp-comp',

@@ -1,4 +1,4 @@
-import Mosaic from '../src/index';
+import Mosaic, { html } from '../src/index';
 
 import './router-card';
 import './mixins';

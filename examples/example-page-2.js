@@ -1,4 +1,4 @@
-import Mosaic from '../src/index';
+import Mosaic, { html } from '../src/index';
 
 let code = 97;
 let randomKey = () => Math.random().toString(36).slice(2);
