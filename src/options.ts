@@ -18,15 +18,15 @@ export class MosaicComponent extends HTMLElement {
     updated?: Function;
     router?: HTMLElement;
     portfolio?: Portfolio;
-    willUpdate?: Function;
     willDestroy?: Function;
     barrier: boolean = false;
     useShadow: boolean = false;
     protected _shadow?: ShadowRoot;
     protected mixins: Object[] = [];
     protected oldValues: any[] = [];
+    willUpdate?: (old?: Any) => void;
+    received?: (attributes: Any) => void;
     data: Observable = new Observable({});
-    received?: (attributes: Object) => void;
     stylesheets?: string[]|CSSStyleSheet[] = [];
     protected initiallyRendered: boolean = false;
     view?: (self?: MosaicComponent) => ViewFunction;
@@ -64,10 +64,10 @@ export interface MosaicOptions extends Any {
     router?: HTMLElement;
     portfolio?: Portfolio;
     willDestroy?: Function;
-    willUpdate?: (old: Object) => void;
+    willUpdate?: (old: Any) => void;
+    received?: (attributes: Any) => void;
     element?: string|Element|HTMLElement;
     stylesheets?: string[]|CSSStyleSheet[];
-    received?: (attributes: Object) => void;
     view?: (self?: MosaicComponent) => ViewFunction;
 }
 
@@ -90,7 +90,7 @@ export interface KeyedArray {
 }
 
 /** The format of the Portfolio action. */
-export type PortfolioAction = (event: string, data: Object, additionalData: Object) => any;
+export type PortfolioAction = (event: string, data: Any, additionalData: Any) => any;
 
 /** A tagged template literal view function. */
 export type ViewFunction = {
