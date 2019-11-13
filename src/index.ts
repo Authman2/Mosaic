@@ -115,11 +115,7 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                     if(this.data.hasOwnProperty(name)) receivedData[name] = value;
                     else receivedAttributes[name] = value;
                 }
-                
-                // Send the attributes through lifecycle functions.
-                if(Object.keys(receivedAttributes).length > 0)
-                    runLifecycle('received', this, receivedAttributes);
-                
+
                 // 7.) Save the new data and repaint.
                 if(Object.keys(receivedData).length > 0) {
                     this.barrier = true;
@@ -149,8 +145,14 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                         }
                     }
                     this.barrier = false;
-                    this.repaint();
                 }
+                
+                // Send the attributes through lifecycle functions.
+                if(Object.keys(receivedAttributes).length > 0)
+                    runLifecycle('received', this, receivedAttributes);
+
+                // Repaint.
+                this.repaint();
             }
 
             // 8.) If you come here as a OTT from an array, then be sure to

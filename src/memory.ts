@@ -32,10 +32,6 @@ export default class Memory {
             const justData = objectFromArray(bts.data);
             const justAttrs = objectFromArray(bts.attributes);
                 
-            // Make the component receive the HTML attributes.
-            if(bts.attributes.length > 0)
-                runLifecycle('received', component, justAttrs);
-
             // Set the data on the component then repaint it.
             if(bts.data.length > 0) {
                 component.barrier = true;
@@ -46,8 +42,15 @@ export default class Memory {
                     component.data[key] = val;
                 }
                 component.barrier = false;
-                component.repaint();
             }
+
+            // Make the component receive the HTML attributes.
+            if(bts.attributes.length > 0)
+                runLifecycle('received', component, justAttrs);
+
+            // Repaint.
+            if(bts.data.length > 0)
+                component.repaint();
 
             // When you are done performing the batcehd updates, clear
             // the batch so you can do it again for the next update.
@@ -182,9 +185,9 @@ export default class Memory {
         const shortName = name.substring(2);
 
         // If there's no new value, then try to remove the event listener.
-        if(!newValue && events[name]) {
+        if(!newValue && events[name])
             (pointer as Element).removeEventListener(shortName, events[name]);
-        }
+        
         // While there is a new value, add it to an "eventHandlers" property
         // so that you can always keep track of the element's functions.
         else if(newValue) {
