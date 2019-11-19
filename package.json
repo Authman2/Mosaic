@@ -31,5 +31,7 @@
   },
   "dependencies": {},
   "types": "dist/index.d.ts",
-  "publishConfig": { "registry": "https://npm.pkg.github.com/" }
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  }
 }
