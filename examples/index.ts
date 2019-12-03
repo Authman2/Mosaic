@@ -31,3 +31,4 @@ let data = new Observable(obj, () => {}, () => {
 (data as any).arr.push(5);
 (data as any).arr.push(35);
 (data as any).arr.splice(1, 0, 2);
+(data as any).arr.pop();

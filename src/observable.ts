@@ -1,4 +1,12 @@
-const arrayFuncs = ['push', 'splice', 'unshift'] as any;
+const arrayFuncs = [
+    'pop',
+    'push',
+    'reverse',
+    'shift',
+    'sort',
+    'splice',
+    'unshift'
+] as any;
 
 /** An object that can perform a given function when its data changes. */
 export default class Observable {
