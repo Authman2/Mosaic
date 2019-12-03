@@ -12,7 +12,7 @@
     "bnd": "npm run build && npm run deploy && git checkout dev"
   },
   "keywords": [
-    "frontend",
+    "frontend", 
     "javascipt",
     "ui"
   ],

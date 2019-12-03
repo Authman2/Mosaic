@@ -1,3 +1,78 @@
+/** An type that can be used to represent literally anything.
+* Mostly just to avoid complier errors/warnings. */
+export type Any = any;
+
+
+/** The basic configuration options for a Mosaic component. Actual Mosaics
+* will have access to these properties through a configuration object. */
+export interface MosaicOptions extends Any {
+    name: string;
+    data?: Object;
+    mixins?: Any[];
+    useShadow?: boolean;
+    // router?: HTMLElement;
+    // portfolio?: Portfolio;
+    element?: string|Element|HTMLElement;
+    stylesheets?: string[]|CSSStyleSheet[];
+    view?: (self?: MosaicComponent) => ViewFunction;
+    
+    created?: Function;
+    updated?: Function;
+    willDestroy?: Function;
+    willUpdate?: (old: Any) => void;
+    received?: (attributes: Any) => void;
+}
+
+/** The actual Mosaic class. You typically won't extend this class, as it
+* is mostly used internally. */
+export class MosaicComponent extends HTMLElement {
+    iid: string = '';
+    tid: string = '';
+    barrier: boolean = false;
+    useShadow: boolean = false;
+
+    // router?: HTMLElement;
+    // portfolio?: Portfolio;
+
+    protected _shadow?: ShadowRoot;
+    protected mixins: Object[];
+    descendants: DocumentFragment;
+    
+    created?: Function|Function[];
+    updated?: Function|Function[];
+    willDestroy?: Function|Function[];
+    willUpdate?: (old?: Any) => void|((old?: Any) => void)[];
+    received?: (attributes: Any) => void|((attributes: Any) => void)[];
+    view?: (self?: MosaicComponent) => ViewFunction;
+    
+    data: Observable;
+    stylesheets?: string[]|CSSStyleSheet[];
+    
+    protected oldValues: any[];
+    protected initiallyRendered: boolean;
+    
+    protected batchedAttrs: BatchUpdate[];
+    protected batchedData: BatchUpdate[];
+
+
+    /** Initialize this component. */
+    constructor() {
+        super();
+        this.oldValues = [];
+        this.initiallyRendered = false;
+        this.batchedAttrs = [];
+        this.batchedData = [];
+        this.stylesheets = [];
+        this.mixins = [];
+        this.data = new Observable({});
+        this.descendants = document.createDocumentFragment();
+    }
+
+}
+
+
+
+
 
 
 
