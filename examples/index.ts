@@ -1,5 +1,4 @@
-// import Mosaic, { Router } from '../src/index';
-import Observable from '../src/observable';
+import Mosaic, { html } from '../src/index';
 
 // import Home from './home-page';
 // import ExamplePage1 from './example-page-1';
@@ -19,16 +18,23 @@ import Observable from '../src/observable';
 // router.addRoute('/example-page-3', ExamplePage3);
 // router.paint();
 
-
-let obj = {
-    arr: []
-}
-let data = new Observable(obj, () => {}, () => {
-    console.log(`Updated Data: ${(data as any).arr}`);
+Mosaic({
+    name: 'my-label',
+    view: function() {
+        return html`
+        <h4>Welcome to your label component!</h4>
+        ${this.descendants}
+        <p>Here is some more content after yours ^</p>
+        `
+    }
 });
 
-(data as any).arr.push(10);
-(data as any).arr.push(5);
-(data as any).arr.push(35);
-(data as any).arr.splice(1, 0, 2);
-(data as any).arr.pop();
+const app = Mosaic({
+    name: 'my-app',
+    view: function() {
+        return html`<my-label>
+            <h5>Well isn't this neat Jimbo?</h5>
+        </my-label>`
+    }
+});
+app.paint('root');

@@ -1,7 +1,14 @@
-// import { nodeMarker, insertAfter, isBooleanAttribute, objectFromArray, runLifecycle } from './util';
-// import { MemoryOptions, MosaicComponent } from './options';
-// import { OTT, _repaint } from './templating';
-// import MAD from './mad';
+/** A Memory is a place in the template where either a single or multiple
+* changes will likely occur throughout the lifecycle of a component. If
+* you find that a value is different than its last memory then commit a
+* new change to the DOM. */
+export default class Memory {
+    
+    
+
+
+
+}
 
 // /** Represents a piece of dynamic content in the markup. */
 // export default class Memory {

@@ -1,15 +1,33 @@
-// import { MosaicComponent, ViewFunction } from "./options";
-// import { buildHTML, memorize } from './parser';
-// import { changed, step } from "./util";
-// import Memory from './memory';
+import { ViewFunction, MosaicComponent } from "./options";
+import { buildHTML } from "./parser";
 
-// /** Finds or creates the template associated with a component. */
-// export function getTemplate(component: MosaicComponent): HTMLTemplateElement {
-//     const found = document.getElementById(component.tid) as HTMLTemplateElement;
-//     if(found) return found;
-//     else {
-//         if(!component.view) return document.createElement('template');
-        
+/** If a template exists for a given component, return that template. Otherwise
+* create the template right away and return it. */
+export function getTemplate(component: MosaicComponent): HTMLTemplateElement {
+    const found = document.getElementById(component.tid) as HTMLTemplateElement;
+    if(found)
+        return found;
+    else {
+        // If the component doesn't have a view function, just return
+        // an empty template.
+        if(!component.view)
+            return document.createElement('template');
+
+        // Otherwise, use the component's view function to build and memorize
+        // the template and return it as an element.
+        const view = component.view(component);
+        const temp = document.createElement('template');
+        temp.id = component.tid;
+        temp.innerHTML = buildHTML(view.strings);
+        temp['memories'] = 
+    }
+}
+
+/** Constructs a One Time Template based on either a view function, or a string. */
+export function OTT(view: ViewFunction|string, key?: string): Element {
+
+}
+
 //         const { strings } = component.view(component);
 //         const template = document.createElement('template');
 //         template.id = component.tid;

@@ -1,25 +1,33 @@
-// import { lastAttributeNameRegex, nodeMarker, traverse } from "./util";
-// import Memory from "./memory";
+import { lastAttributeNameRegex, nodeMarker } from "./util";
 
-// /** Takes the strings of a tagged template literal and 
-// * turns it into a full html string. */
-// export function buildHTML(strings) {
-//     let html = '';
-//     const length = strings.length - 1;
+/** Returns an HTML string with placeholders put in as markers. */
+export function buildHTML(strings: string[]): string {
+    let html = '';
+    strings.forEach(str => {
+        const match = lastAttributeNameRegex.exec(str);
 
-//     for(let i = 0; i < length; i++) {
-//         const str = strings[i];
-//         const attributeMatch = lastAttributeNameRegex.exec(str);
-        
-//         // Node.
-//         if(attributeMatch === null) html += str + nodeMarker;
-//         // Attribute.
-//         else html += str.substring(0, attributeMatch.index) + attributeMatch[1] +
-//             attributeMatch[2] + attributeMatch[3] + nodeMarker;
-//     }
-//     html += strings[length];
-//     return html;
-// }
+        if(!match)
+            html += (str + nodeMarker);
+        else
+            html += (
+                str.substring(0, match.index) +
+                match[1] +
+                match[2] +
+                match[3] +
+                nodeMarker
+            );
+    });
+    // html += strings[strings.length - 1];
+    return html;
+}
+
+/** Runs through an HTML Template and returns a list of memories,
+* which represents parts of the template where you will later have
+* to go back and make updates. */
+export function memorize(temp: HTMLTemplateElement) {
+    
+}
+
 
 // /** Memorizes parts of a DOM tree that contain dynamic content
 // * and returns a list of memories of where those parts are. */

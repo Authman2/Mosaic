@@ -7,6 +7,29 @@ const arrayFuncs = [
     'splice',
     'unshift'
 ] as any;
+export const ObservableArray = function(target, willUpdate?: Function, didUpdate?: Function) {
+    const mosConfig = target['mosaicConfig'] || {};
+    if(!mosConfig.hasOwnProperty('setup_observable_array')) {
+        arrayFuncs.forEach(prop => {
+            Object.defineProperty(target, prop, {
+                enumerable: true,
+                configurable: true,
+                writable: false,
+                value: function() {
+                    // Array functions will now trigger observable patterns.
+                    if(willUpdate) willUpdate(Object.assign({}, target))
+                    const ret = Array.prototype[prop].apply(this, arguments);
+                    if(didUpdate) didUpdate(target);
+                    return ret;
+                }
+            });
+        });
+        target['mosaicConfig'] = {
+            ...mosConfig,
+            'setup_observable_array': true
+        };
+    }
+}
 
 /** An object that can perform a given function when its data changes. */
 export default class Observable {
@@ -15,23 +38,8 @@ export default class Observable {
             get(target, name, receiver) {
                 // If you come across an array, set it up to have
                 // observable array properties.
-                if(Array.isArray(target[name]) && !target[name].hasOwnProperty('setup-observable-array')) {
-                    arrayFuncs.forEach(prop => {
-                        Object.defineProperty(target[name], prop, {
-                            enumerable: true,
-                            configurable: true,
-                            writable: false,
-                            value: function() {
-                                // Array functions will now trigger observable patterns.
-                                if(willUpdate) willUpdate(Object.assign({}, target))
-                                const ret = Array.prototype[prop].apply(this, arguments);
-                                if(didUpdate) didUpdate(target);
-                                return ret;
-                            }
-                        });
-                    });
-                    target[name]['setup-observable-array'] = true;
-                }
+                if(Array.isArray(target[name]))
+                    ObservableArray(target[name], willUpdate, didUpdate);
                 return Reflect.get(target, name, receiver);
             },
             set(target, name, value, receiver) {

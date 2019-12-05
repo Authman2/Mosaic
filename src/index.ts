@@ -1,88 +1,133 @@
+import { MosaicOptions, MosaicComponent, ViewFunction } from "./options";
+import { randomKey, runLifecycle, applyMixin } from "./util";
+import Observable, { ObservableArray } from "./observable";
+import { OTT, getTemplate } from "./templating";
+
+export default function Mosaic(options: MosaicOptions): MosaicComponent {
+    // There are a few options that you need to take before you
+    // create the custom element. These are options that will
+    // persist regardless of the component instance.
+    const _options = Object.assign({}, options);
+    const tid: string = randomKey();
+
+    // Do some error checking to make sure options are clean.
+    if(typeof _options.name !== 'string')
+        throw new Error('Name property must be set to a hyphenated string.');
+    if(_options.descendants)
+        throw new Error('You cannot use "descendants" as a component property.');
+    if(customElements.get(_options.name))
+        throw new Error(`A component with the name "${_options.name}" has already been defined.`);
+
+    // Define the custom element using the CustomElements API.
+    class MosaicClass extends MosaicComponent {
+
+        // Initialize the component.
+        constructor() {
+            super();
+
+            // Initial property setup that wasn't already done in 
+            // "MosaicComponent".
+            this.tid = tid;
+            this.iid = randomKey();
+            this.data = new Observable(Object.assign({}, _options.data), old => {
+                if(this.mosaicConfig.barrier) return;
+                runLifecycle('willUpdate', this, old);
+            }, () => {
+                if(this.mosaicConfig.barrier) return;
+                this.repaint();
+                runLifecycle('updated', this);
+            });
+
+            // Grab all of the user-defined properties and set them
+            // directly on this component.
+            const keys = Object.keys(_options);
+            keys.forEach(key => {
+                if(key === 'element') return;
+                else if(key === 'data') return;
+                else if(key === 'mixins') return;
+                else this[key] = _options[key];
+            });
+
+            // At this stage, you can apply any mixins that exist on
+            // the component. This basically just involves combining
+            // the data property an turning lifecycle functions into
+            // arrays of functions.
+            if(_options.mixins) {
+                this.mosaicConfig.barrier = true;
+                _options.mixins.forEach(mix => applyMixin(this, mix));
+                this.mosaicConfig.barrier = false;
+            }
+
+            // Check if you are using the shadow dom for this component.
+            if(_options.useShadow === true)
+                this._shadow = this.attachShadow({ mode: 'open' });
+
+            // Handle adoptable stylesheets. You basically want to make it
+            // an observable array so that anytime the user adds a stylesheet
+            // onto it later on, it will trigger a repaint so that the new
+            // styles will show.
+            if(_options.stylesheets && this._shadow) {
+                let sheets: CSSStyleSheet[] = [];
+                _options.stylesheets.forEach(sheet => {
+                    if(sheet instanceof CSSStyleSheet)
+                        sheets.push(sheet);
+                    else if(typeof sheet === 'string') {
+                        const ss = new CSSStyleSheet();
+                        (ss as any).replaceSync(sheet);
+                        sheets.push(ss);
+                    }
+                });
+                this.stylesheets = sheets;
+                (this._shadow as any).adoptedStyleSheets = sheets;
+
+                // TODO: Make sure the dynamic stylesheets work.
+                ObservableArray(this.stylesheets, undefined, () => {
+                    (this._shadow as any).adoptedStyleSheets = this.stylesheets;
+                    console.log('Updated stylesheets dynamically!');
+                });
+            }
+        }
+
+        connectedCallback() {
+            // 1.) Get rid of any existing children on this component
+            // at connection time. Save them into a property called
+            // "descendants" which the developer can use later. This
+            // descendants property must be a OTT so that the renderer
+            // can parse it whenever it comes across it in the tree.
+            if(!this.mosaicConfig.initiallyRendered) {
+                const ottDescendants = OTT(this.innerHTML);
+                this.descendants = ottDescendants;
+                this.innerHTML = '';
+            }
+
+            // 2.) Configure the router and portfolio on this component.
+            // TODO: Come back to this when you remake those components.
+
+            // 3.) Now to handle this component's view. If a template does
+            // not yet exist, create it. Otherwise, just clone it. Then
+            // repaint it with this component instances' values.
+            const template = getTemplate(this);
+        }
 
 
+        public paint(arg?: string|HTMLElement|Object) {
 
+        }
 
+        public repaint() {
 
+        }
 
+        public set(data: Object) {
 
+        }
 
-// import { MosaicComponent, MosaicOptions, ViewFunction, KeyedArray, InjectionPoint } from './options';
-// import Observable from './observable';
-// import Router from './router';
-// import Portfolio from './portfolio';
-// import { randomKey, nodeMarker, goUpToConfigureRouter, applyMixin, runLifecycle } from './util';
-// import { getTemplate, _repaint } from './templating';
-
-// export default function Mosaic(options: MosaicOptions): MosaicComponent {
-//     // Configure some basic properties.
-//     const copyOptions = Object.assign({}, options);
-//     const tid: string = randomKey();
+    } // End of class.
     
-//     // Error checking.
-//     if(typeof copyOptions.name !== 'string')
-//         throw new Error('Name must be specified and must be a string.');
-//     if((copyOptions as any).descendants)
-//         throw new Error('You cannot directly set the "descendants" property on a component.');
-
-//     // Define the custom element.
-//     customElements.define(copyOptions.name, class extends MosaicComponent {
-//         constructor() {
-//             super();
-            
-//             // Setup initial Mosaic properties.
-//             this.initiallyRendered = false;
-//             this.tid = tid;
-//             this.iid = randomKey();
-//             this.data = new Observable(Object.assign({}, copyOptions.data || {}), old => {
-//                 if(this.barrier === true) return;
-//                 runLifecycle('willUpdate', this, old);
-//             }, () => {
-//                 if(this.barrier === true) return;
-//                 this.repaint();
-//                 runLifecycle('updated', this);
-//             });
-
-//             // Configure all of the properties if they exist.
-//             let _options = Object.keys(copyOptions);
-//             for(let i = 0; i < _options.length; i++) {
-//                 let key = _options[i];
-//                 if(key === 'element') continue;
-//                 else if(key === 'data') continue;
-//                 else this[key] = options[key];
-//             }
-
-//             // Apply any mixins that are present in the options.
-//             if(copyOptions.mixins) {
-//                 for(let i = 0; i < copyOptions.mixins.length; i++) {
-//                     this.barrier = true;
-//                     const mixin = copyOptions.mixins[i];
-//                     applyMixin(this, mixin);
-//                     this.barrier = false;
-//                 }
-//             }
-
-//             // See if you need to attach the shadow dom based on the options.
-//             if(copyOptions.useShadow === true)
-//                 this._shadow = this.attachShadow({ mode: 'open' });
-
-//             // Adoptable stylesheets.
-//             // TODO: The array of stylesheets should be dynamic, so when you
-//             // add/remove from the array it should trigegr a repaint.
-//             if(copyOptions.stylesheets && this._shadow) {
-//                 let sheets: CSSStyleSheet[] = [];
-//                 for(let i = 0; i < copyOptions.stylesheets.length; i++) {
-//                     const ss = copyOptions.stylesheets[i];
-//                     if(ss instanceof CSSStyleSheet)
-//                         sheets.push(ss);
-//                     else if(typeof ss === 'string') {
-//                         const sheet = new CSSStyleSheet();
-//                         (sheet as any).replaceSync(ss);
-//                         sheets.push(sheet);
-//                     }
-//                 }
-//                 (this._shadow as any).adoptedStyleSheets = sheets;
-//             }
-//         }
+    customElements.define(_options.name, MosaicClass);
+    const component = document.createElement(_options.name);
+    return component as MosaicComponent;
+}
 
 //         connectedCallback() {
 //             // 1.) Remove any child nodes and save them as to the descendants
@@ -273,6 +318,10 @@
 //         Mosaic: typeof Mosaic;
 //     }
 // }
-// const html = (strings, ...values): ViewFunction => ({ strings, values, __isTemplate: true });
+const html = (strings, ...values): ViewFunction => ({
+    strings,
+    values,
+    __isTemplate: true
+});
 // window.Mosaic = Mosaic;
-// export { html, Router, Portfolio };
+export { html };

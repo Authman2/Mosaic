@@ -1,6 +1,30 @@
+import Observable from "./observable";
+
 /** An type that can be used to represent literally anything.
 * Mostly just to avoid complier errors/warnings. */
 export type Any = any;
+
+
+/** The object that the view function turns into when creating the template. */
+export type ViewFunction = {
+    strings: string[],
+    values: any[],
+    __isTemplate: true
+};
+
+
+/** A single update object that gets batched together with other update objects
+* when figuring out whether or not attributes changed. */
+export type Update = [string, any];
+
+
+/** A Mosaic config object which is used internally for quick checks. */
+export type MosaicConfig = {
+    setup_observable_array: boolean,
+    is_ott: boolean,
+    barrier: boolean,
+    initiallyRendered: boolean
+}
 
 
 /** The basic configuration options for a Mosaic component. Actual Mosaics
@@ -28,7 +52,6 @@ export interface MosaicOptions extends Any {
 export class MosaicComponent extends HTMLElement {
     iid: string = '';
     tid: string = '';
-    barrier: boolean = false;
     useShadow: boolean = false;
 
     // router?: HTMLElement;
@@ -36,7 +59,7 @@ export class MosaicComponent extends HTMLElement {
 
     protected _shadow?: ShadowRoot;
     protected mixins: Object[];
-    descendants: DocumentFragment;
+    descendants: Element;
     
     created?: Function|Function[];
     updated?: Function|Function[];
@@ -49,25 +72,47 @@ export class MosaicComponent extends HTMLElement {
     stylesheets?: string[]|CSSStyleSheet[];
     
     protected oldValues: any[];
-    protected initiallyRendered: boolean;
+    protected mosaicConfig: MosaicConfig;
     
-    protected batchedAttrs: BatchUpdate[];
-    protected batchedData: BatchUpdate[];
+    protected batchedAttrs: Update[];
+    protected batchedData: Update[];
 
 
     /** Initialize this component. */
     constructor() {
         super();
         this.oldValues = [];
-        this.initiallyRendered = false;
         this.batchedAttrs = [];
         this.batchedData = [];
         this.stylesheets = [];
         this.mixins = [];
         this.data = new Observable({});
-        this.descendants = document.createDocumentFragment();
+        this.descendants = document.createElement('div');
+        this.mosaicConfig = {
+            is_ott: false,
+            setup_observable_array: false,
+            barrier: false,
+            initiallyRendered: false
+        };
     }
 
+
+    // Internal methods:
+    public paint(arg?: string|HTMLElement|Object) {};
+    public repaint() {};
+    public set(data: Object) {};
+
+    // Internal methods that should not be used by the developer.
+    public _batchData(name: string, value: any) {
+        this.batchedData.push([name, value]);
+    }
+    public _batchAttribute(name: string, value: any) {
+        this.batchedAttrs.push([name, value]);
+    }
+    public _clearBatches() {
+        this.batchedData = [];
+        this.batchedAttrs = [];
+    }
 }
 
 
