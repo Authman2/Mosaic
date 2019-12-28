@@ -1,4 +1,5 @@
-import { lastAttributeNameRegex, nodeMarker } from "./util";
+import { lastAttributeNameRegex, nodeMarker, traverse, isMosaicDefined } from "./util";
+import Memory from "./memory";
 
 /** Returns an HTML string with placeholders put in as markers. */
 export function buildHTML(strings: string[]): string {
@@ -24,84 +25,77 @@ export function buildHTML(strings: string[]): string {
 /** Runs through an HTML Template and returns a list of memories,
 * which represents parts of the template where you will later have
 * to go back and make updates. */
-export function memorize(temp: HTMLTemplateElement) {
+export function memorize(temp: HTMLTemplateElement): Memory[] {
+    let mems: Memory[] = [];
+
+    const clonedTemplate = document.importNode(temp, true);
+    traverse(clonedTemplate, (node: Element, steps: number[]) => {
+        switch(node.nodeType) {
+            case 1:
+                mems = mems.concat(parseAttributes(node, steps));
+                break;
+            case 3:
+                break;
+            case 8:
+                mems = mems.concat(parseNode(node as any, steps));
+                break;
+            default:
+                break;
+        }
+    });
+
+    return mems;
+}
+
+/** Parses the attributes of a node into a set of one or more memories. */
+function parseAttributes(node: Element, steps: number[]): Memory[] {
+    if(!node.attributes) return [];
     
+    let mems: Memory[] = [];
+
+    const isDefined = isMosaicDefined(node);
+    const hasNodeMarker = new RegExp(`[a-z|A-Z| ]*${nodeMarker}[a-z|A-Z| ]*`, 'g');
+
+    for(let i = 0; i < node.attributes.length; i++) {
+        const { name, value } = node.attributes[i];
+        const attrIsDynamic = value.match(hasNodeMarker);
+        if(!attrIsDynamic || attrIsDynamic.length < 1) continue;
+
+        // Split the attributes by space or semicolon and look at each
+        // part as dynamic and possibly needing repainting.
+        const attrParts = (name === 'style' ? 
+            value.split(';') : value.split(' ')).filter(s => s.length > 0);
+        
+        // Go through each part and make a new memory for it. The renderer
+        // will later apply the change to a particular attribute.
+        for(let j = 0; j < attrParts.length; j++) {
+            // Make sure that you only add a memory for the parts that are
+            // dynamic.
+            const partVal = attrParts[j].trim();
+            const isDynamic = new RegExp(nodeMarker, 'gi');
+
+            if(isDynamic.test(partVal))                
+                mems.push(new Memory());
+        }
+    }
+    return mems;
 }
 
 
-// /** Memorizes parts of a DOM tree that contain dynamic content
-// * and returns a list of memories of where those parts are. */
-// export function memorize(t: HTMLTemplateElement): Memory[] {
-//     let ret: Memory[] = [];
-//     const temp: HTMLTemplateElement = document.importNode(t, true);
-//     traverse(temp.content, (node: Element, steps: number[]) => {
-//         // console.dir(node);
-//         switch(node.nodeType) {
-//             case 1: ret = ret.concat(parseAttributes(node, steps)); break;
-//             case 3: ret = ret.concat(parseText((node as any), steps)); break;
-//             case 8: ret = ret.concat(parseNode(node as any, steps)); break;
-//             default: break;
-//         }
-//     });
-//     return ret;
-// }
+/** Parses a new memory for a node in the template. */
+function parseNode(node: Text, steps: number[]): Memory[] {
+    let mems: Memory[] = [];
 
-// // Helper functions to parse attributes, nodes, and text.
-// function parseAttributes(node: Element, steps: number[]): Memory[] {
-//     if(!node.attributes) return [];
-//     let ret: Memory[] = [];
-//     const defined = customElements.get(node.nodeName.toLowerCase()) !== undefined;
-    
-//     // Make sure to keep track of how many dynamic attributes are needed
-//     // to trigger a repaint from a Memory perspective.
-//     let trackedAttributeCount = 0;
+    const markerCheck = nodeMarker.replace('<!--', '').replace('-->', '');
+    if(node.textContent !== markerCheck) return [];
 
-//     const regex = new RegExp(`[a-z|A-Z| ]*${nodeMarker}[a-z|A-Z| ]*`, 'g');
-//     for(let i = 0; i < node.attributes.length; i++) {
-//         const { name, value } = node.attributes[i];
-//         const match = value.match(regex);
-//         if(!match || match.length < 1) continue;
-        
-//         // Split the value to see where the dynamic parts in the string are.
-//         const _split = (name === 'style' ? value.split(';') : value.split(' '));
-//         const split = _split.filter(str => str.length > 0);
-        
-//         for(let j = 0; j < split.length; j++) {
-//             const item = split[j].trim();
-//             const isDynamic = new RegExp(nodeMarker, 'gi');
-            
-//             // Make sure you only add memories for dynamic attributes.
-//             if(isDynamic.test(item)) {
-//                 trackedAttributeCount += 1;
-//                 ret.push(new Memory({
-//                     type: 'attribute',
-//                     steps,
-//                     isComponentType: defined,
-//                     isEvent: name.startsWith('on') && name.length > 2,
-//                     attribute: { name },
-//                     trackedAttributeCount
-//                 }));
-//             }
-//         }
-//     }
-//     return ret;
-// }
-// function parseNode(node: Text, steps: number[]): Memory[] {
-//     const check = nodeMarker.replace('<!--','').replace('-->','');
-//     if(node.textContent !== check) return [];
+    let mosaicDefined = isMosaicDefined(node);
+    let parentDefined = isMosaicDefined(node.parentElement || node);
 
-//     // Check if the parent element is defined as a Mosaic component.
-//     let defined = customElements.get(node.nodeName.toLowerCase()) !== undefined;
-//     let defined2 = false;
-//     if(node.parentElement)
-//         defined2 = customElements.get(node.parentElement.nodeName.toLowerCase()) !== undefined;
-    
-//     return [new Memory({
-//         type: "node",
-//         steps,
-//         isComponentType: defined || defined2
-//     })];
-// }
+    return [new Memory()];
+}
+
+
 // function parseText(node: Text, steps: number[]): Memory[] {
 //     let ret: Memory[] = [];
 //     let parent = node.parentNode;

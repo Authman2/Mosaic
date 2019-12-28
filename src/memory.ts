@@ -1,223 +1,173 @@
+import { MemoryOptions, MosaicComponent } from "./options";
+import { isViewFunction, isBooleanAttribute, nodeMarker, isMosaicDefined, objectFromArray, runLifecycle } from "./util";
+import { OTT } from "./templating";
+
 /** A Memory is a place in the template where either a single or multiple
 * changes will likely occur throughout the lifecycle of a component. If
 * you find that a value is different than its last memory then commit a
 * new change to the DOM. */
 export default class Memory {
+    constructor(public config: MemoryOptions) {}
     
-    
+    /** Commits a change to a node in the DOM. */
+    commit(el: Element, pointer: Element, oldv: any, newv: any) {
+        switch(this.config.type) {
+            case 'node':
+                this.commitNode(pointer, oldv, newv);
+                break;
+            case 'attribute':
+                if(this.config.isEvent) this.commitEvent(pointer, oldv, newv);
+                else this.commitAttribute(pointer, oldv, newv);
+                break;
+            default:
+                break;
+        }
+    }
 
 
+    /** Handles committing node changes to the DOM. */
+    commitNode(el: Element, oldv: any, newv: any) {
+        if(Array.isArray(newv)) {
+            let items = newv;
+            let fragment = document.createDocumentFragment();
+            // for(let i = 0; i < items.length; i++) {
+            //     let ott = OTT(items[i]);
+            //     _repaint(ott.inst, ott.memories, [], ott.values, true);
+            //     frag.append(node);
+            // }
+            // let addition = document.createElement('div');
+            // addition.appendChild(frag);
+            // pointer.replaceWith(addition);
+        }
+        else if(isViewFunction(newv)) {
+            const ott = OTT(newv);
+            el.replaceWith(ott.instance);
+            // TODO: Repaint
+        }
+        else if(typeof newv === 'function') {
+            const called = newv();
+            const ott = OTT(called);
+            el.replaceWith(ott.instance);
+            // TODO: Repaint
+        }
+        else {
+            el.replaceWith(newv);
+        }
+    }
 
+
+    /** Handles committing attribute changes to the DOM. Handles possibly
+    * multiple attributes. */
+    commitAttribute(el: Element, oldv: any, newv: any) {
+        if(!el.attributes) return;
+
+        // Each memory handles a single portion of a given attribute. So,
+        // we need to get a reference to the attribute name that we are
+        // trying to make changes on.
+        const name = this.config.attribute || "";
+        const attribute = el.attributes.getNamedItem(name);
+
+        // For boolean attributes, either add the attribute if the value
+        // is true, or remove it when it is false.
+        if(!attribute) {
+            if(isBooleanAttribute(name) && newv === true)
+                el.setAttribute(name, 'true');
+            // Return because at this point you are done with this attribute.
+            return;
+        }
+
+        // We never want to replace the string completely. Instead, we want
+        // to go in order from the beginning of the attribute and replace the
+        // first instance of a node marker with the new value.
+        const replacedVal = attribute.value.replace(nodeMarker, ''+newv);
+        const valueToSet = replacedVal.length > 0 ? replacedVal : newv;
+        el.setAttribute(name, valueToSet);
+
+        // For boolean attributes, add the attribuet if newv is true and remove
+        // it if newv is false.
+        if(isBooleanAttribute(name)) {
+            if(newv === true) {
+                el.setAttribute(name, 'true');
+                if(el instanceof MosaicComponent)
+                    el.mosaicConfig.rerenderCount += 1;
+            } else {
+                el.removeAttribute(name);
+                if(el instanceof MosaicComponent)
+                    el.mosaicConfig.rerenderCount -= 1;
+            }
+        }
+
+        // Batch the attribute changes together so that we know when to update.
+        if(isMosaicDefined(el)) this.batch(el as MosaicComponent, name, newv);
+    }
+
+
+    /** Handles committing event handlers to DOM nodes. */
+    commitEvent(el: Element, oldv: any, newv: any) {
+        const name = this.config.attribute || "";
+        const events = el['eventHandlers'] || {};
+        const shortName = name.substring(2);
+
+        // If there's no new value, then remove the event listener.
+        if(!newv && events[name])
+            el.removeEventListener(shortName, events[name]);
+
+        // If there is a new value, add it to the eventHandlers property.
+        else if(newv) {
+            events[name] = newv.bind(el);
+            el['eventHandlers'] = events;
+            el.addEventListener(shortName, el['eventHandlers'][name]);
+        }
+
+        // Remove the event attribute to avoid clutter in the DOM tree.
+        if(el.hasAttribute(name)) {
+            el.removeAttribute(name);
+            if(el instanceof MosaicComponent)
+                el.mosaicConfig.rerenderCount -= 1;
+        }
+
+        // Batch the attributes.
+        if(isMosaicDefined(el)) this.batch(el as MosaicComponent, name, newv);
+    }
+
+
+    /** Batches changes together so that the renderer doesn't trigger too many
+    * updates, and instead waits until all of them are finished. */
+    batch(comp: MosaicComponent, name: string, value: any) {
+        const isData = comp.data.hasOwnProperty(name);
+        const batchFunc = isData ? '_batchData' : '_batchAttribute';
+        comp[batchFunc].call(comp, name, value);
+
+        const total = comp.mosaicConfig.rerenderCount || 0;
+        const attrBts = comp.batchedAttrs;
+        const dataBts = comp.batchedData;
+
+        // If you reach or exceed the number that you need for a rerender,
+        // then perform the rerender.
+        if(attrBts.length + dataBts.length >= total) {
+            const justData = objectFromArray(dataBts);
+            const justAttrs = objectFromArray(attrBts);
+
+            // Set data first, then call the received function.
+            // This is done so that the received function has any additional
+            // data changes that come from the same render cycle.
+            if(dataBts.length > 0) {
+                comp.mosaicConfig.barrier = true;
+                Object.keys(justData).forEach(key => {
+                    const val = justData[key];
+                    comp.data[key] = val;
+                });
+                comp.mosaicConfig.barrier = false;
+            }
+            if(attrBts.length > 0) runLifecycle('received', comp, justAttrs);
+
+            // Finally, repaint and reset the batches.
+            if(dataBts.length > 0) comp.repaint();
+            comp._clearBatches();
+        }
+   }
 }
 
-// /** Represents a piece of dynamic content in the markup. */
-// export default class Memory {
-//     constructor(public config: MemoryOptions) {}
-
-//     /** Batches an update together with other component updates so that
-//     * later on they can all perform a single repaint. */
-//     batch(component: MosaicComponent, batchName: string, batchValue: any) {
-//         // Add the (name, value) pair as a batch operation to be carried out
-//         // at the end of the parent component's repaint cycle.
-//         const isData = component.data.hasOwnProperty(batchName);
-//         const batchFunc = isData ? '_batchData' : '_batchAttribute';
-//         component[batchFunc](batchName, batchValue);
-        
-//         // Check if the number of batches matches up to the number of
-//         // attributes present on the HTML element tag. Checking this number
-//         // is fine because you don't split up attributes from data until
-//         // the end of this step.
-//         const bts = component._getBatches();
-
-//         const totalLength = this.config.trackedAttributeCount || 0;
-//         const attrsLength = bts.attributes.length;
-//         const dataLength = bts.data.length;
-//         if(attrsLength + dataLength >= totalLength) {
-//             // Go through the immediately nested nodes and update them with the
-//             // new data, while also sending over the parsed attributes. Then
-//             // clear the batch when you are done.
-//             const justData = objectFromArray(bts.data);
-//             const justAttrs = objectFromArray(bts.attributes);
-                
-//             // Set the data on the component then repaint it.
-//             if(bts.data.length > 0) {
-//                 component.barrier = true;
-//                 let keys = Object.keys(justData);
-//                 for(let i = 0; i < keys.length; i++) {
-//                     const key = keys[i];
-//                     const val = justData[key];
-//                     component.data[key] = val;
-//                 }
-//                 component.barrier = false;
-//             }
-
-//             // Make the component receive the HTML attributes.
-//             if(bts.attributes.length > 0)
-//                 runLifecycle('received', component, justAttrs);
-
-//             // Repaint.
-//             if(bts.data.length > 0)
-//                 component.repaint();
-
-//             // When you are done performing the batcehd updates, clear
-//             // the batch so you can do it again for the next update.
-//             component._resetBatches();
-//         }
-//     }
-
-//     /** Applies the changes to the appropriate DOM nodes when data changes. */
-//     commit(element: ChildNode|Element|ShadowRoot, pointer: ChildNode|Element, oldValue: any, newValue: any) {
-//         // console.log(element, pointer, oldValue, newValue, this);
-//         switch(this.config.type) {
-//             case 'node':
-//                 this.commitNode(element, pointer, oldValue, newValue);
-//                 break;
-//             case 'attribute':
-//                 if(!this.config.attribute) break;
-//                 const { name } = this.config.attribute;
-//                 const func = this.config.isEvent ? 
-//                     this.commitEvent.bind(this) : this.commitAttribute.bind(this);
-//                 func(element, pointer, name, oldValue, newValue);
-//                 break;
-//         }
-//     }
-
-//     /** Applies changes to memories of type "node." */
-//     commitNode(element: HTMLElement|ChildNode|ShadowRoot, pointer: HTMLElement|ChildNode, oldValue: any, newValue: any) {
-//         // If you come across a node inside of a Mosaic component, then do not
-//         // actually add it to the DOM. Instead, let it be rendered by the
-//         // constructor and set into the "descendants" property so the component
-//         // itself can decide whether or not to use it as a descendants property.
-//         if(this.config.isComponentType === true && pointer instanceof MosaicComponent)
-//             return;
-
-//         if(Array.isArray(newValue)) {
-//             let items = newValue;
-//             let frag = document.createDocumentFragment();
-//             for(let i = 0; i < items.length; i++) {
-//                 let item = items[i];
-//                 let ott = OTT(item);
-//                 let node = ott.instance;
-//                 _repaint(node, ott.memories, [], ott.values, true);
-//                 frag.append(node);
-//             }
-//             let addition = document.createElement('div');
-//             addition.appendChild(frag);
-//             pointer.replaceWith(addition);
-//         }
-//         if(typeof newValue === 'object' && newValue.__isTemplate) {
-//             const ott = OTT(newValue);
-//             const inst = ott.instance;
-//             pointer.replaceWith(inst);
-//             _repaint(inst, ott.memories, [], ott.values, true);
-//         }
-//         if(typeof newValue === 'object' && newValue.__isKeyedArray) {
-//             this.commitArray(element, pointer, oldValue, newValue);
-//         }
-//         else if(typeof newValue === 'function') {
-//             const called = newValue();
-//             const ott = OTT(called);
-//             const inst = ott.instance;
-//             pointer.replaceWith(inst);
-//             _repaint(inst, ott.memories, [], ott.values, true);
-//         }
-//         else {
-//             pointer.replaceWith(newValue);
-//         }
-//     }
-
-//     /** Applies attributee changes. */
-//     commitAttribute(element: HTMLElement|ChildNode|ShadowRoot, pointer: HTMLElement|ChildNode, 
-//             name: string, oldValue: any, newValue: any) {
-
-//         const attribute = (pointer as Element).attributes.getNamedItem(name);
-        
-//         // If you come across a boolean attribute that should be true, then add
-//         // it as an attribute.
-//         if(!attribute) {
-//             if(isBooleanAttribute(name) && newValue === true)
-//                 (pointer as Element).setAttribute(name, 'true');
-//             return;
-//         }
-
-//         // Replace the first instance of the marker with the new value.
-//         // Then be sure to set the attribute value to this newly replaced
-//         // string so that on the next dynamic attribute it goes to the next
-//         // position to replace (notice how the new value gets converted to a
-//         // string first. This ensures attribute safety).
-//         const newAttributeValue = attribute.value
-//             .replace(nodeMarker, ''+newValue)
-//             .replace(oldValue, ''+newValue);
-//         const setValue = newAttributeValue.length > 0 ? newAttributeValue : newValue;
-//         (pointer as Element).setAttribute(name, setValue);
-        
-//         // Add or remove boolean attributes. Make sure to also the tracked
-//         // attribute count so that you know how many attributes to check
-//         // for at any given time of an update cycle.
-//         if(isBooleanAttribute(name)) {
-//             if(newValue === true) {
-//                 (pointer as Element).setAttribute(name, 'true');
-//                 if(this.config.trackedAttributeCount)
-//                     this.config.trackedAttributeCount += 1;
-//             } else {
-//                 (pointer as Element).removeAttribute(name);
-//                 if(this.config.trackedAttributeCount)
-//                     this.config.trackedAttributeCount -= 1;
-//             }
-//         }
-        
-//         // Remove the function attribute so it's not cluttered. The event
-//         // listener will still exist on the element, though.
-//         if(typeof newValue === 'function') {
-//             (pointer as Element).removeAttribute(name);
-
-//             // Since you're removing the function as an attribute, be sure
-//             // to update the tracked attribute count so we're not always
-//             // looking for it during a batched update.
-//             if(this.config.trackedAttributeCount)
-//                 this.config.trackedAttributeCount -= 1;
-//         }
-
-//         // Batch the pointer element and the attribute [name, value] pair together so that
-//         // it can be update all at once at the end of the repaint cycle.
-//         if(this.config.isComponentType === true && pointer instanceof MosaicComponent)
-//             this.batch(pointer, name, newValue);
-//     }
-
-//     /** Applies event changes such as adding/removing listeners. */
-//     commitEvent(element: HTMLElement|ChildNode|ShadowRoot, pointer: HTMLElement|ChildNode, 
-//             name: string, oldValue: any, newValue: any) {
-
-//         const events = (pointer as any).eventHandlers || {};
-//         const shortName = name.substring(2);
-
-//         // If there's no new value, then try to remove the event listener.
-//         if(!newValue && events[name])
-//             (pointer as Element).removeEventListener(shortName, events[name]);
-        
-//         // While there is a new value, add it to an "eventHandlers" property
-//         // so that you can always keep track of the element's functions.
-//         else if(newValue) {
-//             events[name] = newValue.bind(element);
-//             (pointer as any).eventHandlers = events;
-//             (pointer as Element).addEventListener(
-//                 shortName, 
-//                 (pointer as any).eventHandlers[name]
-//             );
-//         }
-
-//         // Remove the attribute from the DOM tree to avoid clutter.
-//         if((pointer as Element).hasAttribute(name)) {
-//             (pointer as Element).removeAttribute(name);
-//             if(this.config.trackedAttributeCount)
-//                 this.config.trackedAttributeCount -= 1;
-//         }
-
-//         // Batch the pointer element and the attribute [name, value] pair together so that
-//         // it can be update all at once at the end of the repaint cycle.
-//         if(this.config.isComponentType === true && pointer instanceof MosaicComponent)
-//             this.batch(pointer, name, newValue);
-//     }
 
 //     /** Helper function for applying changes to arrays. */
 //     commitArray(element: HTMLElement|ChildNode|ShadowRoot, pointer: HTMLElement|ChildNode, 
@@ -346,4 +296,3 @@ export default class Memory {
 //             opIndex += count;
 //         }
 //     }
-// }

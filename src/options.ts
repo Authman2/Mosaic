@@ -1,4 +1,5 @@
 import Observable from "./observable";
+import Memory from "./memory";
 
 /** An type that can be used to represent literally anything.
 * Mostly just to avoid complier errors/warnings. */
@@ -13,9 +14,31 @@ export type ViewFunction = {
 };
 
 
+/** A One Time Template. */
+export type OTTType = {
+    instance: any,
+    values: any[],
+    memories: Memory[]
+};
+
+
+/** A helper type for shorter syntax. */
+export type InjectionPoint = string|Element|HTMLElement|undefined|null;
+
+
 /** A single update object that gets batched together with other update objects
 * when figuring out whether or not attributes changed. */
 export type Update = [string, any];
+
+
+/** Configuration options for a memory. */
+export interface MemoryOptions {
+    type: "node"|"attribute";
+    steps: number[];
+    attribute?: string;
+    isEvent?: boolean;
+    isMosaic?: boolean;
+}
 
 
 /** A Mosaic config object which is used internally for quick checks. */
@@ -23,7 +46,8 @@ export type MosaicConfig = {
     setup_observable_array: boolean,
     is_ott: boolean,
     barrier: boolean,
-    initiallyRendered: boolean
+    initiallyRendered: boolean,
+    rerenderCount: number
 }
 
 
@@ -72,10 +96,10 @@ export class MosaicComponent extends HTMLElement {
     stylesheets?: string[]|CSSStyleSheet[];
     
     protected oldValues: any[];
-    protected mosaicConfig: MosaicConfig;
+    mosaicConfig: MosaicConfig;
     
-    protected batchedAttrs: Update[];
-    protected batchedData: Update[];
+    batchedAttrs: Update[];
+    batchedData: Update[];
 
 
     /** Initialize this component. */
@@ -92,7 +116,8 @@ export class MosaicComponent extends HTMLElement {
             is_ott: false,
             setup_observable_array: false,
             barrier: false,
-            initiallyRendered: false
+            initiallyRendered: false,
+            rerenderCount: 0
         };
     }
 
@@ -221,6 +246,3 @@ export class MosaicComponent extends HTMLElement {
 //     values: any[],
 //     __isTemplate: true
 // };
-
-// /** A helper type for shorter syntax. */
-// export type InjectionPoint = string|Element|HTMLElement|undefined|null;

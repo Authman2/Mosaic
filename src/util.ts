@@ -24,6 +24,11 @@ export const isBooleanAttribute = (name: string) => {
     return regex.test(name);
 }
 
+/** Returns whether or not an instance is a View Function. */
+export function isViewFunction(value: any) {
+    return typeof value === 'object' && value.__isTemplate;
+}
+
 /** Insert a DOM node after a given node. */
 export function insertAfter(newNode, referenceNode) {
     referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
@@ -34,6 +39,14 @@ export function insertAfter(newNode, referenceNode) {
 export function objectFromArray(array: any[]) {
     if((Object as any).fromEntries) return (Object as any).fromEntries(array);
     else return Array.from(array).reduce((acc, [key,value]) => Object.assign(acc, { [key]: value }), {});
+}
+
+
+/** REturns whether or not a custom Mosaic element has been defined. */
+export function isMosaicDefined(node: Element|Text) {
+    const isCE = customElements.get(node.nodeName.toLowerCase());
+    const isMOS = node instanceof MosaicComponent;
+    return isCE && isMOS;
 }
 
 /** Traverses a dom tree and performs an action at each level. */

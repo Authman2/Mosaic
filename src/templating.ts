@@ -1,5 +1,5 @@
-import { ViewFunction, MosaicComponent } from "./options";
-import { buildHTML } from "./parser";
+import { ViewFunction, MosaicComponent, OTTType } from "./options";
+import { buildHTML, memorize } from "./parser";
 
 /** If a template exists for a given component, return that template. Otherwise
 * create the template right away and return it. */
@@ -19,65 +19,51 @@ export function getTemplate(component: MosaicComponent): HTMLTemplateElement {
         const temp = document.createElement('template');
         temp.id = component.tid;
         temp.innerHTML = buildHTML(view.strings);
-        temp['memories'] = 
+        temp['memories'] = memorize(temp);
+
+        document.body.appendChild(temp);
+        return temp;
     }
 }
 
 /** Constructs a One Time Template based on either a view function, or a string. */
-export function OTT(view: ViewFunction|string, key?: string): Element {
+export function OTT(view: ViewFunction|string, key?: string): OTTType {
+    // First, check if there is already a template for this view function.
+    // This is really only necessary for arrays, where you have more than
+    // one of the same item repeated. Otherwise, create a new template.
+    const strings = typeof view === 'string' ? view : view.strings.join('');
+    const hasKey = key ? true : false;
+    const templateKey = key || encodeURIComponent(strings);
+    const template = hasKey ?
+        document.getElementById(templateKey) as HTMLTemplateElement
+        : document.createElement('template');
 
-}
+    // If you have a key, just make sure there is a legit template
+    // to use.
+    if(!hasKey) {
+        template.innerHTML = buildHTML(
+            typeof view === 'string' ? [view] : view.strings
+        );
+        template['memories'] = memorize(template);
+    }
 
-//         const { strings } = component.view(component);
-//         const template = document.createElement('template');
-//         template.id = component.tid;
-//         template.innerHTML = buildHTML(strings);
-//         (template as any).memories = memorize(template);
-        
-//         document.body.appendChild(template);
-//         return template;
-//     }
-// }
+    // Add the template to the document and clone it.
+    document.body.appendChild(template);
+    const cloned = document.importNode(template.content, true);
 
-// /** Renders a One Time Template. Still requires repainting. */
-// export function OTT(view: ViewFunction, key?: string) {
-//     // Create and memorize the template.
-//     let cloned;
-//     const templateKey = key || encodeURIComponent(view.strings.join(''));
-//     let template = templateKey ?
-//         document.getElementById(templateKey) as HTMLTemplateElement
-//         :
-//         document.createElement('template');
-
-//     // Only run through this block of code if you have a template key.
-//     if(templateKey) {
-//         // If there's no template, then create one.
-//         if(!template) {
-//             template = document.createElement('template');
-//             template.id = templateKey;
-//             template.innerHTML = buildHTML(view.strings);
-//             (template as any).memories = memorize(template);
-//         }
-//     }
-//     // Otherwise, just make a new template in the moment, but don't save it.
-//     else {
-//         template.innerHTML = buildHTML(view.strings);
-//         (template as any).memories = memorize(template);
-//     }
-//     cloned = document.importNode(template.content, true).firstChild as HTMLElement;
-//     document.body.appendChild(template);
-
-//     // Set the key of the element and return it. Also set a special attribute
-//     // on the instance so that we always know that it is a OTT.
-//     if(key && cloned) cloned.setAttribute('key', key);  
-//     if(cloned) cloned.isOTT = true;
+    // Set the key on the newly cloned instance.
+    // TODO: You MAY actually have to use setAttribute.
+    if(cloned) {
+        if(key) cloned['key'] = key;
+        cloned['isOTT'] = true;
+    }
     
-//     return {
-//         instance: cloned,
-//         values: view.values,
-//         memories: (template as any).memories,
-//     };
-// }
+    return {
+        instance: cloned,
+        values: typeof view === 'string' ? [] : view.values,
+        memories: template['memories']
+    }
+}
 
 // /** A global repaint function, which can be used for templates and components. */
 // export function _repaint(element: HTMLElement|ShadowRoot, memories: Memory[], 
