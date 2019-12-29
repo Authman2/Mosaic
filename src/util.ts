@@ -105,9 +105,9 @@ export function runLifecycle(name: string, component: MosaicComponent, ...args) 
 }
 
 /** Steps down through the child nodes until it reaches the last step. */
-export function step(parent: ChildNode|Element|ShadowRoot, steps: number[], isOTT: boolean = false) {    
-    let child = parent;
-    let start = isOTT ? 1 : 0;
+export function step(parent: Element, steps: number[]) {    
+    let child: any = parent;
+    let start = 0;
     
     for(let i = start; i < steps.length; i++) {
         let next: number = steps[i];
@@ -142,7 +142,7 @@ export function goUpToConfigureRouter() {
 
 /** Compares two values are returns false if they are the same and 
 * true if they are different (i.e. they changed). */
-export function changed(oldv: any, newv: any, isOTT?: boolean) {
+export function changed(oldv: any, newv: any, updateFunction?: boolean) {
     // If no old value, then it is the first render so it did change.
     // Or if there is an old value and no new value, then it changed.
     if(!oldv) return true;
@@ -151,7 +151,7 @@ export function changed(oldv: any, newv: any, isOTT?: boolean) {
     // Compare by type.
     if(isPrimitive(newv)) return oldv !== newv;
     else if(typeof newv === 'function') {
-        if(isOTT && isOTT === true) return true;
+        if(updateFunction === true) return true;
         else return (''+oldv) !== (''+newv);
     }
     else if(Array.isArray(newv)) return true;

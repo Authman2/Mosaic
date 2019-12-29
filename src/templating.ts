@@ -1,5 +1,7 @@
 import { ViewFunction, MosaicComponent, OTTType } from "./options";
 import { buildHTML, memorize } from "./parser";
+import Memory from "./memory";
+import { step, changed } from "./util";
 
 /** If a template exists for a given component, return that template. Otherwise
 * create the template right away and return it. */
@@ -27,11 +29,11 @@ export function getTemplate(component: MosaicComponent): HTMLTemplateElement {
 }
 
 /** Constructs a One Time Template based on either a view function, or a string. */
-export function OTT(view: ViewFunction|string, key?: string): OTTType {
+export function OTT(view: ViewFunction, key?: string): OTTType {
     // First, check if there is already a template for this view function.
     // This is really only necessary for arrays, where you have more than
     // one of the same item repeated. Otherwise, create a new template.
-    const strings = typeof view === 'string' ? view : view.strings.join('');
+    const strings = view.strings.join('');
     const hasKey = key ? true : false;
     const templateKey = key || encodeURIComponent(strings);
     const template = hasKey ?
@@ -41,9 +43,7 @@ export function OTT(view: ViewFunction|string, key?: string): OTTType {
     // If you have a key, just make sure there is a legit template
     // to use.
     if(!hasKey) {
-        template.innerHTML = buildHTML(
-            typeof view === 'string' ? [view] : view.strings
-        );
+        template.innerHTML = buildHTML(view.strings);
         template['memories'] = memorize(template);
     }
 
@@ -63,6 +63,23 @@ export function OTT(view: ViewFunction|string, key?: string): OTTType {
         values: typeof view === 'string' ? [] : view.values,
         memories: template['memories']
     }
+}
+
+/** A global function for repainting a part of the DOM. */
+export function _repaint(el: Element, memories: Memory[], oldv: any[], newv: any[]) {
+    memories.forEach((mem: Memory, i: number) => {
+        // Look at the "pointer" node by following the steps down the element.
+        const steps = mem.config.steps.slice();
+        const pointer = step(el, steps);
+
+        // Get the old and new value and see if they changed.
+        const oldValue = oldv[i];
+        const newValue = newv[i];
+
+        // Compare and commit.
+        if(changed(oldValue, newValue, mem.config.type === 'node'))
+            mem.commit(pointer, oldValue, newValue);
+    });
 }
 
 // /** A global repaint function, which can be used for templates and components. */

@@ -1,7 +1,7 @@
 import { MosaicOptions, MosaicComponent, ViewFunction, InjectionPoint } from "./options";
 import { randomKey, runLifecycle, applyMixin, nodeMarker } from "./util";
 import Observable, { ObservableArray } from "./observable";
-import { OTT, getTemplate } from "./templating";
+import { OTT, getTemplate, _repaint } from "./templating";
 
 export default function Mosaic(options: MosaicOptions): MosaicComponent {
     // There are a few options that you need to take before you
@@ -95,10 +95,19 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             // descendants property must be a OTT so that the renderer
             // can parse it whenever it comes across it in the tree.
             if(!this.mosaicConfig.initiallyRendered) {
-                const ottDescendants = OTT(this.innerHTML);
-                this.descendants = ottDescendants.instance;
-                // TODO: Repaint the descendants.
-                this.innerHTML = '';
+                if(this.view) {
+                    const view = this.view(this);
+                    const ottDescendants = OTT(view);
+                    this.descendants = ottDescendants.instance;
+                    _repaint(this.descendants, ottDescendants.memories, [], ottDescendants.values);
+                    this.innerHTML = '';
+
+                    // TODO: It's only supposed to have 1 memory in the current exp.
+                    // console.log('%c Name: ', 'color:crimson', _options.name);
+                    // console.log(ottDescendants.instance);
+                    // console.log(ottDescendants.memories);
+                    // console.log(ottDescendants.values);
+                }
             }
 
             // 2.) Configure the router and portfolio on this component.
@@ -154,14 +163,16 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                     }
                 }
                 this.mosaicConfig.barrier = false;
+
+                // Repaint.
+                this.repaint();
             }
             
             // Send the attributes through lifecycle functions.
             if(Object.keys(receivedAttributes).length > 0)
                 runLifecycle('received', this, receivedAttributes);
- 
-            // Repaint.
-            this.repaint();
+
+            this.mosaicConfig.initiallyRendered = true;
         }
 
         disconnectedCallback() {
@@ -203,8 +214,8 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
 
             if(!this.view) return;
             const newValues = this.view(this).values;
-            const repaintNode = this._shadow ? this._shadow : this;
-            // _repaint(repaintNode, memories, this.oldValues, newValues);
+            const repaintNode: any = this._shadow ? this._shadow : this;
+            _repaint(repaintNode, memories, this.oldValues, newValues);
 
             this.oldValues = newValues;
         }

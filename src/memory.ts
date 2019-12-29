@@ -1,6 +1,6 @@
 import { MemoryOptions, MosaicComponent } from "./options";
 import { isViewFunction, isBooleanAttribute, nodeMarker, isMosaicDefined, objectFromArray, runLifecycle } from "./util";
-import { OTT } from "./templating";
+import { OTT, _repaint } from "./templating";
 
 /** A Memory is a place in the template where either a single or multiple
 * changes will likely occur throughout the lifecycle of a component. If
@@ -10,14 +10,14 @@ export default class Memory {
     constructor(public config: MemoryOptions) {}
     
     /** Commits a change to a node in the DOM. */
-    commit(el: Element, pointer: Element, oldv: any, newv: any) {
+    commit(el: Element, oldv: any, newv: any) {
         switch(this.config.type) {
             case 'node':
-                this.commitNode(pointer, oldv, newv);
+                this.commitNode(el, oldv, newv);
                 break;
             case 'attribute':
-                if(this.config.isEvent) this.commitEvent(pointer, oldv, newv);
-                else this.commitAttribute(pointer, oldv, newv);
+                if(this.config.isEvent) this.commitEvent(el, oldv, newv);
+                else this.commitAttribute(el, oldv, newv);
                 break;
             default:
                 break;
@@ -28,31 +28,32 @@ export default class Memory {
     /** Handles committing node changes to the DOM. */
     commitNode(el: Element, oldv: any, newv: any) {
         if(Array.isArray(newv)) {
-            let items = newv;
-            let fragment = document.createDocumentFragment();
+            // let items = newv;
+            // let fragment = document.createDocumentFragment();
             // for(let i = 0; i < items.length; i++) {
             //     let ott = OTT(items[i]);
-            //     _repaint(ott.inst, ott.memories, [], ott.values, true);
-            //     frag.append(node);
+            //     _repaint(ott.instance, ott.memories, [], ott.values);
+            //     fragment.append(ott.instance);
             // }
             // let addition = document.createElement('div');
-            // addition.appendChild(frag);
-            // pointer.replaceWith(addition);
+            // addition.appendChild(fragment);
+            // el.replaceWith(addition);
         }
         else if(isViewFunction(newv)) {
             const ott = OTT(newv);
             el.replaceWith(ott.instance);
-            // TODO: Repaint
+            _repaint(ott.instance, ott.memories, [], ott.values);
         }
         else if(typeof newv === 'function') {
             const called = newv();
             const ott = OTT(called);
             el.replaceWith(ott.instance);
-            // TODO: Repaint
+            _repaint(ott.instance, ott.memories, [], ott.values);
         }
         else {
             el.replaceWith(newv);
         }
+        console.log('Ok, reached this memory: ', newv, Array.isArray(newv), newv instanceof Element);
     }
 
 

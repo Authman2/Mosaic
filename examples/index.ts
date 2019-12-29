@@ -24,17 +24,20 @@ Mosaic({
         return html`
         <h4>Welcome to your label component!</h4>
         ${this.descendants}
-        <p>Here is some more content after yours ^</p>
-        `
+        <p>Here is some more content after yours ^</p>`
     }
 });
 
 const app = Mosaic({
+    element: 'root',
     name: 'my-app',
+    data: {
+        name: 'Jimbo'
+    },
     view: function() {
         return html`<my-label>
-            <h5>Well isn't this neat Jimbo?</h5>
+            <h5>Well isn't this neat ${this.data.name}?</h5>
         </my-label>`
     }
 });
-app.paint('root');
+app.paint();

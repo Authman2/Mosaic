@@ -4,10 +4,10 @@ import Memory from "./memory";
 /** Returns an HTML string with placeholders put in as markers. */
 export function buildHTML(strings: string[]): string {
     let html = '';
-    strings.forEach(str => {
+    for(let i = 0; i < strings.length - 1; i++) {
+        const str = strings[i];
         const match = lastAttributeNameRegex.exec(str);
-
-        if(!match)
+        if(match === null)
             html += (str + nodeMarker);
         else
             html += (
@@ -17,8 +17,8 @@ export function buildHTML(strings: string[]): string {
                 match[3] +
                 nodeMarker
             );
-    });
-    // html += strings[strings.length - 1];
+    }
+    html += strings[strings.length - 1];
     return html;
 }
 
@@ -27,9 +27,8 @@ export function buildHTML(strings: string[]): string {
 * to go back and make updates. */
 export function memorize(temp: HTMLTemplateElement): Memory[] {
     let mems: Memory[] = [];
-
-    const clonedTemplate = document.importNode(temp, true);
-    traverse(clonedTemplate, (node: Element, steps: number[]) => {
+    const cloned = document.importNode(temp.content, true);
+    traverse(cloned, (node: Element, steps: number[]) => {
         switch(node.nodeType) {
             case 1:
                 mems = mems.concat(parseAttributes(node, steps));
@@ -43,7 +42,6 @@ export function memorize(temp: HTMLTemplateElement): Memory[] {
                 break;
         }
     });
-
     return mems;
 }
 
@@ -75,7 +73,13 @@ function parseAttributes(node: Element, steps: number[]): Memory[] {
             const isDynamic = new RegExp(nodeMarker, 'gi');
 
             if(isDynamic.test(partVal))                
-                mems.push(new Memory());
+                mems.push(new Memory({
+                    steps,
+                    attribute: name,
+                    type: 'attribute',
+                    isMosaic: isDefined,
+                    isEvent: name.startsWith('on') && name.length > 2,
+                }));
         }
     }
     return mems;
@@ -84,15 +88,18 @@ function parseAttributes(node: Element, steps: number[]): Memory[] {
 
 /** Parses a new memory for a node in the template. */
 function parseNode(node: Text, steps: number[]): Memory[] {
-    let mems: Memory[] = [];
-
     const markerCheck = nodeMarker.replace('<!--', '').replace('-->', '');
     if(node.textContent !== markerCheck) return [];
 
     let mosaicDefined = isMosaicDefined(node);
     let parentDefined = isMosaicDefined(node.parentElement || node);
 
-    return [new Memory()];
+    return [new Memory({
+        steps,
+        type: 'node',
+        isEvent: false,
+        isMosaic: mosaicDefined || parentDefined
+    })];
 }
 
 
