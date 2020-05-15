@@ -28,6 +28,15 @@ Mosaic({
     }
 });
 
+Mosaic({
+    name: 'my-button',
+    view: function() {
+        return html`
+        <button>Click Me!</button>
+        `
+    }
+})
+
 const app = Mosaic({
     element: 'root',
     name: 'my-app',
@@ -35,9 +44,16 @@ const app = Mosaic({
         name: 'Jimbo'
     },
     view: function() {
-        return html`<my-label>
+        return html`
+        <my-label>
             <h5>Well isn't this neat ${this.data.name}?</h5>
-        </my-label>`
+        </my-label>
+
+        <my-button>
+        </my-button>
+
+        <h4>Just testing ${this.data.name}</h4>
+        `
     }
 });
 app.paint();

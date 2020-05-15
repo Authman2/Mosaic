@@ -1,8 +1,10 @@
 import { MosaicOptions, MosaicComponent, ViewFunction, InjectionPoint } from "./options";
 import { randomKey, runLifecycle, applyMixin, nodeMarker } from "./util";
 import Observable, { ObservableArray } from "./observable";
-import { OTT, getTemplate, _repaint } from "./templating";
+import { getTemplate, _repaint } from "./templating";
+import { OTT } from "./OTT";
 
+/** An object that takes care of automatic updates when the state changes. */
 export default function Mosaic(options: MosaicOptions): MosaicComponent {
     // There are a few options that you need to take before you
     // create the custom element. These are options that will
@@ -42,9 +44,9 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             // directly on this component.
             const keys = Object.keys(_options);
             keys.forEach(key => {
-                if(key === 'element') return;
-                else if(key === 'data') return;
-                else if(key === 'mixins') return;
+                if(key === 'element') return; // <-- Just doesn't need to be held onto.
+                else if(key === 'data') return; // <-- Turns into Observable.
+                else if(key === 'mixins') return; // <-- Gets applied right away.
                 else this[key] = _options[key];
             });
 
@@ -95,18 +97,22 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             // descendants property must be a OTT so that the renderer
             // can parse it whenever it comes across it in the tree.
             if(!this.mosaicConfig.initiallyRendered) {
-                if(this.view) {
-                    const view = this.view(this);
-                    const ottDescendants = OTT(view);
-                    this.descendants = ottDescendants.instance;
-                    _repaint(this.descendants, ottDescendants.memories, [], ottDescendants.values);
-                    this.innerHTML = '';
+                if(this.view && this.innerHTML !== '') {
+                    // Convert the inner content into a OTT which can be rendered later.
+                    const insideContent = this.innerHTML;
+                    const ott = OTT(undefined, undefined, insideContent);
+                    this.descendants = ott;
 
-                    // TODO: It's only supposed to have 1 memory in the current exp.
-                    // console.log('%c Name: ', 'color:crimson', _options.name);
-                    // console.log(ottDescendants.instance);
-                    // console.log(ottDescendants.memories);
-                    // console.log(ottDescendants.values);
+                    const view = this.view(this);
+                    const tmp = getTemplate(this);
+                    console.log(options.name, view.values);
+                    console.dir(tmp);
+
+                    // TODO: Getting closer to working, but still doesn't know what memories
+                    // to hold or values to inject.
+                    _repaint(this.descendants.instance, tmp['memories'], [], view.values);
+                    this.innerHTML = '';
+                    console.log(`found inner content on ${_options.name}:`, ott.instance);
                 }
             }
 

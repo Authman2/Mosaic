@@ -1,6 +1,7 @@
 import { MemoryOptions, MosaicComponent } from "./options";
 import { isViewFunction, isBooleanAttribute, nodeMarker, isMosaicDefined, objectFromArray, runLifecycle } from "./util";
-import { OTT, _repaint } from "./templating";
+import { _repaint } from "./templating";
+import { OTT } from './OTT';
 
 /** A Memory is a place in the template where either a single or multiple
 * changes will likely occur throughout the lifecycle of a component. If

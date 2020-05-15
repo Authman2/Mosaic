@@ -1,7 +1,7 @@
 import Observable from "./observable";
 import Memory from "./memory";
 
-/** An type that can be used to represent literally anything.
+/** A type that can be used to represent literally anything.
 * Mostly just to avoid complier errors/warnings. */
 export type Any = any;
 
@@ -83,7 +83,7 @@ export class MosaicComponent extends HTMLElement {
 
     protected _shadow?: ShadowRoot;
     protected mixins: Object[];
-    descendants: Element;
+    descendants: OTTType;
     
     created?: Function|Function[];
     updated?: Function|Function[];
