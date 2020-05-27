@@ -24,6 +24,8 @@ export const isBooleanAttribute = (name: string) => {
     return regex.test(name);
 }
 
+/** Checks if an object is an OTTType. */
+
 /** Insert a DOM node after a given node. */
 export function insertAfter(newNode, referenceNode) {
     referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
