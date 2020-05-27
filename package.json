@@ -1,6 +1,6 @@
 {
   "name": "mosaic-framework",
-  "version": "0.8.8",
+  "version": "0.9.0",
   "description": "A front-end JavaScript library for creating user interfaces",
   "main": "dist/index.js",
   "scripts": {
@@ -30,5 +30,6 @@
     "typescript": "^3.5.3"
   },
   "dependencies": {},
-  "types": "dist/index.d.ts"
+  "types": "dist/index.d.ts",
+  "publishConfig": { "registry": "https://npm.pkg.github.com/" }
 }
