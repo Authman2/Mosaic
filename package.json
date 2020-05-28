@@ -30,6 +30,5 @@
     "typescript": "^3.5.3"
   },
   "dependencies": {},
-  "types": "dist/index.d.ts",
-  "publishConfig": { "registry": "https://npm.pkg.github.com/" }
+  "types": "dist/index.d.ts"
 }
