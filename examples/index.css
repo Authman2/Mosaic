@@ -1,16 +1,21 @@
 home-page {
-    position: absolute;
+    position: relative;
     top: 0px;
     left: 0px;
     right: 0px;
     bottom: 0px;
     padding: 20px;
+    display: flex;
     color: #4341AE;
     margin-left: 10%;
     margin-right: 10%;
     padding-top: 50px;
     text-align: center;
+    align-items: center;
     letter-spacing: 1.2px;
+    align-content: center;
+    flex-direction: column;
+    justify-content: center;
     background-color: white;
     font-family: Avenir, sans-serif;
 }
@@ -96,6 +101,8 @@ portfolio-label {
 }
 
 example-page-1, example-page-2, example-page-3 {
+    position: relative;
+    display: block;
     color: #4341AE;
     font-family: Avenir;
 }

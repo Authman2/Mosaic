@@ -7,6 +7,7 @@ const arrayFuncs = [
     'splice',
     'unshift'
 ] as any;
+
 export const ObservableArray = function(target, willUpdate?: Function, didUpdate?: Function) {
     const mosConfig = target['mosaicConfig'] || {};
     if(!mosConfig.hasOwnProperty('setup_observable_array')) {

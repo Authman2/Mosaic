@@ -1,5 +1,6 @@
 import Observable from "./observable";
 import Memory from "./memory";
+import Portfolio from './portfolio';
 
 /** A type that can be used to represent literally anything.
 * Mostly just to avoid complier errors/warnings. */
@@ -58,8 +59,7 @@ export interface MosaicOptions extends Any {
     data?: Object;
     mixins?: Any[];
     useShadow?: boolean;
-    // router?: HTMLElement;
-    // portfolio?: Portfolio;
+    portfolio?: Portfolio;
     element?: string|Element|HTMLElement;
     stylesheets?: string[]|CSSStyleSheet[];
     view?: (self?: MosaicComponent) => ViewFunction;
@@ -78,12 +78,11 @@ export class MosaicComponent extends HTMLElement {
     tid: string = '';
     useShadow: boolean = false;
 
-    // router?: HTMLElement;
-    // portfolio?: Portfolio;
+    portfolio?: Portfolio;
 
     protected _shadow?: ShadowRoot;
     protected mixins: Object[];
-    descendants: OTTType;
+    descendants: DocumentFragment;
     
     created?: Function|Function[];
     updated?: Function|Function[];
@@ -111,7 +110,7 @@ export class MosaicComponent extends HTMLElement {
         this.stylesheets = [];
         this.mixins = [];
         this.data = new Observable({});
-        this.descendants = document.createElement('div');
+        this.descendants = document.createDocumentFragment();
         this.mosaicConfig = {
             is_ott: false,
             setup_observable_array: false,
@@ -123,8 +122,14 @@ export class MosaicComponent extends HTMLElement {
 
 
     // Internal methods:
+
+    /** Paints this Mosaic component onto its base element. */
     public paint(arg?: string|HTMLElement|Object) {};
+
+    /** Forces an update of this component. */
     public repaint() {};
+
+    /** Sets multiple data properties and only re-paints once. */
     public set(data: Object) {};
 
     // Internal methods that should not be used by the developer.
@@ -140,9 +145,16 @@ export class MosaicComponent extends HTMLElement {
     }
 }
 
+/** The format of the Portfolio action. */
+export type PortfolioAction = (event: string, data: Any, additionalData: Any) => any;
 
-
-
+// /** A custom type for efficient arrays. */
+export interface KeyedArray {
+    keys: any[];
+    items: any[];
+    stringified: string[];
+    __isKeyedArray: boolean;
+}
 
 
 
@@ -228,17 +240,6 @@ export class MosaicComponent extends HTMLElement {
 //     isComponentType?: boolean;
 //     trackedAttributeCount?: number;
 // }
-
-// /** A custom type for efficient arrays. */
-// export interface KeyedArray {
-//     keys: any[];
-//     items: any[];
-//     stringified: string[];
-//     __isKeyedArray: boolean;
-// }
-
-// /** The format of the Portfolio action. */
-// export type PortfolioAction = (event: string, data: Any, additionalData: Any) => any;
 
 // /** A tagged template literal view function. */
 // export type ViewFunction = {

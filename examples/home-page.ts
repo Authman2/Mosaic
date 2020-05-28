@@ -94,23 +94,5 @@ export default Mosaic({
                 <h1>-</h1>
             </round-button>
         </section>
-
-        <section>
-            <h3>
-                <b>Router</b>: Lastly, Mosaic is also great for creating SPAs! It comes 
-                with a built-in, client-side router that lets you use components as 
-                pages. Hit the buttons below to check out the different pages
-                of this example app!
-            </h3>
-            <round-button type='primary' click='${() => self.router.send('/example-page-1')}'>
-                Example Page 1
-            </round-button>
-            <round-button type='primary' click='${() => self.router.send('/example-page-2')}'>
-                Example Page 2
-            </round-button>
-            <round-button type='primary' click='${() => self.router.send('/example-page-3')}'>
-                Example Page 3
-            </round-button>
-        </section>
     `
 });

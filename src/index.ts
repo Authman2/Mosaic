@@ -1,8 +1,8 @@
-import { MosaicOptions, MosaicComponent, ViewFunction, InjectionPoint } from "./options";
-import { randomKey, runLifecycle, applyMixin, nodeMarker } from "./util";
+import { MosaicOptions, MosaicComponent, ViewFunction, InjectionPoint, KeyedArray } from "./options";
+import { randomKey, runLifecycle, applyMixin, nodeMarker, goUpToConfigureRouter } from "./util";
 import Observable, { ObservableArray } from "./observable";
 import { getTemplate, _repaint } from "./templating";
-import { OTT } from "./OTT";
+import Portfolio from './portfolio';
 
 /** An object that takes care of automatic updates when the state changes. */
 export default function Mosaic(options: MosaicOptions): MosaicComponent {
@@ -98,26 +98,14 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             // can parse it whenever it comes across it in the tree.
             if(!this.mosaicConfig.initiallyRendered) {
                 if(this.view && this.innerHTML !== '') {
-                    // Convert the inner content into a OTT which can be rendered later.
-                    const insideContent = this.innerHTML;
-                    const ott = OTT(undefined, undefined, insideContent);
-                    this.descendants = ott;
-
-                    const view = this.view(this);
-                    const tmp = getTemplate(this);
-                    console.log(options.name, view.values);
-                    console.dir(tmp);
-
-                    // TODO: Getting closer to working, but still doesn't know what memories
-                    // to hold or values to inject.
-                    _repaint(this.descendants.instance, tmp['memories'], [], view.values);
+                    this.descendants.append(...this.childNodes);
                     this.innerHTML = '';
-                    console.log(`found inner content on ${_options.name}:`, ott.instance);
                 }
             }
 
             // 2.) Configure the router and portfolio on this component.
-            // TODO: Come back to this when you remake those components.
+            if(this.portfolio) this.portfolio.addDependency(this);
+            goUpToConfigureRouter.call(this);
 
             // 3.) Now to handle this component's view. If a template does
             // not yet exist, create it. Otherwise, just clone it. Then
@@ -149,7 +137,7 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
                     // If the attribute type is a string, but the initial
                     // value in the component is something else, try to
                     // parse it as such.
-                        if(typeof receivedData[key] === 'string') {
+                    if(typeof receivedData[key] === 'string') {
                         if(typeof this.data[key] === 'number')
                             this.data[key] = parseFloat(receivedData[key]);
                         else if(typeof this.data[key] === 'bigint')
@@ -178,13 +166,29 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             if(Object.keys(receivedAttributes).length > 0)
                 runLifecycle('received', this, receivedAttributes);
 
+            // 8.) If you come here as a OTT from an array, then be sure to
+            // repaint again. This is because with the way that the keyed
+            // array patcher is currently set up, it will insert all the
+            // nodes from a fragment (i.e. not in the DOM yet).
+            if(this.hasOwnProperty('arrayOTT') && this.view) {
+                const ott = this['arrayOTT'];
+                const node = ott.instance;
+                const mems = ott.memories;
+                const vals = ott.values;
+                _repaint(node, mems, [], vals);
+            }
+                
             this.mosaicConfig.initiallyRendered = true;
+            runLifecycle('created', this);
         }
 
         disconnectedCallback() {
-            // if(this.portfolio) this.portfolio.removeDependency(this);
+            if(this.portfolio) this.portfolio.removeDependency(this);
             runLifecycle('willDestroy', this);
         }
+
+
+        // USER
 
         public paint(arg?: string|HTMLElement|Object) {
             let isElement: boolean = typeof arg === 'string' || arg instanceof HTMLElement;
@@ -226,8 +230,27 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
             this.oldValues = newValues;
         }
 
-        public set(data: Object) {
+        public set(data: {}) {
+            this.mosaicConfig.barrier = true;
+            const keys = Object.keys(data);
+            for(let i = 0; i < keys.length; i++) {
+                const key = keys[i];
+                this.data[key] = data[key];
+            }
+            this.mosaicConfig.barrier = false;
+            this.repaint();
+            runLifecycle('updated', this);
+        }
 
+        setAttribute(qualifiedName: string, value: any) {
+            super.setAttribute(qualifiedName, value);
+            
+            // Overload the setAttribute function so that people
+            // using Mosaic components a DOM nodes can still have
+            // the "received" lifecycle function called.
+            let obj = {};
+            obj[qualifiedName] = value;
+            runLifecycle('received', this, obj);
         }
 
     } // End of class.
@@ -408,28 +431,28 @@ export default function Mosaic(options: MosaicOptions): MosaicComponent {
 //     return component as MosaicComponent;
 // }
 
-// /** A function for efficiently rendering a list in a component. */
-// Mosaic.list = function(items: any[], key: Function, map: Function): KeyedArray {
-//     const keys = items.map((itm, index) => key(itm, index));
-//     const mapped = items.map((itm, index) => {
-//         return {
-//             ...map(itm, index),
-//             key: keys[index]
-//         }
-//     });
-//     const stringified = mapped.map(json => JSON.stringify(json));
-//     return { keys, items: mapped, stringified, __isKeyedArray: true };
-// }
+/** A function for efficiently rendering a list in a component. */
+Mosaic.list = function(items: any[], key: Function, map: Function): KeyedArray {
+    const keys = items.map((itm, index) => key(itm, index));
+    const mapped = items.map((itm, index) => {
+        return {
+            ...map(itm, index),
+            key: keys[index]
+        }
+    });
+    const stringified = mapped.map(json => JSON.stringify(json));
+    return { keys, items: mapped, stringified, __isKeyedArray: true };
+}
 
-// declare global {
-//     interface Window {
-//         Mosaic: typeof Mosaic;
-//     }
-// }
+declare global {
+    interface Window {
+        Mosaic: typeof Mosaic;
+    }
+}
 const html = (strings, ...values): ViewFunction => ({
     strings,
     values,
     __isTemplate: true
 });
-// window.Mosaic = Mosaic;
-export { html };
+window.Mosaic = Mosaic;
+export { html, Portfolio };

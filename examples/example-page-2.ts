@@ -16,10 +16,12 @@ export default Mosaic({
             key: randomKey()
         });
         code += 1;
+        console.log(this.data.letters);
     },
     removeSecondAndThird() {
         // Deletion.
         this.data.letters = this.data.letters.filter((_, idx) => idx !== 1 && idx !== 2);
+        console.log(this.data.letters);
     },
     modifySecond() {
         // Modification.
@@ -27,6 +29,7 @@ export default Mosaic({
             letter: 'x',
             key: this.data.letters[1].key,
         }
+        console.log(this.data.letters);
     },
     view() {
         return html`
@@ -39,13 +42,13 @@ export default Mosaic({
                 updates to lists. The example below uses letters and indices as keys to
                 make fast updates whenever there is an addition, removal, or modification.
             </h3>
-            <round-button type='primary' onclick='${this.addLetter}' style='display:inline-block'>
+            <round-button type='primary' onclick='${this.addLetter.bind(this)}' style='display:inline-block'>
                 Push Letter
             </round-button>
-            <round-button type='danger' onclick='${this.removeSecondAndThird}' style='display:inline-block'>
+            <round-button type='danger' onclick='${this.removeSecondAndThird.bind(this)}' style='display:inline-block'>
                 Remove items 2 and 3
             </round-button>
-            <round-button type='warning' onclick='${this.modifySecond}' style='display:inline-block'>
+            <round-button type='warning' onclick='${this.modifySecond.bind(this)}' style='display:inline-block'>
                 Change item 2
             </round-button>
 
@@ -62,3 +65,9 @@ export default Mosaic({
         `
     }
 })
+
+// ${Mosaic.list(this.data.letters, obj => obj.key, (obj, index) => {
+//     return html`<div style='cursor:pointer;' onclick='${() => console.log(obj)}'>
+//         <p>${index + 1}.) ${obj.letter}</p>
+//     </div>`
+// })}

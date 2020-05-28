@@ -67,13 +67,11 @@ export function applyMixin(to: MosaicComponent, from: Object) {
         // Take the data from the mixin object and apply it as
         // an addition to the existing Mosaic component's data.
         if(k === 'data') {
-            // TODO: Make sure this is working.
-            to.data = Object.assign({}, to.data, from['data']);
-            // let dKeys = Object.keys(from['data']);
-            // for(let j = 0; j < dKeys.length; j++) {
-            //     let dk = dKeys[j];
-            //     to.data[dk] = from[k][dk];
-            // }
+            let dKeys = Object.keys(from['data']);
+            for(let j = 0; j < dKeys.length; j++) {
+                let dk = dKeys[j];
+                to.data[dk] = from[k][dk];
+            }
         }
 
         // For lifecycle functions, turn them into arrays of functions.

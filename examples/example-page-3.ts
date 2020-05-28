@@ -58,6 +58,7 @@ export default Mosaic({
             this.data.count += 1;
         }, 1000);
     },
+
     view: function() {
         return html`
         <h1>More Examples (cont.)</h1>
@@ -78,13 +79,7 @@ export default Mosaic({
             </h2>
         </section>
 
-        ${
-            html`<temp-comp title='Something!!!' onclick='${_ => console.log(this.data.count)}'>
-                <p>
-                    <b>${'some text goes here: ' + this.data.count}</b>
-                </p>
-            </temp-comp>`
-        }
+        <temp-comp title='Something!!!' onclick='${_ => console.log(this.data.count)}'></temp-comp>
 
         <test-stylesheet></test-stylesheet>
         `
